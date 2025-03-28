@@ -6,3 +6,5 @@ edition = "2021"
 [dependencies]
 spacetimedb-sdk = "1.0"
 hex = "0.4"
+bevy = "0.15.3"
+
