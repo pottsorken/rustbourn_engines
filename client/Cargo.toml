@@ -7,5 +7,5 @@ edition = "2021"
 spacetimedb-sdk = "1.0"
 hex = "0.4"
 bevy = "0.15.3"
-bevy_xpbd_2d = "0.5.0"
-avian2d = "0.2.1"
+bevy_ecs_tilemap = "0.15.0"
+
