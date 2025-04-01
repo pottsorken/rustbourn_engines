@@ -1,5 +1,6 @@
 use bevy::prelude::*;
 use bevy_ecs_tilemap::prelude::*;
+use noisy_bevy::simplex_noise_2d; // For map generation. May be temporary
 
 #[derive(Component)]
 struct Player {
@@ -28,7 +29,7 @@ fn setup_player(mut commands: Commands, asset_server: Res<AssetServer>) {
     // Spawn a player sprite at position (0, 0) at a higher z-index than map
     commands.spawn((
         Sprite {
-            custom_size: Some(Vec2::new(100.0, 100.0)), // Square size 100x100 pixels
+            custom_size: Some(Vec2::new(80.0, 80.0)), // Square size 100x100 pixels
             image: asset_server.load("sprites/top-view/robot_3Dblue.png"),
             ..default()
         },
@@ -45,11 +46,14 @@ fn setup_player(mut commands: Commands, asset_server: Res<AssetServer>) {
 }
 
 fn setup_tilemap(mut commands: Commands, asset_server: Res<AssetServer>) {
-    let texture_handle: Handle<Image> = asset_server.load("sprites/tiles.png");
-
+    let texture_handle: Vec<Handle<Image>> = vec![
+        asset_server.load("sprites/td_tanks/dirt.png"),
+        asset_server.load("sprites/td_tanks/stone.png"),
+        asset_server.load("sprites/td_tanks/grass.png"),
+    ];
     // New map with 10x10 chunks being 32x32 tiles
     let map_size = TilemapSize { x: 64, y: 64 };
-    let tile_size = TilemapTileSize { x: 16.0, y: 16.0 }; // tiles are 16x16 pixels
+    let tile_size = TilemapTileSize { x: 128.0, y: 128.0 }; // tiles are 16x16 pixels
     let grid_size = tile_size.into(); // Grid size == tile size
     let map_type = TilemapType::default();
 
@@ -59,15 +63,29 @@ fn setup_tilemap(mut commands: Commands, asset_server: Res<AssetServer>) {
     // spawn entity
     let tilemap_entity = commands.spawn_empty().id();
 
+    let noise_scale = 0.1;
+
     // Fill the tilemap with some tiles
     for x in 0..map_size.x {
         for y in 0..map_size.y {
             let tile_pos = TilePos { x, y };
+
+            // Determine tile texture
+            let noise_value =
+                simplex_noise_2d(Vec2::new(x as f32 * noise_scale, y as f32 * noise_scale));
+            let texture_index = if noise_value > 0.5 {
+                2 // grass
+            } else if noise_value > 0.0 {
+                1 // stone
+            } else {
+                0 // dirt
+            };
+
             let tile_entity = commands
                 .spawn(TileBundle {
                     position: tile_pos,
                     tilemap_id: TilemapId(tilemap_entity),
-                    //texture_index: TileTextureIndex(0), // first tile in tileset
+                    texture_index: TileTextureIndex(texture_index), // first tile in tileset
                     ..Default::default()
                 })
                 .id();
@@ -80,7 +98,7 @@ fn setup_tilemap(mut commands: Commands, asset_server: Res<AssetServer>) {
         map_type,
         size: map_size,
         storage: tile_storage,
-        texture: TilemapTexture::Single(texture_handle),
+        texture: TilemapTexture::Vector(texture_handle),
         tile_size,
         transform: get_tilemap_center_transform(&map_size, &grid_size, &map_type, 0.0),
         ..Default::default()
@@ -91,7 +109,7 @@ fn setup_tilemap(mut commands: Commands, asset_server: Res<AssetServer>) {
     #[cfg(all(not(feature = "atlas"), feature = "render"))]
     {
         array_texture_loader.add(TilemapArrayTexture {
-            texture: TilemapTexture::Single(asset_server.load("sprites/tiles.png")),
+            texture: TilemapTexture::Single(asset_server.load("sprites/td_tanks/sheet_tanks.png")),
             tile_size,
             ..Default::default()
         });
@@ -138,11 +156,20 @@ fn player_movement(
 fn camera_follow(
     player_query: Query<&Transform, With<Player>>,
     mut camera_query: Query<&mut Transform, (With<Camera>, Without<Player>)>,
+    time: Res<Time>,
 ) {
+    let follow_speed = 5.0;
+
     if let Ok(player_transform) = player_query.get_single() {
         for mut camera_transform in camera_query.iter_mut() {
-            camera_transform.translation = player_transform.translation;
-            camera_transform.translation.z = 999.9; // Ensure camera z-pos unchanged
+            camera_transform.translation = camera_transform.translation.lerp(
+                Vec3::new(
+                    player_transform.translation.x,
+                    player_transform.translation.y,
+                    camera_transform.translation.z, // Ensure camera z-pos unchanged
+                ),
+                follow_speed * time.delta_secs(),
+            );
         }
     }
 }
