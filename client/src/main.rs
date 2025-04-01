@@ -1,4 +1,5 @@
 use bevy::prelude::*;
+use bevy_ecs_tilemap::prelude::*;
 
 use bevy_ecs_tilemap::prelude::*;
 use noisy_bevy::simplex_noise_2d; // For map generation. May be temporary
