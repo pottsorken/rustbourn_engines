@@ -1593,6 +1593,7 @@ dependencies = [
  "bevy",
  "bevy_ecs_tilemap",
  "hex",
+ "noisy_bevy",
  "spacetimedb-sdk",
 ]
 
@@ -3411,6 +3412,15 @@ name = "nohash-hasher"
 version = "0.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "2bf50223579dc7cdcfb3bfcacf7069ff68243f8c363f62ffa99cf000a6b9c451"
+
+[[package]]
+name = "noisy_bevy"
+version = "0.8.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "5e24fedeca6003c0d04b916346d386f5a777aee89bf611b3960ab5d64977c165"
+dependencies = [
+ "bevy",
+]
 
 [[package]]
 name = "nom"

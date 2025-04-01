@@ -8,4 +8,5 @@ spacetimedb-sdk = "1.0"
 hex = "0.4"
 bevy = "0.15.3"
 bevy_ecs_tilemap = "0.15.0"
+noisy_bevy = "0.8"
 
