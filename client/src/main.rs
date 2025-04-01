@@ -51,7 +51,7 @@ fn setup_tilemap(mut commands: Commands, asset_server: Res<AssetServer>) {
         asset_server.load("sprites/td_tanks/stone.png"),
         asset_server.load("sprites/td_tanks/grass.png"),
     ];
-    // New map with 10x10 chunks being 32x32 tiles
+    // New map with 64x64 chunks being 32x32 tiles
     let map_size = TilemapSize { x: 64, y: 64 };
     let tile_size = TilemapTileSize { x: 128.0, y: 128.0 }; // tiles are 16x16 pixels
     let grid_size = tile_size.into(); // Grid size == tile size
@@ -103,17 +103,6 @@ fn setup_tilemap(mut commands: Commands, asset_server: Res<AssetServer>) {
         transform: get_tilemap_center_transform(&map_size, &grid_size, &map_type, 0.0),
         ..Default::default()
     });
-
-    // Add atlas to array texture loader so it's preprocessed before we need to use it.
-    // Only used when the atlas feature is off and we are using array textures.
-    #[cfg(all(not(feature = "atlas"), feature = "render"))]
-    {
-        array_texture_loader.add(TilemapArrayTexture {
-            texture: TilemapTexture::Single(asset_server.load("sprites/td_tanks/sheet_tanks.png")),
-            tile_size,
-            ..Default::default()
-        });
-    }
 }
 
 fn player_movement(
@@ -158,7 +147,7 @@ fn camera_follow(
     mut camera_query: Query<&mut Transform, (With<Camera>, Without<Player>)>,
     time: Res<Time>,
 ) {
-    let follow_speed = 5.0;
+    let follow_speed = 3.0;
 
     if let Ok(player_transform) = player_query.get_single() {
         for mut camera_transform in camera_query.iter_mut() {
