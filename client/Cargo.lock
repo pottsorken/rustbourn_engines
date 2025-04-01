@@ -630,6 +630,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "bevy_ecs_tilemap"
+version = "0.15.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "6d860132718d33627950294b0f316310f1dae789fb995deb4516ebdd7f3e6219"
+dependencies = [
+ "bevy",
+ "bevy_internal",
+ "log",
+]
+
+[[package]]
 name = "bevy_encase_derive"
 version = "0.15.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1312,7 +1323,7 @@ dependencies = [
  "bitflags 2.9.0",
  "cexpr",
  "clang-sys",
- "itertools 0.12.1",
+ "itertools 0.13.0",
  "log",
  "prettyplease",
  "proc-macro2",
@@ -1580,6 +1591,7 @@ name = "client"
 version = "0.1.0"
 dependencies = [
  "bevy",
+ "bevy_ecs_tilemap",
  "hex",
  "spacetimedb-sdk",
 ]
