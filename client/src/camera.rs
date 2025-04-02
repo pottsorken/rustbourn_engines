@@ -5,10 +5,10 @@ use crate::player::{Player,
     player_movement};
 
 pub fn setup_camera(mut commands: Commands) {
-    commands.spawn(Camera2dBundle {
-        transform: Transform::from_xyz(0.0, 0.0, 999.9),
-        ..default()
-    });
+    commands.spawn((
+        Camera2d,
+        Transform::from_xyz(0.0, 0.0, 999.9),
+    ));
 }
 
 
