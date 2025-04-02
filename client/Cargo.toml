@@ -15,4 +15,4 @@ hex = "0.4"
 bevy = {version = "0.15.3", features = ["dynamic_linking"] }
 bevy_ecs_tilemap = "0.15.0"
 noisy_bevy = "0.8"
-
+clap = { version = "4.0", features = ["derive"] }

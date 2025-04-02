@@ -6,13 +6,12 @@ use spacetimedb_sdk::{
     credentials, DbContext, Error, Event, Identity, Status, Table, TableWithPrimaryKey,
 };
 
+use crate::parse::*;
+
 #[derive(Resource)]
 pub struct CtxWrapper {
     ctx: DbConnection,
 }
-
-/// The URI of the SpacetimeDB instance hosting our chat module.
-const HOST: &str = "http://130.229.179.28:3000";
 
 /// The database name we chose when we published our module.
 const DB_NAME: &str = "test";
@@ -51,6 +50,10 @@ pub fn setup_connection(mut commands: Commands, asset_server: Res<AssetServer>) 
 }
 
 fn connect_to_db() -> DbConnection {
+    let server_url = parse_args();
+
+    //let server_url = parse_args();
+    //println!("Server url: {:?}", server_url.to_string());
     match DbConnection::builder()
         // Register our `on_connect` callback, which will save our auth token.
         .on_connect(on_connected)
@@ -63,7 +66,7 @@ fn connect_to_db() -> DbConnection {
         // so we can re-authenticate as the same `Identity`.
         .with_token(creds_store().load().expect("Error loading credentials"))
         .with_module_name(DB_NAME)
-        .with_uri(HOST)
+        .with_uri(server_url)
         .build()
     {
         Ok(db) => {
