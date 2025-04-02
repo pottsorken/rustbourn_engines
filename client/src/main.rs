@@ -4,8 +4,9 @@ use noisy_bevy::simplex_noise_2d; // For map generation. May be temporary
 
 mod player;
 
-use player::Player;
-
+use player::{Player,
+            setup_player,
+            player_movement};
 
 fn main() {
     App::new()
@@ -20,7 +21,7 @@ fn main() {
             })
         )
         .add_plugins(TilemapPlugin)
-        .add_systems(Startup, (setup_camera, player::setup_player, setup_tilemap))
+        .add_systems(Startup, (setup_camera, setup_player, setup_tilemap))
         .add_systems(Update, (player_movement, camera_follow))
         .run();
 }
@@ -94,42 +95,6 @@ fn setup_tilemap(mut commands: Commands, asset_server: Res<AssetServer>) {
     });
 }
 
-fn player_movement(
-    keyboard_input: Res<ButtonInput<KeyCode>>,
-    mut query: Query<(&mut Transform, &Player)>,
-    time: Res<Time>,
-) {
-    for (mut transform, player) in &mut query {
-        // Handle rotation with A/D keys
-        let mut rotation_dir = 0.0;
-        if keyboard_input.pressed(KeyCode::KeyA) {
-            rotation_dir += 1.0;
-        }
-        if keyboard_input.pressed(KeyCode::KeyD) {
-            rotation_dir -= 1.0;
-        }
-
-        // Apply rotation
-        if rotation_dir != 0.0 {
-            transform.rotate_z(rotation_dir * player.rotation_speed * time.delta_secs());
-        }
-
-        // Handle movement with W/S keys (forward/backward relative to rotation)
-        let mut move_dir = Vec3::ZERO;
-        if keyboard_input.pressed(KeyCode::KeyW) {
-            move_dir.y += 1.0;
-        }
-        if keyboard_input.pressed(KeyCode::KeyS) {
-            move_dir.y -= 1.0;
-        }
-
-        // Apply movement relative to player's rotation
-        if move_dir != Vec3::ZERO {
-            let move_direction = transform.rotation * move_dir.normalize();
-            transform.translation += move_direction * player.movement_speed * time.delta_secs();
-        }
-    }
-}
 
 fn camera_follow(
     player_query: Query<&Transform, With<Player>>,
