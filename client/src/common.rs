@@ -17,7 +17,7 @@ pub struct PlayerConfig {
     pub size: Vec2,
     pub movement_speed: f32,
     pub rotation_speed: f32,
-    pub sprite_path: &'static str,
+    pub path: &'static str,
 }
 
 /// Global constant config for the player
@@ -25,7 +25,28 @@ pub const PLAYER_CONFIG: PlayerConfig = PlayerConfig {
     size: Vec2::new(80.0, 80.0),
     movement_speed: 1000.0,
     rotation_speed: f32::to_radians(180.0),
-    sprite_path: "sprites/top-view/robot_3Dblue.png",
+    path: "sprites/top-view/robot_3Dblue.png",
+};
+
+// === Player defined constraints ===
+
+#[derive(Component)]
+pub struct Obstacle {
+    
+}
+
+/// Configuration struct for initializing the Player entity
+pub struct ObstacleConfig {
+    pub size: Vec2,
+    pub count: i32,
+    pub path: &'static str,
+}
+
+/// Global constant config for the player
+pub const OBSTACLE_CONFIG: ObstacleConfig = ObstacleConfig {
+    size: Vec2::new(80.0, 80.0),
+    count: 1000,
+    path: "sprites/Obstacles/obstacle_rock.png",
 };
 
 // === Map related definitions ===

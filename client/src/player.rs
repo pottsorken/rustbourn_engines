@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 use bevy::window::PrimaryWindow;
-use crate::common::{Player, PLAYER_CONFIG, MAP_CONFIG};
+use crate::common::{Player, Obstacle, MAP_CONFIG, OBSTACLE_CONFIG, PLAYER_CONFIG};
 
 pub fn setup_player(
     mut commands: Commands, 
@@ -13,14 +13,14 @@ pub fn setup_player(
     commands.spawn((
         Sprite {
             custom_size: Some(PLAYER_CONFIG.size), // Square size 100x100 pixels
-            image: asset_server.load(PLAYER_CONFIG.sprite_path),
+            image: asset_server.load(PLAYER_CONFIG.path),
             ..default()
         },
         //TextureAtlas {
         //    layout: asset_server.load("sprites/top-view/robot_3Dblue.png"),
         //    index: 0,
         //}, -- NOTE: If asset-chart is ever used
-        Transform::from_xyz(0.0, 0.0, 1.0),
+        Transform::from_xyz(0.0, 0.0, 2.0),
         Player {
             movement_speed: PLAYER_CONFIG.movement_speed,                  // meters per second
             rotation_speed: PLAYER_CONFIG.rotation_speed, // degrees per second
@@ -30,10 +30,11 @@ pub fn setup_player(
 
 pub fn player_movement(
     keyboard_input: Res<ButtonInput<KeyCode>>,
-    mut query: Query<(&mut Transform, &Player)>,
+    mut query: Query<(&mut Transform, &Player), Without<Obstacle>>,
+    obstacle_query: Query<&Transform, With<Obstacle>>,
     time: Res<Time>,
 ) {
-    if let Ok((mut transform, player)) = query.get_single_mut() {
+    if let Ok((mut transform, _player)) = query.get_single_mut() {
         // Handle rotation with A/D keys
         let mut rotation_dir = 0.0;
         if keyboard_input.pressed(KeyCode::KeyA) || keyboard_input.pressed(KeyCode::ArrowLeft){
@@ -60,7 +61,11 @@ pub fn player_movement(
         // Apply movement relative to player's rotation
         if move_dir != Vec3::ZERO {
             let move_direction = transform.rotation * move_dir.normalize();
-            transform.translation += move_direction * PLAYER_CONFIG.movement_speed * time.delta_secs();
+            let new_pos = transform.translation + move_direction * PLAYER_CONFIG.movement_speed * time.delta_secs();
+            
+            if !will_collide(new_pos.truncate(), &obstacle_query) {
+                transform.translation = new_pos;
+            }
         }
     }
 }
@@ -102,4 +107,14 @@ pub fn confine_player_movement(
 
         player_transform.translation = translation;
     }
+}
+
+pub fn will_collide(new_pos: Vec2, obstacles: &Query<&Transform, With<Obstacle>>) -> bool {
+        let player_radius = PLAYER_CONFIG.size.x.min(PLAYER_CONFIG.size.y) / 2.0;
+        let obstacle_radius = OBSTACLE_CONFIG.size.x.min(OBSTACLE_CONFIG.size.y) / 2.0;
+        let collision_distance = player_radius + obstacle_radius;
+
+        obstacles.iter().any(|transform| {
+            new_pos.distance(transform.translation.truncate()) < collision_distance
+        })
 }
