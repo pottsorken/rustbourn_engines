@@ -1,5 +1,16 @@
 use bevy::prelude::*;
 
+use bevy_ecs_tilemap::prelude::*;
+use noisy_bevy::simplex_noise_2d; // For map generation. May be temporary
+
+mod camera;
+mod map;
+mod player;
+use camera::{camera_follow, setup_camera};
+use map::setup_tilemap;
+use player::{player_movement, setup_player, Player};
+
+// Spacedime dependencies
 mod module_bindings;
 use module_bindings::*;
 use spacetimedb_sdk::{
@@ -13,26 +24,19 @@ const HOST: &str = "http://localhost:3000";
 const DB_NAME: &str = "test";
 
 fn main() {
-    let ctx = connect_to_db();
-
-    ctx.run_threaded();
-    // Construct a new position
-    let position = BevyTransform {
-        coordinates: vec_2_type::Vec2 { x: 2.0, y: 3.0 },
-        rotation: 20.0,
-        scale: vec_2_type::Vec2 { x: 70.0, y: 80.0 },
-    };
-
-    println!("position: {:?}", position);
-    //Call update_player_position and check for errors
-    match ctx.reducers.update_player_position(position) {
-        Ok(_) => println!("Player position updated successfully"),
-        Err(e) => eprintln!("Failed to update player position: {:?}", e),
-    }
-
-    loop {
-        //do nothing
-    }
+    App::new()
+        .add_plugins(DefaultPlugins.set(WindowPlugin {
+            primary_window: Some(Window {
+                title: String::from("Rustbourn Engines"),
+                position: WindowPosition::Centered(MonitorSelection::Primary),
+                ..Default::default()
+            }),
+            ..Default::default()
+        }))
+        .add_plugins(TilemapPlugin)
+        .add_systems(Startup, (setup_camera, setup_player, setup_tilemap))
+        .add_systems(Update, (player_movement, camera_follow))
+        .run();
 }
 
 fn connect_to_db() -> DbConnection {
