@@ -11,7 +11,16 @@ struct Player {
 }
 fn main() {
     App::new()
-        .add_plugins(DefaultPlugins)
+        .add_plugins(DefaultPlugins
+            .set(WindowPlugin {
+                primary_window : Some(Window{
+                    title : String::from("Rustbourn Engines"),
+                    position : WindowPosition::Centered(MonitorSelection::Primary),
+                    ..Default::default()
+                }),
+                ..Default::default()
+            })
+        )
         .add_plugins(TilemapPlugin)
         .add_systems(Startup, (setup_camera, setup_player, setup_tilemap))
         .add_systems(Update, (player_movement, camera_follow))
