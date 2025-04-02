@@ -7,11 +7,12 @@ mod camera;
 mod db_connection;
 mod map;
 mod module_bindings;
+mod opponent;
 mod parse;
 mod player;
 
 use camera::{camera_follow, setup_camera};
-use db_connection::setup_connection;
+use db_connection::{print_player_positions, setup_connection};
 use map::setup_tilemap;
 use parse::*;
 use player::{player_movement, setup_player, Player};
@@ -31,6 +32,9 @@ fn main() {
             Startup,
             (setup_camera, setup_player, setup_tilemap, setup_connection),
         )
-        .add_systems(Update, (player_movement, camera_follow))
+        .add_systems(
+            Update,
+            (player_movement, camera_follow, print_player_positions),
+        )
         .run();
 }

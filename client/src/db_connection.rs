@@ -2,6 +2,7 @@ use bevy::prelude::*;
 
 // Spacetime dependencies
 use crate::module_bindings::*;
+use crate::opponent::*;
 use spacetimedb_sdk::{
     credentials, DbContext, Error, Event, Identity, Status, Table, TableWithPrimaryKey,
 };
@@ -35,6 +36,8 @@ pub fn setup_connection(mut commands: Commands, asset_server: Res<AssetServer>) 
     // Connect to the database
     let ctx = connect_to_db();
 
+    subscribe_to_tables(&ctx);
+
     //// Register callbacks to run in re\sponse to database events
     //register_callbacks(&ctx);
     //
@@ -47,6 +50,27 @@ pub fn setup_connection(mut commands: Commands, asset_server: Res<AssetServer>) 
     commands.insert_resource(CtxWrapper { ctx });
     // Handle CLI input
     //user_input_loop(&ctx);
+}
+
+/// Register subscriptions for all rows of the player tables.
+fn subscribe_to_tables(ctx: &DbConnection) {
+    ctx.subscription_builder()
+        .on_applied(on_sub_applied)
+        .on_error(on_sub_error)
+        .subscribe(["SELECT * FROM player"]); //WHERE online=true
+}
+
+/// Our `on_subscription_applied` callback:
+fn on_sub_applied(ctx: &SubscriptionEventContext) {
+    let mut positions = ctx.db.player().iter().collect::<Vec<_>>();
+    for position in positions {
+        println!("{:?}", position);
+    }
+}
+
+fn on_sub_error(_ctx: &ErrorContext, err: Error) {
+    eprintln!("Subscription failed: {}", err);
+    std::process::exit(1);
 }
 
 fn connect_to_db() -> DbConnection {
@@ -105,5 +129,31 @@ fn on_disconnected(_ctx: &ErrorContext, err: Option<Error>) {
     } else {
         println!("Disconnected.");
         std::process::exit(0);
+    }
+}
+
+pub fn print_player_positions(
+    ctx_wrapper: Res<CtxWrapper>,
+    mut commands: Commands,
+    asset_server: Res<AssetServer>,
+    mut query: Query<(&mut Transform, &Opponent)>,
+) {
+    let players = ctx_wrapper.ctx.db.player().iter().collect::<Vec<_>>();
+    for player in players {
+        println!("{:?}", player);
+        spawn_opponent(
+            &mut commands,
+            &asset_server,
+            &query,
+            &player.identity,
+            player.position.coordinates.x,
+            player.position.coordinates.y,
+        );
+        update_opponent(
+            &mut query,
+            &player.identity,
+            player.position.coordinates.x,
+            player.position.coordinates.y,
+        );
     }
 }
