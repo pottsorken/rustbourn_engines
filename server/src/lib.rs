@@ -1,8 +1,10 @@
-use spacetimedb::{reducer, spacetimedb_lib::db, table, Identity, ReducerContext, Table, Timestamp, SpacetimeType};
+use spacetimedb::{
+    reducer, spacetimedb_lib::db, table, Identity, ReducerContext, SpacetimeType, Table, Timestamp,
+};
 
 // Player data
 #[spacetimedb::table(name = player, public)]
-pub struct Player{
+pub struct Player {
     #[primary_key]
     identity: Identity,
     position: BevyTransform,
@@ -10,31 +12,37 @@ pub struct Player{
 }
 
 // Bevy transform data
-#[derive(SpacetimeType)]
-pub struct
-BevyTransform{
+#[derive(Debug, SpacetimeType)]
+pub struct BevyTransform {
     coordinates: Vec2,
     rotation: f32,
     scale: Vec2,
 }
 
 // Vector with x, y coordinates
-#[derive(SpacetimeType)]
-pub struct Vec2{
+#[derive(Debug, SpacetimeType)]
+pub struct Vec2 {
     x: f32,
     y: f32,
 }
 
 // Reducer for updating player position
 #[spacetimedb::reducer]
-pub fn update_player_position(ctx: &ReducerContext, bevy_transform: BevyTransform) -> Result<(), String>{
-    if let Some(_player) = ctx.db.player().identity().find(ctx.sender){
-        ctx.db.player().identity().update(Player{
+pub fn update_player_position(
+    ctx: &ReducerContext,
+    bevy_transform: BevyTransform,
+) -> Result<(), String> {
+    log::info!(
+        "Code reaches this point! --------{:?}------",
+        bevy_transform
+    );
+    if let Some(_player) = ctx.db.player().identity().find(ctx.sender) {
+        ctx.db.player().identity().update(Player {
             position: bevy_transform,
             .._player
         });
         Ok(())
-    } else{
+    } else {
         Err("Player not found".to_string())
     }
 }
@@ -42,16 +50,20 @@ pub fn update_player_position(ctx: &ReducerContext, bevy_transform: BevyTransfor
 // Reducer for creating and/or login existing player to server
 // Called when client connects
 #[spacetimedb::reducer(client_connected)]
-pub fn player_connected(ctx: &ReducerContext){
-    if let Some(_player) = ctx.db.player().identity().find(ctx.sender){
-        ctx.db.player().identity().update(Player{online: true, .._player});
-    } else{
-        ctx.db.player().insert(Player{
+pub fn player_connected(ctx: &ReducerContext) {
+    log::info!(" HEY -----");
+    if let Some(_player) = ctx.db.player().identity().find(ctx.sender) {
+        ctx.db.player().identity().update(Player {
+            online: true,
+            .._player
+        });
+    } else {
+        ctx.db.player().insert(Player {
             identity: ctx.sender,
             position: BevyTransform {
-                coordinates: Vec2{x: 0.0, y: 0.0},
+                coordinates: Vec2 { x: 0.0, y: 0.0 },
                 rotation: 0.0,
-                scale: Vec2{x: 50.0, y: 100.0},
+                scale: Vec2 { x: 50.0, y: 100.0 },
             },
             online: true,
         });
@@ -61,11 +73,17 @@ pub fn player_connected(ctx: &ReducerContext){
 // Reducer for logging out player
 // Called when client disconnects from server
 #[spacetimedb::reducer(client_disconnected)]
-pub fn player_disconnected(ctx: &ReducerContext){
-    if let Some(_player) = ctx.db.player().identity().find(ctx.sender){
-        ctx.db.player().identity().update(Player{online: false, .._player});
-    } else{
+pub fn player_disconnected(ctx: &ReducerContext) {
+    if let Some(_player) = ctx.db.player().identity().find(ctx.sender) {
+        ctx.db.player().identity().update(Player {
+            online: false,
+            .._player
+        });
+    } else {
         // Should never reach!!
-        log::warn!("Disconnect event for unknown user with identity {:?}", ctx.sender)
+        log::warn!(
+            "Disconnect event for unknown user with identity {:?}",
+            ctx.sender
+        )
     }
 }
