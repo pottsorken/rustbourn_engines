@@ -11,6 +11,7 @@ pub mod player_table;
 pub mod player_type;
 pub mod update_player_position_reducer;
 pub mod vec_2_type;
+use bevy::prelude::*;
 
 pub use bevy_transform_type::BevyTransform;
 pub use player_connected_reducer::{
@@ -204,6 +205,7 @@ impl __sdk::InModule for RemoteTables {
 ///
 /// Which of these methods you should call depends on the specific needs of your application,
 /// but you must call one of them, or else the connection will never progress.
+#[derive(Resource)]
 pub struct DbConnection {
     /// Access to tables defined by the module via extension traits implemented for [`RemoteTables`].
     pub db: RemoteTables,

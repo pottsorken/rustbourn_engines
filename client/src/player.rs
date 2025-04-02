@@ -1,4 +1,9 @@
+use crate::db_connection::*;
+use crate::module_bindings::*;
 use bevy::prelude::*;
+use spacetimedb_sdk::{
+    credentials, DbContext, Error, Event, Identity, Status, Table, TableWithPrimaryKey,
+};
 
 #[derive(Component)]
 pub struct Player {
@@ -12,7 +17,7 @@ pub fn setup_player(mut commands: Commands, asset_server: Res<AssetServer>) {
     // Spawn a player sprite at position (0, 0) at a higher z-index than map
     commands.spawn((
         Sprite {
-            custom_size: Some(Vec2::new(80.0, 80.0)), // Square size 100x100 pixels
+            custom_size: Some(bevy::prelude::Vec2::new(80.0, 80.0)), // Square size 100x100 pixels
             image: asset_server.load("sprites/top-view/robot_3Dblue.png"),
             ..default()
         },
@@ -32,7 +37,9 @@ pub fn player_movement(
     keyboard_input: Res<ButtonInput<KeyCode>>,
     mut query: Query<(&mut Transform, &Player)>,
     time: Res<Time>,
+    ctx: Res<DbConnection>,
 ) {
+    let ctx_inner = &ctx.into_inner();
     for (mut transform, player) in &mut query {
         // Handle rotation with A/D keys
         let mut rotation_dir = 0.0;
@@ -62,5 +69,6 @@ pub fn player_movement(
             let move_direction = transform.rotation * move_dir.normalize();
             transform.translation += move_direction * player.movement_speed * time.delta_secs();
         }
+        update_player_position(ctx_inner, &transform);
     }
 }
