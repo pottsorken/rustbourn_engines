@@ -1,15 +1,21 @@
 use bevy::prelude::*;
 use bevy_ecs_tilemap::prelude::*;
-
-use bevy_ecs_tilemap::prelude::*;
 use noisy_bevy::simplex_noise_2d; // For map generation. May be temporary
 
 mod camera;
 mod map;
 mod player;
-use camera::{camera_follow, setup_camera};
-use map::setup_tilemap;
-use player::{player_movement, setup_player, Player};
+
+use player::{Player, setup_player, player_movement, confine_player_movement};
+use map::{setup_tilemap};
+use camera::{setup_camera, camera_follow};
+
+pub const PLAYER_SIZE: f32 = 100.0;
+pub const PLAYER_SPEED: f32 = 300.0;
+
+//#[cfg(windows)]
+//#[global_allocator]
+//static GLOBAL: mimalloc::MiMalloc = mimalloc::MiMalloc;
 
 // Spacedime dependencies
 mod module_bindings;
@@ -26,17 +32,21 @@ const DB_NAME: &str = "test";
 
 fn main() {
     App::new()
-        .add_plugins(DefaultPlugins.set(WindowPlugin {
-            primary_window: Some(Window {
-                title: String::from("Rustbourn Engines"),
-                position: WindowPosition::Centered(MonitorSelection::Primary),
+        .add_plugins(
+            DefaultPlugins.set(WindowPlugin {
+                primary_window : Some(Window{
+                    title : String::from("Rustbourn Engines"),
+                    position : WindowPosition::Centered(MonitorSelection::Primary),
+                    ..Default::default()
+                }),
                 ..Default::default()
-            }),
-            ..Default::default()
-        }))
+            })
+        )
         .add_plugins(TilemapPlugin)
         .add_systems(Startup, (setup_camera, setup_player, setup_tilemap))
-        .add_systems(Update, (player_movement, camera_follow))
+        .add_systems(Update, player_movement)
+        .add_systems(Update, confine_player_movement)
+        .add_systems(Update, camera_follow)
         .run();
 }
 
