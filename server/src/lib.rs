@@ -1,5 +1,6 @@
 use spacetimedb::{
-    reducer, spacetimedb_lib::db, table, Identity, ReducerContext, SpacetimeType, Table, Timestamp,
+    reducer, spacetimedb_lib::db, table, DbContext, Identity, ReducerContext, SpacetimeType, Table,
+    Timestamp,
 };
 
 // Player data
