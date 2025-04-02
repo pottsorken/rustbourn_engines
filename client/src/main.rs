@@ -6,6 +6,8 @@ mod camera;
 mod map;
 mod player;
 mod common;
+mod hook;
+mod player_attach;
 
 use player::*;
 use map::*;
@@ -18,6 +20,7 @@ use camera::*;
 // Spacedime dependencies
 mod module_bindings;
 use module_bindings::*;
+use player_attach::attatch_objects;
 use spacetimedb_sdk::{
     credentials, DbContext, Error, Event, Identity, Status, Table, TableWithPrimaryKey,
 };
@@ -41,10 +44,11 @@ fn main() {
             })
         )
         .add_plugins(TilemapPlugin)
-        .add_systems(Startup, (setup_camera, setup_player, setup_tilemap))
+        .add_systems(Startup, (setup_camera, setup_player, setup_hook, setup_tilemap))
         .add_systems(Update, player_movement)
         .add_systems(Update, confine_player_movement)
         .add_systems(Update, camera_follow)
+        .add_systems(Update, attatch_objects)
         .run();
 }
 
