@@ -1,4 +1,4 @@
-use crate::db_connection::*;
+use crate::db_connection::{update_player_position, CtxWrapper};
 use crate::module_bindings::*;
 use bevy::prelude::*;
 use spacetimedb_sdk::{
@@ -37,9 +37,9 @@ pub fn player_movement(
     keyboard_input: Res<ButtonInput<KeyCode>>,
     mut query: Query<(&mut Transform, &Player)>,
     time: Res<Time>,
-    ctx: Res<DbConnection>,
+    ctx: Res<CtxWrapper>,
 ) {
-    let ctx_inner = &ctx.into_inner();
+    let ctx_wrapper = &ctx.into_inner();
     for (mut transform, player) in &mut query {
         // Handle rotation with A/D keys
         let mut rotation_dir = 0.0;
@@ -69,6 +69,6 @@ pub fn player_movement(
             let move_direction = transform.rotation * move_dir.normalize();
             transform.translation += move_direction * player.movement_speed * time.delta_secs();
         }
-        update_player_position(ctx_inner, &transform);
+        update_player_position(ctx_wrapper, &transform);
     }
 }

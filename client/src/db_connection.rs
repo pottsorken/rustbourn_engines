@@ -6,14 +6,21 @@ use spacetimedb_sdk::{
     credentials, DbContext, Error, Event, Identity, Status, Table, TableWithPrimaryKey,
 };
 
+#[derive(Resource)]
+pub struct CtxWrapper {
+    ctx: DbConnection,
+}
+
 /// The URI of the SpacetimeDB instance hosting our chat module.
-const HOST: &str = "http://localhost:3000";
+const HOST: &str = "http://130.229.179.28:3000";
 
 /// The database name we chose when we published our module.
 const DB_NAME: &str = "test";
 
-pub fn update_player_position(ctx: &DbConnection, player_transform: &Transform) {
-    ctx.reducers()
+pub fn update_player_position(ctx_wrapper: &CtxWrapper, player_transform: &Transform) {
+    ctx_wrapper
+        .ctx
+        .reducers()
         .update_player_position(BevyTransform {
             coordinates: vec_2_type::Vec2 {
                 x: player_transform.translation.x,
@@ -38,7 +45,7 @@ pub fn setup_connection(mut commands: Commands, asset_server: Res<AssetServer>) 
     // Spawn a thread, where the connection will process messages and invoke callbacks.
     ctx.run_threaded();
 
-    commands.insert_resource(ctx);
+    commands.insert_resource(CtxWrapper { ctx });
     // Handle CLI input
     //user_input_loop(&ctx);
 }
