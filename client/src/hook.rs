@@ -22,7 +22,6 @@ pub fn setup_hook(mut commands: Commands, asset_server: Res<AssetServer>) {
     ));
 }
 
-
 // fn extend_rope(mut query: Query<&mut Transform, With<Hook>>) {
 //     for mut transform in query.iter_mut() {
 //         transform.scale.y += 5.0;
