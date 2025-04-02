@@ -27,3 +27,40 @@ pub fn setup_player(mut commands: Commands, asset_server: Res<AssetServer>) {
         },
     ));
 }
+
+pub fn player_movement(
+    keyboard_input: Res<ButtonInput<KeyCode>>,
+    mut query: Query<(&mut Transform, &Player)>,
+    time: Res<Time>,
+) {
+    for (mut transform, player) in &mut query {
+        // Handle rotation with A/D keys
+        let mut rotation_dir = 0.0;
+        if keyboard_input.pressed(KeyCode::KeyA) {
+            rotation_dir += 1.0;
+        }
+        if keyboard_input.pressed(KeyCode::KeyD) {
+            rotation_dir -= 1.0;
+        }
+
+        // Apply rotation
+        if rotation_dir != 0.0 {
+            transform.rotate_z(rotation_dir * player.rotation_speed * time.delta_secs());
+        }
+
+        // Handle movement with W/S keys (forward/backward relative to rotation)
+        let mut move_dir = Vec3::ZERO;
+        if keyboard_input.pressed(KeyCode::KeyW) {
+            move_dir.y += 1.0;
+        }
+        if keyboard_input.pressed(KeyCode::KeyS) {
+            move_dir.y -= 1.0;
+        }
+
+        // Apply movement relative to player's rotation
+        if move_dir != Vec3::ZERO {
+            let move_direction = transform.rotation * move_dir.normalize();
+            transform.translation += move_direction * player.movement_speed * time.delta_secs();
+        }
+    }
+}
