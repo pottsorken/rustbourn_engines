@@ -1,16 +1,18 @@
 use bevy::prelude::*;
 use bevy_ecs_tilemap::prelude::*;
 use noisy_bevy::simplex_noise_2d;
+use crate::common::MAP_CONFIG;
 
 pub fn setup_tilemap(mut commands: Commands, asset_server: Res<AssetServer>) {
-    let texture_handle: Vec<Handle<Image>> = vec![
-        asset_server.load("sprites/td_tanks/dirt.png"),
-        asset_server.load("sprites/td_tanks/stone.png"),
-        asset_server.load("sprites/td_tanks/grass.png"),
-    ];
+    let texture_handle: Vec<Handle<Image>> = MAP_CONFIG
+        .tile_textures
+        .iter()
+        .map(|path|asset_server.load(*path))
+        .collect();
+
     // New map with 64x64 chunks being 32x32 tiles
-    let map_size = TilemapSize { x: 64, y: 64 };
-    let tile_size = TilemapTileSize { x: 128.0, y: 128.0 }; // tiles are 16x16 pixels
+    let map_size = MAP_CONFIG.map_size;
+    let tile_size = MAP_CONFIG.tile_size; // tiles are 16x16 pixels
     let grid_size = tile_size.into(); // Grid size == tile size
     let map_type = TilemapType::default();
 
@@ -28,8 +30,11 @@ pub fn setup_tilemap(mut commands: Commands, asset_server: Res<AssetServer>) {
             let tile_pos = TilePos { x, y };
 
             // Determine tile texture
-            let noise_value =
-                simplex_noise_2d(Vec2::new(x as f32 * noise_scale, y as f32 * noise_scale));
+            let noise_value = simplex_noise_2d(Vec2::new(
+                x as f32 * MAP_CONFIG.noise_scale, 
+                y as f32 * MAP_CONFIG.noise_scale,
+            ));
+
             let texture_index = if noise_value > 0.5 {
                 2 // grass
             } else if noise_value > 0.0 {
@@ -46,6 +51,7 @@ pub fn setup_tilemap(mut commands: Commands, asset_server: Res<AssetServer>) {
                     ..Default::default()
                 })
                 .id();
+            
             tile_storage.set(&tile_pos, tile_entity);
         }
     }

@@ -5,13 +5,11 @@ use noisy_bevy::simplex_noise_2d; // For map generation. May be temporary
 mod camera;
 mod map;
 mod player;
+mod common;
 
-use player::{Player, setup_player, player_movement, confine_player_movement};
-use map::{setup_tilemap};
-use camera::{setup_camera, camera_follow};
-
-pub const PLAYER_SIZE: f32 = 100.0;
-pub const PLAYER_SPEED: f32 = 300.0;
+use player::*;
+use map::*;
+use camera::*;
 
 //#[cfg(windows)]
 //#[global_allocator]

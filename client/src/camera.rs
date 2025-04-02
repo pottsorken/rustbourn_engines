@@ -1,8 +1,8 @@
 use bevy::prelude::*;
 
-use crate::player::{Player,
-    setup_player,
-    player_movement};
+use crate::player::*;
+use crate::common::{Player};
+
 
 pub fn setup_camera(mut commands: Commands) {
     commands.spawn((
