@@ -28,27 +28,37 @@ pub fn setup_hook(mut commands: Commands, asset_server: Res<AssetServer>) {
     ));
 }
 
+pub fn hook_controls_short(
+    keyboard_input: Res<ButtonInput<KeyCode>>,
+    mut query: Query<(&mut Sprite, &mut Transform), With<Hook>>,
+    time: Res<Time>,
+) {
+    if keyboard_input.just_pressed(KeyCode::Space) {
+        
+    }
+}
+
 // fn extend_rope(mut query: Query<&mut Transform, With<Hook>>) {
 //     for mut transform in query.iter_mut() {
 //         transform.scale.y += 5.0;
 //     }
 // }
 
-pub fn hook_controls(
-    keyboard_input: Res<ButtonInput<KeyCode>>,
-    mut query: Query<(&mut Sprite, &mut Transform), With<Hook>>,
-    time: Res<Time>,
-) {
-    let growth_rate = 100.0; // Units per second
-    let growth_amount = growth_rate * time.delta_secs();
+// pub fn hook_controls(
+//     keyboard_input: Res<ButtonInput<KeyCode>>,
+//     mut query: Query<(&mut Sprite, &mut Transform), With<Hook>>,
+//     time: Res<Time>,
+// ) {
+//     let growth_rate = 100.0; // Units per second
+//     let growth_amount = growth_rate * time.delta_secs();
     
-    for (mut sprite, mut transform) in query.iter_mut() {
-        if keyboard_input.pressed(KeyCode::Space) {
-            if let Some(size) = sprite.custom_size {
-                sprite.custom_size = Some(Vec2::new(size.x, size.y + growth_amount));
-                // Move the sprite up by half the growth amount to maintain bottom position
-                transform.translation.y += growth_amount / 2.0;
-            }
-        }
-    }
-}
+//     for (mut sprite, mut transform) in query.iter_mut() {
+//         if keyboard_input.pressed(KeyCode::Space) {
+//             if let Some(size) = sprite.custom_size {
+//                 sprite.custom_size = Some(Vec2::new(size.x, size.y + growth_amount));
+//                 // Move the sprite up by half the growth amount to maintain bottom position
+//                 transform.translation.y += growth_amount / 2.0;
+//             }
+//         }
+//     }
+// }

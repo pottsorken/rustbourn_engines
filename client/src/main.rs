@@ -9,6 +9,7 @@ mod common;
 mod hook;
 mod player_attach;
 
+<<<<<<< HEAD
 use player::*;
 use map::*;
 use camera::*;
@@ -16,6 +17,13 @@ use camera::*;
 //#[cfg(windows)]
 //#[global_allocator]
 //static GLOBAL: mimalloc::MiMalloc = mimalloc::MiMalloc;
+=======
+use camera::{camera_follow, setup_camera};
+use map::setup_tilemap;
+use player::{Player, player_movement, setup_player};
+use hook::{setup_hook, hook_control_short};
+use player_attach::{PlayerAttach, attatch_objects};
+>>>>>>> b06ac5f (Working on hook)
 
 // Spacedime dependencies
 mod module_bindings;
