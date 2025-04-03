@@ -91,7 +91,7 @@ pub fn confine_player_movement(
 
         let half_player_size = PLAYER_CONFIG.size / 2.0;
 
-        let world_map_size = Vec2::new(
+        let world_map_size = bevy::prelude::Vec2::new(
             MAP_CONFIG.map_size.x as f32 * MAP_CONFIG.tile_size.x,
             MAP_CONFIG.map_size.y as f32 * MAP_CONFIG.tile_size.y,
         );
@@ -121,7 +121,10 @@ pub fn confine_player_movement(
     }
 }
 
-pub fn will_collide(new_pos: Vec2, obstacles: &Query<&Transform, With<Obstacle>>) -> bool {
+pub fn will_collide(
+    new_pos: bevy::prelude::Vec2,
+    obstacles: &Query<&Transform, With<Obstacle>>,
+) -> bool {
     let player_radius = PLAYER_CONFIG.size.x.min(PLAYER_CONFIG.size.y) / 2.0;
     let obstacle_radius = OBSTACLE_CONFIG.size.x.min(OBSTACLE_CONFIG.size.y) / 2.0;
     let collision_distance = player_radius + obstacle_radius;

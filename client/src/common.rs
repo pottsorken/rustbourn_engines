@@ -23,7 +23,7 @@ pub struct PlayerConfig {
 /// Global constant config for the player
 pub const PLAYER_CONFIG: PlayerConfig = PlayerConfig {
     size: Vec2::new(80.0, 80.0),
-    movement_speed: 1000.0,
+    movement_speed: 300.0,
     rotation_speed: f32::to_radians(180.0),
     path: "sprites/top-view/robot_3Dblue.png",
 };
@@ -31,9 +31,7 @@ pub const PLAYER_CONFIG: PlayerConfig = PlayerConfig {
 // === Player defined constraints ===
 
 #[derive(Component)]
-pub struct Obstacle {
-    
-}
+pub struct Obstacle {}
 
 /// Configuration struct for initializing the Player entity
 pub struct ObstacleConfig {
@@ -55,7 +53,7 @@ pub const OBSTACLE_CONFIG: ObstacleConfig = ObstacleConfig {
 pub struct MapConfig {
     pub map_size: TilemapSize,
     pub tile_size: TilemapTileSize, // tiles are 16x16 pixels
-    pub noise_scale: f32, // Grid size == tile size
+    pub noise_scale: f32,           // Grid size == tile size
     pub tile_textures: [&'static str; 3],
 }
 
@@ -68,5 +66,5 @@ pub const MAP_CONFIG: MapConfig = MapConfig {
         "sprites/td_tanks/dirt.png",
         "sprites/td_tanks/stone.png",
         "sprites/td_tanks/grass.png",
-    ]
+    ],
 };

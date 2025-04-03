@@ -7,7 +7,10 @@ mod camera;
 mod common;
 mod db_connection;
 mod map;
+mod module_bindings;
 mod obstacle;
+mod opponent;
+mod parse;
 mod player;
 
 use camera::*;
@@ -20,17 +23,13 @@ use player::*;
 //static GLOBAL: mimalloc::MiMalloc = mimalloc::MiMalloc;
 
 // Spacedime dependencies
-mod module_bindings;
-mod opponent;
-mod parse;
-mod player;
 
 use camera::{camera_follow, setup_camera};
 use db_connection::{print_player_positions, setup_connection};
 use map::setup_tilemap;
 use opponent::despawn_opponents;
 use parse::*;
-use player::{player_movement, setup_player, Player};
+use player::{player_movement, setup_player};
 
 fn main() {
     App::new()
