@@ -51,7 +51,7 @@ fn main() {
                 setup_camera,
                 setup_player,
                 setup_tilemap,
-                setup_connection,
+                setup_connection.before(setup_obstacle),
                 setup_obstacle,
                 setup_hook,
             ),

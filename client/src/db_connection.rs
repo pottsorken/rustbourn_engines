@@ -59,7 +59,10 @@ fn subscribe_to_tables(ctx: &DbConnection) {
     ctx.subscription_builder()
         .on_applied(on_sub_applied)
         .on_error(on_sub_error)
-        .subscribe(["SELECT * FROM player WHERE online=true"]);
+        .subscribe([
+            "SELECT * FROM player WHERE online=true",
+            "SELECT * FROM obstacle",
+        ]);
 }
 
 /// Our `on_subscription_applied` callback:
@@ -167,4 +170,13 @@ pub fn print_player_positions(
         );
     }
     //println!("");
+}
+
+pub fn load_obstacles(ctx_wrapper: &CtxWrapper) -> Vec<[f32; 2]> {
+    let mut obstacle_storage = Vec::new();
+    let obstacles = ctx_wrapper.ctx.db.obstacle().iter().collect::<Vec<_>>();
+    for obstacle in obstacles {
+        obstacle_storage.push([obstacle.position.x, obstacle.position.y]);
+    }
+    obstacle_storage
 }

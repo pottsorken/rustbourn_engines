@@ -5,6 +5,8 @@
 use spacetimedb_sdk::__codegen::{self as __sdk, __lib, __sats, __ws};
 
 pub mod bevy_transform_type;
+pub mod obstacle_table;
+pub mod obstacle_type;
 pub mod player_connected_reducer;
 pub mod player_disconnected_reducer;
 pub mod player_table;
@@ -13,6 +15,8 @@ pub mod update_player_position_reducer;
 pub mod vec_2_type;
 
 pub use bevy_transform_type::BevyTransform;
+pub use obstacle_table::*;
+pub use obstacle_type::Obstacle;
 pub use player_connected_reducer::{
     player_connected, set_flags_for_player_connected, PlayerConnectedCallbackId,
 };
@@ -82,6 +86,7 @@ impl TryFrom<__ws::ReducerCallInfo<__ws::BsatnFormat>> for Reducer {
 #[allow(non_snake_case)]
 #[doc(hidden)]
 pub struct DbUpdate {
+    obstacle: __sdk::TableUpdate<Obstacle>,
     player: __sdk::TableUpdate<Player>,
 }
 
@@ -91,6 +96,9 @@ impl TryFrom<__ws::DatabaseUpdate<__ws::BsatnFormat>> for DbUpdate {
         let mut db_update = DbUpdate::default();
         for table_update in raw.tables {
             match &table_update.table_name[..] {
+                "obstacle" => {
+                    db_update.obstacle = obstacle_table::parse_table_update(table_update)?
+                }
                 "player" => db_update.player = player_table::parse_table_update(table_update)?,
 
                 unknown => {
@@ -118,6 +126,7 @@ impl __sdk::DbUpdate for DbUpdate {
     ) -> AppliedDiff<'_> {
         let mut diff = AppliedDiff::default();
 
+        diff.obstacle = cache.apply_diff_to_table::<Obstacle>("obstacle", &self.obstacle);
         diff.player = cache
             .apply_diff_to_table::<Player>("player", &self.player)
             .with_updates_by_pk(|row| &row.identity);
@@ -130,6 +139,7 @@ impl __sdk::DbUpdate for DbUpdate {
 #[allow(non_snake_case)]
 #[doc(hidden)]
 pub struct AppliedDiff<'r> {
+    obstacle: __sdk::TableAppliedDiff<'r, Obstacle>,
     player: __sdk::TableAppliedDiff<'r, Player>,
 }
 
@@ -143,6 +153,7 @@ impl<'r> __sdk::AppliedDiff<'r> for AppliedDiff<'r> {
         event: &EventContext,
         callbacks: &mut __sdk::DbCallbacks<RemoteModule>,
     ) {
+        callbacks.invoke_table_row_callbacks::<Obstacle>("obstacle", &self.obstacle, event);
         callbacks.invoke_table_row_callbacks::<Player>("player", &self.player, event);
     }
 }
@@ -719,6 +730,7 @@ impl __sdk::SpacetimeModule for RemoteModule {
     type SubscriptionHandle = SubscriptionHandle;
 
     fn register_tables(client_cache: &mut __sdk::ClientCache<Self>) {
+        obstacle_table::register_table(client_cache);
         player_table::register_table(client_cache);
     }
 }
