@@ -13,13 +13,22 @@ pub struct Player {
 }
 
 /// Configuration struct for initializing the Player entity
+#[derive(Component)]
 pub struct PlayerConfig {
     pub size: Vec2,
     pub movement_speed: f32,
     pub rotation_speed: f32,
     pub path: &'static str,
 }
-
+#[derive(Component)]
+pub struct Hook {
+    pub hook_speed: f32,
+    pub hook_max_range: f32,
+}
+#[derive(Component)]
+pub struct PlayerAttach {
+    pub offset: Vec2,
+}
 /// Global constant config for the player
 pub const PLAYER_CONFIG: PlayerConfig = PlayerConfig {
     size: Vec2::new(80.0, 80.0),
@@ -46,6 +55,7 @@ pub const OBSTACLE_CONFIG: ObstacleConfig = ObstacleConfig {
     count: 1000,
     path: "sprites/Obstacles/obstacle_rock.png",
 };
+
 
 // === Map related definitions ===
 

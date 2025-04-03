@@ -6,22 +6,25 @@ use noisy_bevy::simplex_noise_2d; // For map generation. May be temporary
 mod camera;
 mod common;
 mod db_connection;
+mod hook;
 mod map;
 mod module_bindings;
 mod obstacle;
 mod opponent;
 mod parse;
 mod player;
+mod player_attach;
 
 use camera::*;
+use hook::*;
 use map::*;
 use obstacle::*;
 use player::*;
+use player_attach::*;
 
 //#[cfg(windows)]
 //#[global_allocator]
 //static GLOBAL: mimalloc::MiMalloc = mimalloc::MiMalloc;
-
 // Spacedime dependencies
 
 use camera::{camera_follow, setup_camera};
@@ -50,6 +53,7 @@ fn main() {
                 setup_tilemap,
                 setup_connection,
                 setup_obstacle,
+                setup_hook,
             ),
         )
         .add_systems(
@@ -60,6 +64,8 @@ fn main() {
                 camera_follow,
                 print_player_positions,
                 despawn_opponents,
+                hook_controls,
+                attatch_objects,
             ),
         )
         .run();
