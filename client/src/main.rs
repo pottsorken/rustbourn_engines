@@ -2,31 +2,19 @@ use bevy::prelude::*;
 use bevy_ecs_tilemap::prelude::*;
 use noisy_bevy::simplex_noise_2d; // For map generation. May be temporary
 
+mod common;
 mod camera;
 mod map;
 mod player;
-<<<<<<< HEAD
-mod common;
 mod hook;
 mod player_attach;
 
-use player::*;
-use map::*;
+use common::*;
 use camera::*;
-
-//#[cfg(windows)]
-//#[global_allocator]
-//static GLOBAL: mimalloc::MiMalloc = mimalloc::MiMalloc;
-=======
-mod hook;
-mod player_attach;
-
-use camera::{camera_follow, setup_camera};
-use map::setup_tilemap;
-use player::{Player, player_movement, setup_player};
-use hook::{setup_hook, hook_controls};
-use player_attach::{PlayerAttach, attatch_objects};
->>>>>>> 66f8b5470560b0e7eea27317858704d9522e0d03
+use map::*;
+use player::*;
+use hook::*;
+use player_attach::*;
 
 // Spacedime dependencies
 mod module_bindings;

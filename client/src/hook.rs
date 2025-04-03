@@ -1,5 +1,5 @@
 use bevy::prelude::*;
-use crate::player::Player;
+use crate::common::*;
 use crate::player_attach::PlayerAttach;
 
 #[derive(Component)]
@@ -58,10 +58,10 @@ pub fn hook_controls(
     mut query: Query<(&mut Sprite, &mut Transform, &Hook)>,
     time: Res<Time>,
 ) {
-    let growth_rate = hook.hook_speed;
-    let growth_amount = growth_rate * time.delta_secs();
-
+    
     for (mut sprite, mut transform, hook) in query.iter_mut() {
+        let growth_rate = hook.hook_speed;
+        let growth_amount = growth_rate * time.delta_secs();
         if let Some(size) = sprite.custom_size {
             let mut new_height = size.y;
             let mut y_offset = 0.0;
@@ -85,7 +85,3 @@ pub fn hook_controls(
         }
     }
 }
-<<<<<<< HEAD
-=======
-
->>>>>>> 504ea33b64dfaafd21f201528062ae1076dfa6f3

@@ -1,8 +1,6 @@
 use bevy::prelude::*;
 
-use crate::player::{Player,
-    setup_player,
-    player_movement};
+use crate::common::*;
 
 // use crate::hook::{Hook}
 
