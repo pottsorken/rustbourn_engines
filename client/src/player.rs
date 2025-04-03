@@ -1,11 +1,18 @@
+use crate::common::{Obstacle, Player, MAP_CONFIG, OBSTACLE_CONFIG, PLAYER_CONFIG};
+use crate::db_connection::{update_player_position, CtxWrapper};
+use crate::module_bindings::*;
 use bevy::prelude::*;
 use bevy::window::PrimaryWindow;
-use crate::common::{Player, Obstacle, MAP_CONFIG, OBSTACLE_CONFIG, PLAYER_CONFIG};
+
+// server
+use spacetimedb_sdk::{
+    credentials, DbContext, Error, Event, Identity, Status, Table, TableWithPrimaryKey,
+};
 
 pub fn setup_player(
-    mut commands: Commands, 
+    mut commands: Commands,
     window_query: Query<&Window, With<PrimaryWindow>>,
-    asset_server: Res<AssetServer>
+    asset_server: Res<AssetServer>,
 ) {
     let _window = window_query.get_single().unwrap();
 
@@ -22,7 +29,7 @@ pub fn setup_player(
         //}, -- NOTE: If asset-chart is ever used
         Transform::from_xyz(0.0, 0.0, 2.0),
         Player {
-            movement_speed: PLAYER_CONFIG.movement_speed,                  // meters per second
+            movement_speed: PLAYER_CONFIG.movement_speed, // meters per second
             rotation_speed: PLAYER_CONFIG.rotation_speed, // degrees per second
         },
     ));
@@ -33,14 +40,17 @@ pub fn player_movement(
     mut query: Query<(&mut Transform, &Player), Without<Obstacle>>,
     obstacle_query: Query<&Transform, With<Obstacle>>,
     time: Res<Time>,
+    ctx: Res<CtxWrapper>,
 ) {
-    if let Ok((mut transform, _player)) = query.get_single_mut() {
+    //if let Ok((mut transform, _player)) = query.get_single_mut() { // NOTE: merge conflict
+    let ctx_wrapper = &ctx.into_inner();
+    for (mut transform, player) in &mut query {
         // Handle rotation with A/D keys
         let mut rotation_dir = 0.0;
-        if keyboard_input.pressed(KeyCode::KeyA) || keyboard_input.pressed(KeyCode::ArrowLeft){
+        if keyboard_input.pressed(KeyCode::KeyA) || keyboard_input.pressed(KeyCode::ArrowLeft) {
             rotation_dir += 1.0;
         }
-        if keyboard_input.pressed(KeyCode::KeyD) || keyboard_input.pressed(KeyCode::ArrowRight){
+        if keyboard_input.pressed(KeyCode::KeyD) || keyboard_input.pressed(KeyCode::ArrowRight) {
             rotation_dir -= 1.0;
         }
 
@@ -51,22 +61,24 @@ pub fn player_movement(
 
         // Handle movement with W/S keys (forward/backward relative to rotation)
         let mut move_dir = Vec3::ZERO;
-        if keyboard_input.pressed(KeyCode::KeyW) || keyboard_input.pressed(KeyCode::ArrowUp){
+        if keyboard_input.pressed(KeyCode::KeyW) || keyboard_input.pressed(KeyCode::ArrowUp) {
             move_dir.y += 1.0;
         }
-        if keyboard_input.pressed(KeyCode::KeyS) || keyboard_input.pressed(KeyCode::ArrowDown){
+        if keyboard_input.pressed(KeyCode::KeyS) || keyboard_input.pressed(KeyCode::ArrowDown) {
             move_dir.y -= 1.0;
         }
 
         // Apply movement relative to player's rotation
         if move_dir != Vec3::ZERO {
             let move_direction = transform.rotation * move_dir.normalize();
-            let new_pos = transform.translation + move_direction * PLAYER_CONFIG.movement_speed * time.delta_secs();
-            
+            let new_pos = transform.translation
+                + move_direction * PLAYER_CONFIG.movement_speed * time.delta_secs();
+
             if !will_collide(new_pos.truncate(), &obstacle_query) {
                 transform.translation = new_pos;
             }
         }
+        update_player_position(ctx_wrapper, &transform);
     }
 }
 
@@ -77,8 +89,8 @@ pub fn confine_player_movement(
     if let Ok(mut player_transform) = player_query.get_single_mut() {
         let _window = window_query.get_single().unwrap();
 
-        let half_player_size= PLAYER_CONFIG.size / 2.0;
-        
+        let half_player_size = PLAYER_CONFIG.size / 2.0;
+
         let world_map_size = Vec2::new(
             MAP_CONFIG.map_size.x as f32 * MAP_CONFIG.tile_size.x,
             MAP_CONFIG.map_size.y as f32 * MAP_CONFIG.tile_size.y,
@@ -110,11 +122,11 @@ pub fn confine_player_movement(
 }
 
 pub fn will_collide(new_pos: Vec2, obstacles: &Query<&Transform, With<Obstacle>>) -> bool {
-        let player_radius = PLAYER_CONFIG.size.x.min(PLAYER_CONFIG.size.y) / 2.0;
-        let obstacle_radius = OBSTACLE_CONFIG.size.x.min(OBSTACLE_CONFIG.size.y) / 2.0;
-        let collision_distance = player_radius + obstacle_radius;
+    let player_radius = PLAYER_CONFIG.size.x.min(PLAYER_CONFIG.size.y) / 2.0;
+    let obstacle_radius = OBSTACLE_CONFIG.size.x.min(OBSTACLE_CONFIG.size.y) / 2.0;
+    let collision_distance = player_radius + obstacle_radius;
 
-        obstacles.iter().any(|transform| {
-            new_pos.distance(transform.translation.truncate()) < collision_distance
-        })
+    obstacles
+        .iter()
+        .any(|transform| new_pos.distance(transform.translation.truncate()) < collision_distance)
 }
