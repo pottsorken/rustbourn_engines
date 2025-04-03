@@ -22,6 +22,16 @@ pub fn setup_hook(mut commands: Commands, asset_server: Res<AssetServer>) {
     ));
 }
 
+pub fn hook_controls_short(
+    keyboard_input: Res<ButtonInput<KeyCode>>,
+    mut query: Query<(&mut Sprite, &mut Transform), With<Hook>>,
+    time: Res<Time>,
+) {
+    if keyboard_input.just_pressed(KeyCode::Space) {
+        
+    }
+}
+
 // fn extend_rope(mut query: Query<&mut Transform, With<Hook>>) {
 //     for mut transform in query.iter_mut() {
 //         transform.scale.y += 5.0;
