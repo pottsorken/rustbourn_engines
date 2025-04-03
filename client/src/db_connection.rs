@@ -27,10 +27,11 @@ pub fn update_player_position(ctx_wrapper: &CtxWrapper, player_transform: &Trans
                 x: player_transform.translation.x,
                 y: player_transform.translation.y,
             },
-            rotation: player_transform.rotation.z,
+            rotation: player_transform.rotation.to_euler(EulerRot::XYZ).2,
             scale: vec_2_type::Vec2 { x: 0.0, y: 0.0 },
         })
         .unwrap();
+    //println!("{}", player_transform.rotation.to_euler(EulerRot::XYZ).2);
 }
 
 pub fn setup_connection(mut commands: Commands, asset_server: Res<AssetServer>) {
@@ -58,7 +59,7 @@ fn subscribe_to_tables(ctx: &DbConnection) {
     ctx.subscription_builder()
         .on_applied(on_sub_applied)
         .on_error(on_sub_error)
-        .subscribe(["SELECT * FROM player"]); //WHERE online=true
+        .subscribe(["SELECT * FROM player WHERE online=true"]);
 }
 
 /// Our `on_subscription_applied` callback:
@@ -143,7 +144,10 @@ pub fn print_player_positions(
     let local_player_id = ctx_wrapper.ctx.identity(); //Get local player's ID
 
     for player in players {
-        println!("{:?}", player);
+        let temp_id = player.identity.to_u256() % 10_000;
+        if temp_id == 9573 {
+            //print!("{}: {}   ", temp_id, player.position.rotation);
+        }
         spawn_opponent(
             &mut commands,
             &asset_server,
@@ -162,4 +166,5 @@ pub fn print_player_positions(
             player.position.rotation,
         );
     }
+    //println!("");
 }
