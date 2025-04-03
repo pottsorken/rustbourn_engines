@@ -9,11 +9,11 @@ mod player;
 mod hook;
 mod player_attach;
 
-use camera::{camera_follow, setup_camera};
-use map::setup_tilemap;
-use player::{Player, player_movement, setup_player};
-use hook::{setup_hook, hook_controls};
-use player_attach::{PlayerAttach, attatch_objects};
+use camera::*;
+use map::*;
+use player::*;
+use hook::*;
+use player_attach::*;
 
 // Spacedime dependencies
 mod module_bindings;

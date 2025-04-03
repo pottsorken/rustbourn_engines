@@ -40,10 +40,11 @@ pub fn hook_controls(
     mut query: Query<(&mut Sprite, &mut Transform, &Hook)>,
     time: Res<Time>,
 ) {
-    let growth_rate = hook.hook_speed;
-    let growth_amount = growth_rate * time.delta_secs();
-
+   
     for (mut sprite, mut transform, hook) in query.iter_mut() {
+        let growth_rate = hook.hook_speed;
+        let growth_amount = growth_rate * time.delta_secs();
+
         if let Some(size) = sprite.custom_size {
             let mut new_height = size.y;
             let mut y_offset = 0.0;
