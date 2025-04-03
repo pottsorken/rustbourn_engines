@@ -5,6 +5,7 @@ use noisy_bevy::simplex_noise_2d; // For map generation. May be temporary
 mod camera;
 mod map;
 mod player;
+<<<<<<< HEAD
 mod common;
 mod hook;
 mod player_attach;
@@ -16,6 +17,16 @@ use camera::*;
 //#[cfg(windows)]
 //#[global_allocator]
 //static GLOBAL: mimalloc::MiMalloc = mimalloc::MiMalloc;
+=======
+mod hook;
+mod player_attach;
+
+use camera::{camera_follow, setup_camera};
+use map::setup_tilemap;
+use player::{Player, player_movement, setup_player};
+use hook::{setup_hook, hook_controls};
+use player_attach::{PlayerAttach, attatch_objects};
+>>>>>>> 66f8b5470560b0e7eea27317858704d9522e0d03
 
 // Spacedime dependencies
 mod module_bindings;
@@ -45,10 +56,21 @@ fn main() {
         )
         .add_plugins(TilemapPlugin)
         .add_systems(Startup, (setup_camera, setup_player, setup_hook, setup_tilemap))
+<<<<<<< HEAD
         .add_systems(Update, player_movement)
         .add_systems(Update, confine_player_movement)
         .add_systems(Update, camera_follow)
         .add_systems(Update, attatch_objects)
+=======
+        .add_systems(Update, 
+            (
+                player_movement, 
+                camera_follow,
+                attatch_objects,
+                hook_controls,
+            ),
+        )
+>>>>>>> 66f8b5470560b0e7eea27317858704d9522e0d03
         .run();
 }
 
