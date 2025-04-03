@@ -1,15 +1,7 @@
 use bevy::prelude::*;
 
-use crate::player::{Player,
-    setup_player,
-    player_movement};
+use crate::common::{PlayerAttach, Player};
 
-// use crate::hook::{Hook}
-
-#[derive(Component)]
-pub struct PlayerAttach {
-    pub offset: Vec2,
-}
 
 pub fn attatch_objects(
     player_query: Query<&Transform, With<Player>>,

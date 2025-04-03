@@ -2,12 +2,14 @@ use bevy::prelude::*;
 use bevy_ecs_tilemap::prelude::*;
 use noisy_bevy::simplex_noise_2d; // For map generation. May be temporary
 
+mod common;
 mod camera;
 mod map;
 mod player;
 mod hook;
 mod player_attach;
 
+use common::*;
 use camera::*;
 use map::*;
 use player::*;
@@ -40,8 +42,8 @@ fn main() {
             })
         )
         .add_plugins(TilemapPlugin)
-        .add_systems(Startup, (setup_camera, setup_player, setup_tilemap))
-        .add_systems(Update, (player_movement, camera_follow))
+        .add_systems(Startup, (setup_camera, setup_player, setup_tilemap, setup_hook))
+        .add_systems(Update, (player_movement, camera_follow, hook_controls, attatch_objects))
         .run();
 }
 

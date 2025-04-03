@@ -1,12 +1,5 @@
 use bevy::prelude::*;
-use crate::player::Player;
-use crate::player_attach::PlayerAttach;
-
-#[derive(Component)]
-pub struct Hook {
-    pub hook_speed: f32,
-    pub hook_max_range: f32,
-}
+use crate::common::{Hook, PlayerAttach};
 
 pub fn setup_hook(mut commands: Commands, asset_server: Res<AssetServer>) {
     // Spawn a player sprite at position (0, 0) at a higher z-index than map
