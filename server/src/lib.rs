@@ -3,6 +3,9 @@ use spacetimedb::{
     Timestamp,
 };
 
+use noise::{NoiseFn, Perlin};
+
+
 // Player data
 #[spacetimedb::table(name = player, public)]
 pub struct Player {
@@ -10,6 +13,11 @@ pub struct Player {
     identity: Identity,
     position: BevyTransform,
     online: bool,
+}
+
+#[spacetimedb::table(name = obstacle, public)]
+pub struct Obstacle{
+    position: Vec2,
 }
 
 // Bevy transform data
@@ -86,5 +94,34 @@ pub fn player_disconnected(ctx: &ReducerContext) {
             "Disconnect event for unknown user with identity {:?}",
             ctx.sender
         )
+    }
+}
+
+
+#[spacetimedb::reducer(init)]
+pub fn server_startup(ctx: &ReducerContext){
+    generate_obstacles(ctx);
+}
+
+fn generate_obstacles(ctx: &ReducerContext){
+
+    let perlin = Perlin::new(42);
+    // Generate 1000 obstacles
+    for i in 0..1000{
+        let x = (i as f32) / 10.0; // Control frequency
+        let y = (i as f32) / 10.0;
+
+        let random_x = perlin.get([x as f64, y as f64]) as f32 * 8192.0;
+        let random_y = perlin.get([y as f64, x as f64]) as f32 * 8192.0;
+        let invalid_x = random_x < 300.0 && random_x > -300.0;
+        let invalid_y = random_y < 300.0 && random_y > -300.0;
+
+        if invalid_x && invalid_y{
+            continue;
+        }
+
+        ctx.db.obstacle().insert(Obstacle{
+            position: Vec2 { x: random_x, y: random_y },
+        });
     }
 }
