@@ -54,6 +54,7 @@ fn main() {
                 setup_connection,
                 setup_obstacle,
                 setup_hook,
+                setup_claw,
             ),
         )
         .add_systems(
@@ -66,6 +67,7 @@ fn main() {
                 despawn_opponents,
                 hook_controls,
                 attatch_objects,
+                attatch_objects_hook,
             ),
         )
         .run();

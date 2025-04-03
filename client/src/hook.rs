@@ -17,7 +17,25 @@ pub fn setup_hook(mut commands: Commands, asset_server: Res<AssetServer>) {
             hook_max_range: 100.0,
         },
         PlayerAttach {
-            offset: Vec2::new(0.0, 20.0), // Offset from player's center
+            offset: Vec2::new(0.0, 20.0),
+            target: "player", // Offset from player's center
+        },
+    ));
+}
+pub fn setup_claw(mut commands: Commands, asset_server: Res<AssetServer>) {
+    // Spawn a player sprite at position (0, 0) at a higher z-index than map
+    commands.spawn((
+        Sprite {
+            custom_size: Some(Vec2::new(12.0, 12.0)), // Square size 100x100 pixels
+            // image: asset_server.load("sprites/top-view/robot_yellow.png"),
+            color:Color::srgb(0.0,0.0, 0.2),
+            anchor: bevy::sprite::Anchor::TopCenter,
+            ..default()
+        },
+        Transform::from_xyz(0.0, 0.0, 10.0),
+        PlayerAttach {
+            offset: Vec2::new(0.0, 0.0), 
+            target: "Hook"// Offset from player's center
         },
     ));
 }
@@ -60,4 +78,5 @@ pub fn hook_controls(
         }
     }
 }
+
 
