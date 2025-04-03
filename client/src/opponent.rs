@@ -21,7 +21,13 @@ pub fn spawn_opponent(
     id: &Identity,
     x: f32,
     y: f32,
+    local_player_id: &Identity,
 ) {
+    if id == local_player_id {
+        println!("Skipping spawn for local player {:?}", id);
+        return;
+    }
+
     for (transf, opp) in &mut query.iter() {
         if opp.id == *id {
             return;
@@ -52,9 +58,11 @@ pub fn update_opponent(
     x: f32,
     y: f32,
 ) {
-    for (mut transform, opponent) in &mut query.iter() {
+    for (mut transform, opponent) in query.iter_mut() {
         if opponent.id == *id {
-            transform = &Transform::from_xyz(x, y, 1.0).clone();
+            transform.translation.x = x;
+            transform.translation.y = y;
+            //println!("Updated opponent {:?} to position ({}, {})", id, x, y);
         }
     }
 }

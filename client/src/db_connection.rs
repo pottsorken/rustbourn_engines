@@ -15,6 +15,7 @@ pub struct CtxWrapper {
 }
 
 /// The database name we chose when we published our module.
+//const DB_NAME: &str = "c200083d815ce43080deb1559d525d655b7799ec50b1552f413b372555053a1c";
 const DB_NAME: &str = "test";
 
 pub fn update_player_position(ctx_wrapper: &CtxWrapper, player_transform: &Transform) {
@@ -139,6 +140,8 @@ pub fn print_player_positions(
     mut query: Query<(&mut Transform, &Opponent)>,
 ) {
     let players = ctx_wrapper.ctx.db.player().iter().collect::<Vec<_>>();
+    let local_player_id = ctx_wrapper.ctx.identity(); //Get local player's ID
+
     for player in players {
         println!("{:?}", player);
         spawn_opponent(
@@ -148,6 +151,7 @@ pub fn print_player_positions(
             &player.identity,
             player.position.coordinates.x,
             player.position.coordinates.y,
+            &local_player_id,
         );
         update_opponent(
             &mut query,

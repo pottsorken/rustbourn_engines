@@ -17,9 +17,9 @@ struct Args {
 pub fn parse_args() -> String {
     let args = Args::parse();
     // Validate the IP address
-    if let Err(e) = args.ip.parse::<std::net::Ipv4Addr>() {
-        panic!("Invalid IPv4 address provided: {}", e);
-    }
+    //if let Err(e) = args.ip.parse::<std::net::Ipv4Addr>() {
+    //    panic!("Invalid IPv4 address provided: {}", e);
+   // }
 
     println!("http://{}:{}", args.ip, args.port);
     // Construct the connection URL
