@@ -15,6 +15,7 @@ pub fn setup_hook(mut commands: Commands, asset_server: Res<AssetServer>) {
             custom_size: Some(Vec2::new(12.0, 26.0)), // Square size 100x100 pixels
             // image: asset_server.load("C:\\Users\\Denise\\Desktop\\Studier\\CINTE\\II1305 Projektkurs\\rustbourn_engines\\client\\assets\\sprites\\top-view\\robot_yellow.png"),
             image: asset_server.load("sprites/top-view/robot_yellow.png"),
+            anchor: bevy::sprite::Anchor::BottomCenter,
             ..default()
         },
         Transform::from_xyz(0.0, 0.0, 5.0),
@@ -36,19 +37,34 @@ pub fn setup_hook(mut commands: Commands, asset_server: Res<AssetServer>) {
 
 pub fn hook_controls(
     keyboard_input: Res<ButtonInput<KeyCode>>,
-    mut query: Query<(&mut Sprite, &mut Transform), With<Hook>>,
+    mut query: Query<(&mut Sprite, &mut Transform, &Hook)>,
     time: Res<Time>,
 ) {
-    let growth_rate = 100.0; // Units per second
+    let growth_rate = 100.0;
     let growth_amount = growth_rate * time.delta_secs();
-    
-    for (mut sprite, mut transform) in query.iter_mut() {
-        if keyboard_input.pressed(KeyCode::Space) {
-            if let Some(size) = sprite.custom_size {
-                sprite.custom_size = Some(Vec2::new(size.x, size.y + growth_amount));
-                // Move the sprite up by half the growth amount to maintain bottom position
-                transform.translation.y += growth_amount / 2.0;
+
+    for (mut sprite, mut transform, hook) in query.iter_mut() {
+        if let Some(size) = sprite.custom_size {
+            let mut new_height = size.y;
+            let mut y_offset = 0.0;
+
+            if keyboard_input.pressed(KeyCode::Space) {
+                // Extend
+                if size.y < hook.hook_max_range {
+                    new_height = (size.y + growth_amount).min(hook.hook_max_range);
+                    y_offset = (new_height - size.y) / 2.0;
+                }
+            } else {
+                // Retract
+                if size.y > 0.0 {
+                    new_height = (size.y - growth_amount).max(0.0);
+                    y_offset = -(size.y - new_height) / 2.0;
+                }
             }
+
+            sprite.custom_size = Some(Vec2::new(size.x, new_height));
+            transform.translation.y += y_offset;
         }
     }
 }
+
