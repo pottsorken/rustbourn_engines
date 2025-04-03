@@ -56,7 +56,8 @@ fn main() {
                 setup_tilemap,
                 setup_connection,
                 setup_hook,
-            ).chain(), // So the startup happens in order.
+                setup_claw,
+            ),
         )
         .add_systems(
             Update,
@@ -67,7 +68,7 @@ fn main() {
                 print_player_positions,
                 hook_controls,
                 attatch_objects,
-                update_bots,
+                attatch_objects_hook,
             ),
         )
         .add_systems(
