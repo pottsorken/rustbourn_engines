@@ -55,6 +55,7 @@ pub struct MapConfig {
     pub tile_size: TilemapTileSize, // tiles are 16x16 pixels
     pub noise_scale: f32,           // Grid size == tile size
     pub tile_textures: [&'static str; 3],
+    pub safe_zone_size: f32,
 }
 
 /// Global constant config for the tilemap
@@ -67,4 +68,5 @@ pub const MAP_CONFIG: MapConfig = MapConfig {
         "sprites/td_tanks/stone.png",
         "sprites/td_tanks/grass.png",
     ],
+    safe_zone_size: 300.0,
 };
