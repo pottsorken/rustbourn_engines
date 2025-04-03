@@ -11,7 +11,7 @@ use crate::parse::*;
 
 #[derive(Resource)]
 pub struct CtxWrapper {
-    ctx: DbConnection,
+    pub ctx: DbConnection,
 }
 
 /// The database name we chose when we published our module.

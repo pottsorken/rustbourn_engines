@@ -1,6 +1,6 @@
-use bevy::prelude::*;
+use bevy::{ecs::entity, prelude::*};
 
-use crate::module_bindings::*;
+use crate::{db_connection::CtxWrapper, module_bindings::*};
 use spacetimedb_sdk::{Error, Event, Identity, Status, Table, TableWithPrimaryKey};
 
 #[derive(Component)]
@@ -72,6 +72,27 @@ pub fn update_opponent(
             //    print!("{}: {}   ", temp_id, player.position.rotation);
             //}
             //println!("Updated opponent {:?} to position ({}, {})", id, x, y);
+        }
+    }
+}
+
+pub fn despawn_opponents(
+    mut commands: Commands,
+    ctx_wrapper: Res<CtxWrapper>,
+    query: Query<(Entity, &Opponent)>,
+){
+    // List all online players
+    let online_players: Vec::<Identity> = ctx_wrapper
+        .ctx
+        .db
+        .player()
+        .iter()
+        .map(|player| player.identity)
+        .collect();
+
+    for (entity, opponent) in query.iter(){
+        if !online_players.contains(&opponent.id){
+            commands.entity(entity).despawn();
         }
     }
 }

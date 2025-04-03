@@ -16,6 +16,7 @@ use db_connection::{print_player_positions, setup_connection};
 use map::setup_tilemap;
 use parse::*;
 use player::{player_movement, setup_player, Player};
+use opponent::despawn_opponents;
 
 fn main() {
     App::new()
@@ -34,7 +35,7 @@ fn main() {
         )
         .add_systems(
             Update,
-            (player_movement, camera_follow, print_player_positions),
+            (player_movement, camera_follow, print_player_positions, despawn_opponents),
         )
         .run();
 }
