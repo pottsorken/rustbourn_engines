@@ -56,21 +56,10 @@ fn main() {
         )
         .add_plugins(TilemapPlugin)
         .add_systems(Startup, (setup_camera, setup_player, setup_hook, setup_tilemap))
-<<<<<<< HEAD
         .add_systems(Update, player_movement)
         .add_systems(Update, confine_player_movement)
         .add_systems(Update, camera_follow)
         .add_systems(Update, attatch_objects)
-=======
-        .add_systems(Update, 
-            (
-                player_movement, 
-                camera_follow,
-                attatch_objects,
-                hook_controls,
-            ),
-        )
->>>>>>> 66f8b5470560b0e7eea27317858704d9522e0d03
         .run();
 }
 
