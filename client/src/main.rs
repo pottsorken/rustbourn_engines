@@ -56,7 +56,6 @@ fn main() {
                 setup_tilemap,
                 setup_connection,
                 setup_hook,
-                setup_claw,
             ),
         )
         .add_systems(
@@ -68,7 +67,6 @@ fn main() {
                 print_player_positions,
                 hook_controls,
                 attatch_objects,
-                attatch_objects_hook,
             ),
         )
         .add_systems(

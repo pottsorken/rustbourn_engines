@@ -57,7 +57,6 @@ pub struct Hook {
 #[derive(Component)]
 pub struct PlayerAttach {
     pub offset: Vec2,
-    pub target: &'static str
 }
 /// Global constant config for the player
 pub const PLAYER_CONFIG: PlayerConfig = PlayerConfig {
