@@ -151,6 +151,7 @@ pub fn print_player_positions(
             &player.identity,
             player.position.coordinates.x,
             player.position.coordinates.y,
+            player.position.rotation,
             &local_player_id,
         );
         update_opponent(
@@ -158,6 +159,7 @@ pub fn print_player_positions(
             &player.identity,
             player.position.coordinates.x,
             player.position.coordinates.y,
+            player.position.rotation,
         );
     }
 }
