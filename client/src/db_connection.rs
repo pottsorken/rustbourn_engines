@@ -27,7 +27,7 @@ pub fn update_player_position(ctx_wrapper: &CtxWrapper, player_transform: &Trans
                 x: player_transform.translation.x,
                 y: player_transform.translation.y,
             },
-            rotation: 0.0,
+            rotation: player_transform.rotation.z,
             scale: vec_2_type::Vec2 { x: 0.0, y: 0.0 },
         })
         .unwrap();
