@@ -1,4 +1,5 @@
 use bevy::prelude::*;
+use bevy::reflect::List;
 
 // Spacetime dependencies
 use crate::module_bindings::*;
@@ -173,10 +174,6 @@ pub fn print_player_positions(
 }
 
 pub fn load_obstacles(ctx_wrapper: &CtxWrapper) -> Vec<[f32; 2]> {
-    let mut obstacle_storage = Vec::new();
-    let obstacles = ctx_wrapper.ctx.db.obstacle().iter().collect::<Vec<_>>();
-    for obstacle in obstacles {
-        obstacle_storage.push([obstacle.position.x, obstacle.position.y]);
-    }
-    obstacle_storage
+    let obstacles: Vec<[f32; 2]> = ctx_wrapper.ctx.db.obstacle().iter().map(|obstacle| [obstacle.position.x, obstacle.position.y]).collect();
+    obstacles
 }
