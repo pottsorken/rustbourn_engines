@@ -13,8 +13,8 @@ pub fn setup_hook(mut commands: Commands, asset_server: Res<AssetServer>) {
     commands.spawn((
         Sprite {
             custom_size: Some(Vec2::new(12.0, 26.0)), // Square size 100x100 pixels
-            // image: asset_server.load("C:\\Users\\Denise\\Desktop\\Studier\\CINTE\\II1305 Projektkurs\\rustbourn_engines\\client\\assets\\sprites\\top-view\\robot_yellow.png"),
-            image: asset_server.load("sprites/top-view/robot_yellow.png"),
+            // image: asset_server.load("sprites/top-view/robot_yellow.png"),
+            color:Color::srgb(0.8, 0.4, 0.2),
             anchor: bevy::sprite::Anchor::BottomCenter,
             ..default()
         },
@@ -40,7 +40,7 @@ pub fn hook_controls(
     mut query: Query<(&mut Sprite, &mut Transform, &Hook)>,
     time: Res<Time>,
 ) {
-    let growth_rate = 100.0;
+    let growth_rate = hook.hook_speed;
     let growth_amount = growth_rate * time.delta_secs();
 
     for (mut sprite, mut transform, hook) in query.iter_mut() {
@@ -63,7 +63,7 @@ pub fn hook_controls(
             }
 
             sprite.custom_size = Some(Vec2::new(size.x, new_height));
-            transform.translation.y += y_offset;
+            
         }
     }
 }
