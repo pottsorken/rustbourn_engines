@@ -70,3 +70,36 @@ pub const MAP_CONFIG: MapConfig = MapConfig {
         "sprites/td_tanks/grass.png",
     ]
 };
+
+// === UI related definitions ===
+
+#[derive(Component)]
+
+// Configuration of UI
+pub struct UIConfig {
+    pub background_color: Srgba, 
+}
+
+// Global constant for UI 
+pub const UI_CONFIG: UIConfig = UIConfig {
+    background_color: Srgba::rgb(1.0,0.0,0.0),
+};
+
+
+// === Block related definitions ===
+
+#[derive(Component)]
+pub struct Block {
+    pub offset: Vec2, // relative position to attach to player
+}
+
+
+// === Appstate related definitions ===
+
+
+#[derive(States, Clone, Copy, Debug, Default, Eq, PartialEq, Hash)]
+pub enum AppState {
+    #[default]
+    MainMenu,
+    InGame,
+}

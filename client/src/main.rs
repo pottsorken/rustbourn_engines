@@ -1,5 +1,6 @@
 use bevy::prelude::*;
 use bevy_ecs_tilemap::prelude::*;
+use main_menu::MainMenuPlugin;
 use noisy_bevy::simplex_noise_2d; // For map generation. May be temporary
 
 mod common;
@@ -7,12 +8,14 @@ mod camera;
 mod map;
 mod player;
 mod obstacle;
+mod main_menu;
 
+use main_menu::systems::{layout::spawn_main_menu, interactions::handle_button_interactions};
 use obstacle::*;
 use player::*;
 use map::*;
 use camera::*;
-
+use common::*;
 
 //#[cfg(windows)]
 //#[global_allocator]
@@ -44,8 +47,10 @@ fn main() {
             })
         )
         .add_plugins(TilemapPlugin)
-        .add_systems(Startup, (setup_camera, setup_player, setup_tilemap, setup_obstacle))
-        .add_systems(Update, (player_movement, confine_player_movement, camera_follow))
+        .insert_state(AppState::MainMenu)
+        .add_plugins(MainMenuPlugin)
+        .add_systems(Startup, (setup_camera, setup_player, setup_tilemap, setup_obstacle, spawn_main_menu))
+        .add_systems(Update, (player_movement, confine_player_movement, camera_follow, handle_button_interactions))
         .run();
 }
 
