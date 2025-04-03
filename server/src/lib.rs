@@ -105,14 +105,15 @@ pub fn server_startup(ctx: &ReducerContext){
 
 fn generate_obstacles(ctx: &ReducerContext){
 
-    let perlin = Perlin::new(42);
+    let perlin_x = Perlin::new(21);
+    let perlin_y = Perlin::new(1345);
     // Generate 1000 obstacles
     for i in 0..1000{
         let x = (i as f32) / 10.0; // Control frequency
-        let y = (i as f32) / 10.0;
+        let y = ((i+1) as f32) / 10.0;
 
-        let random_x = perlin.get([x as f64, y as f64]) as f32 * 8192.0;
-        let random_y = perlin.get([y as f64, x as f64]) as f32 * 8192.0;
+        let random_x = perlin_x.get([x as f64, y as f64]) as f32 * 8192.0;
+        let random_y = perlin_y.get([y as f64, x as f64]) as f32 * 8192.0;
         let invalid_x = random_x < 300.0 && random_x > -300.0;
         let invalid_y = random_y < 300.0 && random_y > -300.0;
 
