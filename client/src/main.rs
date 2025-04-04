@@ -51,8 +51,7 @@ fn main() {
                 setup_camera,
                 setup_player,
                 setup_tilemap,
-                (setup_connection,
-                setup_obstacle).chain(),
+                setup_connection,
                 setup_hook,
             ),
         )
@@ -63,10 +62,17 @@ fn main() {
                 confine_player_movement,
                 camera_follow,
                 print_player_positions,
-                despawn_opponents,
                 hook_controls,
                 attatch_objects,
             ),
         )
+        .add_systems(
+            FixedUpdate,
+            (
+                setup_obstacle,
+                despawn_opponents,
+            )
+        )
+        .insert_resource(Time::from_seconds(0.5))
         .run();
 }
