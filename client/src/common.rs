@@ -40,7 +40,9 @@ pub const PLAYER_CONFIG: PlayerConfig = PlayerConfig {
 // === Player defined constraints ===
 
 #[derive(Component)]
-pub struct Obstacle {}
+pub struct Obstacle {
+    pub id: u64,
+}
 
 /// Configuration struct for initializing the Player entity
 pub struct ObstacleConfig {
@@ -55,7 +57,6 @@ pub const OBSTACLE_CONFIG: ObstacleConfig = ObstacleConfig {
     count: 1000,
     path: "sprites/Obstacles/obstacle_rock.png",
 };
-
 
 // === Map related definitions ===
 

@@ -5,7 +5,6 @@ use spacetimedb::{
 
 use noise::{NoiseFn, Perlin};
 
-
 // Player data
 #[spacetimedb::table(name = player, public)]
 pub struct Player {
@@ -16,8 +15,9 @@ pub struct Player {
 }
 
 #[spacetimedb::table(name = obstacle, public)]
-pub struct Obstacle{
+pub struct Obstacle {
     position: Vec2,
+    id: u64,
 }
 
 // Bevy transform data
@@ -97,32 +97,35 @@ pub fn player_disconnected(ctx: &ReducerContext) {
     }
 }
 
-
 #[spacetimedb::reducer(init)]
-pub fn server_startup(ctx: &ReducerContext){
+pub fn server_startup(ctx: &ReducerContext) {
     generate_obstacles(ctx);
 }
 
-fn generate_obstacles(ctx: &ReducerContext){
-
+fn generate_obstacles(ctx: &ReducerContext) {
     let perlin_x = Perlin::new(21);
     let perlin_y = Perlin::new(1345);
     // Generate 1000 obstacles
-    for i in 0..1000{
+    for i in 0..1000 {
         let x = (i as f32) / 10.0; // Control frequency
-        let y = ((i+1) as f32) / 10.0;
+        let y = ((i + 1) as f32) / 10.0;
 
         let random_x = perlin_x.get([x as f64, y as f64]) as f32 * 8192.0;
         let random_y = perlin_y.get([y as f64, x as f64]) as f32 * 8192.0;
         let invalid_x = random_x < 300.0 && random_x > -300.0;
         let invalid_y = random_y < 300.0 && random_y > -300.0;
 
-        if invalid_x && invalid_y{
+        if invalid_x && invalid_y {
             continue;
         }
 
-        ctx.db.obstacle().insert(Obstacle{
-            position: Vec2 { x: random_x, y: random_y },
+        ctx.db.obstacle().insert(Obstacle {
+            position: Vec2 {
+                x: random_x,
+                y: random_y,
+            },
+            id: i,
         });
     }
 }
+
