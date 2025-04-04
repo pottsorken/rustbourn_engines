@@ -179,7 +179,7 @@ pub fn load_obstacles(ctx_wrapper: &CtxWrapper) -> Vec<(f32, f32, u64)> {
         .db
         .obstacle()
         .iter()
-        .map(|obstacle| [obstacle.position.x, obstacle.position.y, obstacle.id])
+        .map(|obstacle| (obstacle.position.x, obstacle.position.y, obstacle.id))
         .collect();
     obstacles
 }
