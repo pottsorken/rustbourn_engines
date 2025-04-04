@@ -110,8 +110,8 @@ fn generate_obstacles(ctx: &ReducerContext) {
         let x = (i as f32) / 10.0; // Control frequency
         let y = ((i + 1) as f32) / 10.0;
 
-        let random_x = perlin_x.get([x as f64, y as f64]) as f32 * 8192.0;
-        let random_y = perlin_y.get([y as f64, x as f64]) as f32 * 8192.0;
+        let random_x = perlin_x.get([x as f64, y as f64]) as f32 * 4056.0;
+        let random_y = perlin_y.get([y as f64, x as f64]) as f32 * 4056.0;
         let invalid_x = random_x < 300.0 && random_x > -300.0;
         let invalid_y = random_y < 300.0 && random_y > -300.0;
 
