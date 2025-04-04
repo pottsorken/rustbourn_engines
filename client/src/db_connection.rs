@@ -15,7 +15,7 @@ pub struct CtxWrapper {
 }
 
 /// The database name we chose when we published our module.
-const DB_NAME: &str = "test";
+const DB_NAME: &str = "c2004f2063b6bab3562a3caa05c24a4c39c1d036ccd7d0dfda20ea6d3e20c5f4";
 // const DB_NAME: &str = "test";
 
 pub fn update_player_position(ctx_wrapper: &CtxWrapper, player_transform: &Transform) {

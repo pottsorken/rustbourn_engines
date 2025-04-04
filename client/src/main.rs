@@ -10,6 +10,7 @@ mod hook;
 mod map;
 mod module_bindings;
 mod obstacle;
+mod block;
 mod opponent;
 mod parse;
 mod player;
@@ -19,6 +20,7 @@ use camera::*;
 use hook::*;
 use map::*;
 use obstacle::*;
+use block::*;
 use player::*;
 use player_attach::*;
 
@@ -53,6 +55,7 @@ fn main() {
                 setup_tilemap,
                 setup_connection,
                 setup_obstacle,
+                setup_block,
                 setup_hook,
             ),
         )
@@ -60,6 +63,7 @@ fn main() {
             Update,
             (
                 player_movement,
+                update_block,
                 confine_player_movement,
                 camera_follow,
                 print_player_positions,
