@@ -1,6 +1,7 @@
 use crate::common::{Obstacle, Block, Player, MAP_CONFIG, OBSTACLE_CONFIG, BLOCK_CONFIG, PLAYER_CONFIG};
 use crate::db_connection::{update_player_position, CtxWrapper};
-use crate::module_bindings::*;
+use bevy::math::Vec2 as BevyVec2;
+use crate::module_bindings::Vec2 as DBVec2;
 use bevy::prelude::*;
 use bevy::window::PrimaryWindow;
 
@@ -38,8 +39,8 @@ pub fn setup_player(
 pub fn player_movement(
     keyboard_input: Res<ButtonInput<KeyCode>>,
     mut player_query: Query<(&mut Transform, &Player), (Without<Obstacle>, Without<Block>)>,
-    obstacle_query: Query<&Transform, (With<Obstacle>, Without<Block>)>,
-    block_query: Query<&Transform, (With<Block>, Without<Obstacle>)>,
+    obstacle_query: Query<&Transform, With<Obstacle>>,
+    block_query: Query<&Transform, With<Block>>,
     time: Res<Time>,
     ctx: Res<CtxWrapper>,
 ) {
@@ -77,7 +78,7 @@ pub fn player_movement(
             let new_pos = transform.translation
                 + move_direction * PLAYER_CONFIG.movement_speed * time.delta_secs();
 
-            if !obstacle_collision(new_pos.truncate(), &obstacle_query) && !block_collision(new_pos.truncate(), &block_query){
+            if !check_collision(new_pos.truncate(), &obstacle_query, OBSTACLE_CONFIG.size) && !check_collision(new_pos.truncate(), &block_query, BLOCK_CONFIG.size){
                 transform.translation = new_pos;
             }
         }
@@ -124,28 +125,16 @@ pub fn confine_player_movement(
     }
 }
 
-pub fn obstacle_collision(
-    new_pos: bevy::prelude::Vec2,
-    obstacles: &Query<&Transform, (With<Obstacle>, Without<Block>)>,
+pub fn check_collision<T: Component>(
+    new_pos: Vec2,
+    targets: &Query<&Transform, With<T>>,
+    target_size: Vec2,
 ) -> bool {
     let player_radius = PLAYER_CONFIG.size.x.min(PLAYER_CONFIG.size.y) / 2.0;
-    let obstacle_radius = OBSTACLE_CONFIG.size.x.min(OBSTACLE_CONFIG.size.y) / 2.0;
-    let collision_distance = player_radius + obstacle_radius;
+    let target_radius = target_size.x.min(target_size.y) / 2.0;
+    let collision_distance = player_radius + target_radius;
 
-    obstacles
-        .iter()
-        .any(|transform| new_pos.distance(transform.translation.truncate()) < collision_distance)
-}
-
-pub fn block_collision(
-    new_pos: bevy::prelude::Vec2,
-    blocks: &Query<&Transform, (With<Block>, Without<Obstacle>)>,
-) -> bool {
-    let player_radius = PLAYER_CONFIG.size.x.min(PLAYER_CONFIG.size.y) / 2.0;
-    let block_radius = BLOCK_CONFIG.size.x.min(BLOCK_CONFIG.size.y) / 2.0;
-    let collision_distance = player_radius + block_radius;
-
-    blocks
+    targets
         .iter()
         .any(|transform| new_pos.distance(transform.translation.truncate()) < collision_distance)
 }
