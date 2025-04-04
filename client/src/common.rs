@@ -66,7 +66,28 @@ pub const PLAYER_CONFIG: PlayerConfig = PlayerConfig {
     path: "sprites/top-view/robot_3Dblue.png",
 };
 
-// === Player defined constraints ===
+// === Block defined constraints ===
+
+#[derive(Component)]
+pub struct Block{
+    
+}
+pub struct BlockConfig {
+    pub size: Vec2,
+    pub rotation_speed: f32,
+    pub path: &'static str,
+    pub count: i32,
+}
+/// Global constant config for the block
+pub const BLOCK_CONFIG: BlockConfig = BlockConfig {
+    size: Vec2::new(80.0, 80.0),
+    rotation_speed: f32::to_radians(90.0),
+    path: "sprites/top-view/robot_green.png",
+    count: 100,
+};
+
+
+// === Obstacle defined constraints ===
 
 #[derive(Component)]
 pub struct Obstacle {
