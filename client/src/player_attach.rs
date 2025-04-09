@@ -23,4 +23,20 @@ pub fn attach_objects(
         }
     }
 }
+pub fn attach_items(
+    player_query: Query<(&Transform, &PlayerGrid), With<Player>>,
+    mut items_query: Query<(&PlayerAttach, &mut Transform), Without<Player>>,
+) {
+    //if let Ok(player_transform) = player_query.get_single() {
+    for (player_transform, player_grid) in player_query.iter() {
+        for (attach, mut transform) in items_query.iter_mut() {
+            // Calculate the rotated offset
+            let rotated_offset = player_transform.rotation
+                * Vec3::new(attach.offset.x as f32, attach.offset.y as f32, 5.0);
 
+            // Update position and rotation
+            transform.translation = player_transform.translation + rotated_offset;
+            transform.rotation = player_transform.rotation;
+        }
+    }
+}

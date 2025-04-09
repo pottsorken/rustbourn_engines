@@ -20,16 +20,13 @@ pub struct Obstacle {
     id: u64,
 }
 
-
 #[spacetimedb::table(name = bots, public)]
 pub struct Bot {
     #[primary_key]
     id: u64,
     position: BevyTransform,
-    alive: bool,   // instead of online we have alive that checks if that specific bot is alive
+    alive: bool, // instead of online we have alive that checks if that specific bot is alive
 }
-
-
 
 // Bevy transform data
 #[derive(Debug, SpacetimeType)]
@@ -78,8 +75,7 @@ pub fn update_bot_position(
         "Code reaches this point! --------{:?}------",
         bevy_transform
     );
-    if let Some(mut _bot) = ctx.db.bots().iter().find(|b| b.id == bot_id){
-
+    if let Some(mut _bot) = ctx.db.bots().iter().find(|b| b.id == bot_id) {
         _bot.position = bevy_transform;
 
         ctx.db.bots().id().update(_bot);
@@ -100,21 +96,14 @@ pub fn reset_bots_if_no_players_online(ctx: &ReducerContext) -> Result<(), Strin
     }
 
     // Your original bot spawn points
-    let bot_spawn_positions = vec![
-        (200.0, 20.0),
-        (-200.0, -20.0),
-        (200.0, -250.0),
-    ];
+    let bot_spawn_positions = vec![(200.0, 20.0), (-200.0, -20.0), (200.0, -250.0)];
 
     // Reset each bot (e.g., set them to some default positions)
     for (i, mut bot) in ctx.db.bots().iter().enumerate() {
-        let (x, y) = bot_spawn_positions
-            .get(i)
-            .cloned()
-            .unwrap_or((0.0, 0.0));
+        let (x, y) = bot_spawn_positions.get(i).cloned().unwrap_or((0.0, 0.0));
 
         bot.position = BevyTransform {
-            coordinates: Vec2 {x, y},
+            coordinates: Vec2 { x, y },
             rotation: 0.0,
             scale: Vec2 { x: 0.0, y: 0.0 },
         };
@@ -165,7 +154,6 @@ pub fn player_disconnected(ctx: &ReducerContext) {
     }
 
     reset_bots_if_no_players_online(ctx);
-
 }
 
 #[spacetimedb::reducer(init)]
@@ -174,23 +162,18 @@ pub fn server_startup(ctx: &ReducerContext) {
     generate_bots(ctx);
 }
 
-fn generate_bots(ctx: &ReducerContext){
+fn generate_bots(ctx: &ReducerContext) {
     // Example bot generation logic
-    let bot_spawn_positions = vec![
-        (200.0, 20.0),
-        (-200.0, -20.0),
-        (200.0, -250.0),
-    ];
+    let bot_spawn_positions = vec![(200.0, 20.0), (-200.0, -20.0), (200.0, -250.0)];
 
     // Generate and insert bots into the database
     for (i, (x, y)) in bot_spawn_positions.into_iter().enumerate() {
         let bot_id = i as u64; // Unique ID for each bot
         let bot_transform = BevyTransform {
             coordinates: Vec2 { x, y },
-            rotation: 0.0,  // Initial rotation
+            rotation: 0.0, // Initial rotation
             scale: Vec2 { x: 1.0, y: 1.0 },
         };
-
 
         // Insert bot into the database
         ctx.db.bots().insert(Bot {
@@ -198,17 +181,14 @@ fn generate_bots(ctx: &ReducerContext){
             position: bot_transform,
             alive: true, // Bots are alive when generated
         });
-
     }
-
 }
-
 
 fn generate_obstacles(ctx: &ReducerContext) {
     let perlin_x = Perlin::new(21);
     let perlin_y = Perlin::new(1345);
     // Generate 1000 obstacles
-    for i in 0..1000 {
+    for i in 0..200 {
         let x = (i as f32) / 10.0; // Control frequency
         let y = ((i + 1) as f32) / 10.0;
 
@@ -230,4 +210,3 @@ fn generate_obstacles(ctx: &ReducerContext) {
         });
     }
 }
-

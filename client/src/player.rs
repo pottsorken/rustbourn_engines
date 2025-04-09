@@ -41,9 +41,9 @@ pub fn setup_player(
         },
         PlayerGrid {
             block_position: HashMap::new(),
-            grid_size: (3, 2),
+            grid_size: (1, 1),
             cell_size: 84.,
-            next_free_pos: (-3, -2),
+            next_free_pos: (-1, -1),
         },
     ));
 }
@@ -134,6 +134,7 @@ pub fn attach_block(
 pub fn player_movement(
     keyboard_input: Res<ButtonInput<KeyCode>>,
     mut block_query: Query<(Entity, &Transform), (With<Block>, Without<AttachedBlock>)>,
+    attached_block_query: Query<(Entity, &Transform, &AttachedBlock), With<Block>>,
     mut player_query: Query<
         (Entity, &mut Transform, &mut Player, &mut PlayerGrid),
         (Without<Obstacle>, Without<Block>),
@@ -173,12 +174,52 @@ pub fn player_movement(
 
         // Apply movement relative to player's rotation
         if move_dir != Vec3::ZERO {
-            let move_direction = transform.rotation * move_dir.normalize();
+            //|| rotation_dir != 0. {
+            let mut move_direction = Vec3::ZERO.clone();
+            //if move_dir != Vec3::ZERO {
+            move_direction = transform.rotation * move_dir.normalize();
+            //}
             let new_pos =
                 transform.translation + move_direction * player.movement_speed * time.delta_secs();
 
-            let collided_with_obstacle =
+            let mut collided_with_obstacle =
                 check_collision(new_pos.truncate(), &obstacle_query, OBSTACLE_CONFIG.size);
+
+            let mut blocks_collided_obstacles = false;
+
+            // Check collision for all attached blocks
+            for (attached_block_entity, attached_block_transform, attached_block_link) in
+                attached_block_query.iter()
+            {
+                if attached_block_link.player_entity == player_entity {
+                    let rotated_offset = transform.rotation
+                        * Vec3::new(
+                            attached_block_link.grid_offset.0 as f32 * grid.cell_size,
+                            attached_block_link.grid_offset.1 as f32 * grid.cell_size,
+                            5.0,
+                        );
+                    //* rotation_dir
+                    //* player.rotation_speed
+                    //* time.delta_secs();
+
+                    let new_block_pos = (attached_block_transform.translation
+                        + move_direction * player.movement_speed * time.delta_secs());
+                    //+ (rotated_offset);
+                    //
+                    //* rotation_dir
+                    //* player.rotation_speed
+                    //* time.delta_secs());
+
+                    blocks_collided_obstacles = check_collision(
+                        new_block_pos.truncate(),
+                        &obstacle_query,
+                        OBSTACLE_CONFIG.size,
+                    );
+                    if blocks_collided_obstacles {
+                        break;
+                    }
+                }
+            }
 
             let mut collided_with_block = false;
 
@@ -198,7 +239,8 @@ pub fn player_movement(
             }
 
             //println!(" ");
-            if !collided_with_obstacle && !collided_with_block {
+            if !collided_with_obstacle && !collided_with_block && !blocks_collided_obstacles {
+                // Apply tanslation
                 transform.translation = new_pos;
             }
         }

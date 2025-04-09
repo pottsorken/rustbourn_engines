@@ -1,5 +1,5 @@
-use bevy::prelude::*;
 use crate::common::{Hook, PlayerAttach};
+use bevy::prelude::*;
 
 pub fn setup_hook(mut commands: Commands, asset_server: Res<AssetServer>) {
     // Spawn a player sprite at position (0, 0) at a higher z-index than map
@@ -11,7 +11,7 @@ pub fn setup_hook(mut commands: Commands, asset_server: Res<AssetServer>) {
             anchor: bevy::sprite::Anchor::BottomCenter,
             ..default()
         },
-        Transform::from_xyz(0.0, 0.0, 5.0),
+        Transform::from_xyz(0.0, 0.0, 8.0),
         Hook {
             hook_speed: 500.0,
             hook_max_range: 100.0,
@@ -21,7 +21,6 @@ pub fn setup_hook(mut commands: Commands, asset_server: Res<AssetServer>) {
         },
     ));
 }
-
 
 // fn extend_rope(mut query: Query<&mut Transform, With<Hook>>) {
 //     for mut transform in query.iter_mut() {
@@ -57,7 +56,7 @@ pub fn hook_controls(
             }
 
             sprite.custom_size = Some(Vec2::new(size.x, new_height));
-            
         }
     }
 }
+
