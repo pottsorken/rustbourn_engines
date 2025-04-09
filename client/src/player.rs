@@ -41,21 +41,104 @@ pub fn setup_player(
         },
         PlayerGrid {
             block_position: HashMap::new(),
-            grid_size: (2, 2),
-            cell_size: 128.,
-            next_free_pos: (-2, -2),
+            grid_size: (3, 2),
+            cell_size: 84.,
+            next_free_pos: (-3, -2),
         },
     ));
 }
 
+pub fn attach_block(
+    keyboard_input: Res<ButtonInput<KeyCode>>,
+    mut block_query: Query<(Entity, &mut Transform), (With<Block>, Without<AttachedBlock>)>,
+    mut player_query: Query<
+        (Entity, &Transform, &mut Player, &mut PlayerGrid),
+        (Without<Obstacle>, Without<Block>),
+    >,
+    mut commands: Commands,
+    time: Res<Time>,
+) {
+    for (player_entity, transform, mut player, mut grid) in &mut player_query {
+        let mut rotation_dir = 0.0;
+        if keyboard_input.pressed(KeyCode::KeyA) || keyboard_input.pressed(KeyCode::ArrowLeft) {
+            rotation_dir += 1.0;
+        }
+        if keyboard_input.pressed(KeyCode::KeyD) || keyboard_input.pressed(KeyCode::ArrowRight) {
+            rotation_dir -= 1.0;
+        }
+
+        // Handle movement with W/S keys (forward/backward relative to rotation)
+        let mut move_dir = Vec3::ZERO;
+        if keyboard_input.pressed(KeyCode::KeyW) || keyboard_input.pressed(KeyCode::ArrowUp) {
+            move_dir.y += 1.0;
+        }
+        if keyboard_input.pressed(KeyCode::KeyS) || keyboard_input.pressed(KeyCode::ArrowDown) {
+            move_dir.y -= 1.0;
+        }
+
+        // Apply movement relative to player's rotation
+        if move_dir != Vec3::ZERO {
+            let move_direction = transform.rotation * move_dir.normalize();
+            let new_pos =
+                transform.translation + move_direction * player.movement_speed * time.delta_secs();
+
+            // NOTE: Block collision here
+            let mut collided_with_block = false;
+            for (block_entity, mut block_transform) in block_query.iter_mut() {
+                let block_radius = BLOCK_CONFIG.size.x.min(BLOCK_CONFIG.size.y) / 2.0;
+                let player_radius = PLAYER_CONFIG.size.x.min(PLAYER_CONFIG.size.y) / 2.0;
+                let collision_distance = block_radius + player_radius;
+
+                if new_pos
+                    .truncate()
+                    .distance(block_transform.translation.truncate())
+                    < collision_distance
+                {
+                    collided_with_block = true;
+
+                    let nextpos = grid.next_free_pos.clone();
+                    commands.entity(block_entity).insert(AttachedBlock {
+                        grid_offset: nextpos, // WARN: subject to change constants
+                        player_entity,
+                    });
+                    grid.block_position.insert(nextpos, block_entity);
+                    println!(
+                        "Attach at gridpos ({}, {})",
+                        grid.next_free_pos.0, grid.next_free_pos.1
+                    );
+
+                    // increment grid pos
+                    grid.next_free_pos.0 += 1;
+                    if grid.next_free_pos == (0, 0) {
+                        grid.next_free_pos.0 += 1;
+                    }
+                    if grid.next_free_pos.0 > grid.grid_size.0 {
+                        grid.next_free_pos.0 = -grid.grid_size.0;
+                        grid.next_free_pos.1 += 1;
+                    }
+
+                    //block_transform.translation.x += 300.;
+                    //block_transform.translation.y += 300.;
+                    // Check if already attached
+                    //if attachable_blocks.get(block_entity).is_err() && player.max_block_count < 2 {
+                    //let offset = block_transform.translation - transform.translation;
+
+                    //player.max_block_count += 1;
+                    //}
+                }
+            }
+        }
+    }
+}
+
 pub fn player_movement(
     keyboard_input: Res<ButtonInput<KeyCode>>,
+    mut block_query: Query<(Entity, &Transform), (With<Block>, Without<AttachedBlock>)>,
     mut player_query: Query<
         (Entity, &mut Transform, &mut Player, &mut PlayerGrid),
         (Without<Obstacle>, Without<Block>),
     >,
     obstacle_query: Query<&Transform, With<Obstacle>>,
-    mut block_query: Query<(Entity, &Transform), With<Block>>,
     //attachable_blocks: Query<&PlayerAttach>,
     mut commands: Commands,
     time: Res<Time>,
@@ -100,8 +183,7 @@ pub fn player_movement(
             let mut collided_with_block = false;
 
             // NOTE: Block collision logic here
-
-            for (block_entity, block_transform) in block_query.iter_mut() {
+            for (block_entity, mut block_transform) in block_query.iter_mut() {
                 let block_radius = BLOCK_CONFIG.size.x.min(BLOCK_CONFIG.size.y) / 2.0;
                 let player_radius = PLAYER_CONFIG.size.x.min(PLAYER_CONFIG.size.y) / 2.0;
                 let collision_distance = block_radius + player_radius;
@@ -112,56 +194,10 @@ pub fn player_movement(
                     < collision_distance
                 {
                     collided_with_block = true;
-
-                    let nextpos = grid.next_free_pos.clone();
-                    commands.entity(block_entity).insert(AttachedBlock {
-                        grid_offset: nextpos, // WARN: subject to change constants
-                        player_entity,
-                    });
-                    grid.block_position.insert(nextpos, block_entity);
-                    println!(
-                        "Attach at gridpos ({}, {})",
-                        grid.next_free_pos.0, grid.next_free_pos.1
-                    );
-
-                    // increment grid pos
-                    grid.next_free_pos.0 += 1;
-                    if grid.next_free_pos.0 > grid.grid_size.0 {
-                        grid.next_free_pos.0 = -grid.grid_size.0;
-                        grid.next_free_pos.1 += 1;
-                    }
-
-                    // Check if already attached
-                    //if attachable_blocks.get(block_entity).is_err() && player.max_block_count < 2 {
-                    //let offset = block_transform.translation - transform.translation;
-
-                    //'outer: for x in -grid.grid_size.0..grid.grid_size.0 {
-                    //    for y in -grid.grid_size.1..grid.grid_size.1 {
-                    //        if grid.block_position.contains_key(&(x, y)) {
-                    //            println!("Skipping pos ({}, {})", x, y);
-                    //            continue;
-                    //        } else {
-                    //            //if grid.block_position.get(&(x, y)) == Some(&block_entity) {
-                    //            //    break 'outer;
-                    //            //}
-                    //
-                    //            commands.entity(block_entity).insert(AttachedBlock {
-                    //                grid_offset: (x, y), // WARN: subject to change constants
-                    //                player_entity,
-                    //            });
-                    //            grid.block_position.insert((x, y), block_entity);
-                    //            println!("Attach at gridpos ({}, {})", x, y);
-                    //            collided_with_block = false;
-                    //            break 'outer;
-                    //        }
-                    //    }
-                    //}
-
-                    //player.max_block_count += 1;
-                    //}
                 }
             }
-            println!(" ");
+
+            //println!(" ");
             if !collided_with_obstacle && !collided_with_block {
                 transform.translation = new_pos;
             }
@@ -222,4 +258,3 @@ pub fn check_collision<T: Component>(
         .iter()
         .any(|transform| new_pos.distance(transform.translation.truncate()) < collision_distance)
 }
-

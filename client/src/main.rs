@@ -72,6 +72,7 @@ fn main() {
                 print_player_positions,
                 hook_controls,
                 attach_objects,
+                attach_block,
                 update_bots,
             ),
         )
