@@ -1,8 +1,9 @@
-use crate::common::{Obstacle, Block, Player, MAP_CONFIG, OBSTACLE_CONFIG, BLOCK_CONFIG, PLAYER_CONFIG};
+use crate::common::{Obstacle, Block, Player, PlayerAttach, MAP_CONFIG, OBSTACLE_CONFIG, BLOCK_CONFIG, PLAYER_CONFIG};
 use crate::db_connection::{update_player_position, CtxWrapper};
 use bevy::math::Vec2 as BevyVec2;
 use crate::module_bindings::Vec2 as DBVec2;
 use bevy::prelude::*;
+use crate::player_attach::*;
 use bevy::window::PrimaryWindow;
 
 // server
@@ -32,15 +33,18 @@ pub fn setup_player(
         Player {
             movement_speed: PLAYER_CONFIG.movement_speed, // meters per second
             rotation_speed: PLAYER_CONFIG.rotation_speed, // degrees per second
+            max_block_count: 0,
         },
     ));
 }
 
 pub fn player_movement(
     keyboard_input: Res<ButtonInput<KeyCode>>,
-    mut player_query: Query<(&mut Transform, &Player), (Without<Obstacle>, Without<Block>)>,
+    mut player_query: Query<(Entity, &mut Transform, &mut Player), (Without<Obstacle>, Without<Block>)>,
     obstacle_query: Query<&Transform, With<Obstacle>>,
-    block_query: Query<&Transform, With<Block>>,
+    mut block_query: Query<(Entity, &Transform), With<Block>>,
+    attachable_blocks: Query<&PlayerAttach>,
+    mut commands: Commands,
     time: Res<Time>,
     ctx: Res<CtxWrapper>,
 ) {
@@ -48,7 +52,7 @@ pub fn player_movement(
     //if let Ok((mut transform, _player)) = query.get_single_mut() { // NOTE: merge conflict
     let ctx_wrapper = &ctx.into_inner();
 
-    for (mut transform, _player) in &mut player_query {
+    for (player_entity, mut transform,mut player) in &mut player_query {
         // Handle rotation with A/D keys
         let mut rotation_dir = 0.0;
         if keyboard_input.pressed(KeyCode::KeyA) || keyboard_input.pressed(KeyCode::ArrowLeft) {
@@ -76,9 +80,30 @@ pub fn player_movement(
         if move_dir != Vec3::ZERO {
             let move_direction = transform.rotation * move_dir.normalize();
             let new_pos = transform.translation
-                + move_direction * PLAYER_CONFIG.movement_speed * time.delta_secs();
+                + move_direction * player.movement_speed * time.delta_secs();
 
-            if !check_collision(new_pos.truncate(), &obstacle_query, OBSTACLE_CONFIG.size) && !check_collision(new_pos.truncate(), &block_query, BLOCK_CONFIG.size){
+            let collided_with_obstacle = check_collision(new_pos.truncate(), &obstacle_query, OBSTACLE_CONFIG.size);
+
+            let mut collided_with_block = false;
+            for (block_entity, block_transform) in block_query.iter_mut() {
+                let block_radius = BLOCK_CONFIG.size.x.min(BLOCK_CONFIG.size.y) / 2.0;
+                let player_radius = PLAYER_CONFIG.size.x.min(PLAYER_CONFIG.size.y) / 2.0;
+                let collision_distance = block_radius + player_radius;
+
+                if new_pos.truncate().distance(block_transform.translation.truncate()) < collision_distance {
+                    collided_with_block = true;
+
+                    // Check if already attached
+                    if attachable_blocks.get(block_entity).is_err() && player.max_block_count < 2{
+                        //let offset = block_transform.translation - transform.translation;
+                        commands.entity(block_entity).insert(PlayerAttach {
+                            offset: Vec2::new(80.0, 80.0),
+                        });
+                        player.max_block_count += 1;
+                    }
+                }
+            }
+            if !collided_with_obstacle && !collided_with_block {
                 transform.translation = new_pos;
             }
         }

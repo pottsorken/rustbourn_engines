@@ -71,7 +71,7 @@ fn main() {
                 camera_follow,
                 print_player_positions,
                 hook_controls,
-                attatch_objects,
+                attach_objects,
             ),
         )
         .add_systems(

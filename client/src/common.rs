@@ -39,6 +39,7 @@ pub const BOT_CONFIG: BotConfig = BotConfig {
 pub struct Player {
     pub movement_speed: f32,
     pub rotation_speed: f32,
+    pub max_block_count: i32,
 }
 
 /// Configuration struct for initializing the Player entity
@@ -58,6 +59,7 @@ pub struct Hook {
 pub struct PlayerAttach {
     pub offset: Vec2,
 }
+
 /// Global constant config for the player
 pub const PLAYER_CONFIG: PlayerConfig = PlayerConfig {
     size: Vec2::new(80.0, 80.0),

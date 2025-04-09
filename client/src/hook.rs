@@ -61,5 +61,3 @@ pub fn hook_controls(
         }
     }
 }
-
-
