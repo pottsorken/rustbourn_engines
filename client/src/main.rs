@@ -53,13 +53,14 @@ fn main() {
         .add_systems(
             Startup,
             (
+                setup_connection,
                 setup_camera,
                 setup_player,
                 setup_tilemap,
-                setup_connection,
                 setup_block,
                 setup_hook,
-            ),
+            )
+                .chain(),
         )
         .add_systems(
             Update,
@@ -71,6 +72,7 @@ fn main() {
                 print_player_positions,
                 hook_controls,
                 attach_objects,
+                update_bots,
             ),
         )
         .add_systems(FixedUpdate, (setup_obstacle, despawn_opponents, spawn_bots))
