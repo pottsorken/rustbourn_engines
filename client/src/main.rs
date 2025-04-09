@@ -14,6 +14,7 @@ mod opponent;
 mod parse;
 mod player;
 mod player_attach;
+mod bots;
 
 use camera::*;
 use hook::*;
@@ -21,6 +22,7 @@ use map::*;
 use obstacle::*;
 use player::*;
 use player_attach::*;
+use bots::*;
 
 //#[cfg(windows)]
 //#[global_allocator]
@@ -33,6 +35,7 @@ use map::setup_tilemap;
 use opponent::despawn_opponents;
 use parse::*;
 use player::{player_movement, setup_player};
+use bots::{spawn_bots, update_bots};
 
 fn main() {
     App::new()
@@ -53,7 +56,7 @@ fn main() {
                 setup_tilemap,
                 setup_connection,
                 setup_hook,
-            ),
+            ).chain(), // So the startup happens in order.
         )
         .add_systems(
             Update,
@@ -64,6 +67,7 @@ fn main() {
                 print_player_positions,
                 hook_controls,
                 attatch_objects,
+                update_bots,
             ),
         )
         .add_systems(
@@ -71,8 +75,13 @@ fn main() {
             (
                 setup_obstacle,
                 despawn_opponents,
+                spawn_bots,
+                
+                
             )
         )
         .insert_resource(Time::from_seconds(0.5))
         .run();
 }
+
+
