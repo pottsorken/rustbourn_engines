@@ -5,14 +5,24 @@
 use spacetimedb_sdk::__codegen::{self as __sdk, __lib, __sats, __ws};
 
 pub mod bevy_transform_type;
+pub mod bot_type;
+pub mod bots_table;
+pub mod obstacle_table;
+pub mod obstacle_type;
 pub mod player_connected_reducer;
 pub mod player_disconnected_reducer;
 pub mod player_table;
 pub mod player_type;
+pub mod reset_bots_if_no_players_online_reducer;
+pub mod update_bot_position_reducer;
 pub mod update_player_position_reducer;
 pub mod vec_2_type;
 
 pub use bevy_transform_type::BevyTransform;
+pub use bot_type::Bot;
+pub use bots_table::*;
+pub use obstacle_table::*;
+pub use obstacle_type::Obstacle;
 pub use player_connected_reducer::{
     player_connected, set_flags_for_player_connected, PlayerConnectedCallbackId,
 };
@@ -21,6 +31,13 @@ pub use player_disconnected_reducer::{
 };
 pub use player_table::*;
 pub use player_type::Player;
+pub use reset_bots_if_no_players_online_reducer::{
+    reset_bots_if_no_players_online, set_flags_for_reset_bots_if_no_players_online,
+    ResetBotsIfNoPlayersOnlineCallbackId,
+};
+pub use update_bot_position_reducer::{
+    set_flags_for_update_bot_position, update_bot_position, UpdateBotPositionCallbackId,
+};
 pub use update_player_position_reducer::{
     set_flags_for_update_player_position, update_player_position, UpdatePlayerPositionCallbackId,
 };
@@ -36,7 +53,14 @@ pub use vec_2_type::Vec2;
 pub enum Reducer {
     PlayerConnected,
     PlayerDisconnected,
-    UpdatePlayerPosition { bevy_transform: BevyTransform },
+    ResetBotsIfNoPlayersOnline,
+    UpdateBotPosition {
+        bevy_transform: BevyTransform,
+        bot_id: u64,
+    },
+    UpdatePlayerPosition {
+        bevy_transform: BevyTransform,
+    },
 }
 
 impl __sdk::InModule for Reducer {
@@ -48,6 +72,8 @@ impl __sdk::Reducer for Reducer {
         match self {
             Reducer::PlayerConnected => "player_connected",
             Reducer::PlayerDisconnected => "player_disconnected",
+            Reducer::ResetBotsIfNoPlayersOnline => "reset_bots_if_no_players_online",
+            Reducer::UpdateBotPosition { .. } => "update_bot_position",
             Reducer::UpdatePlayerPosition { .. } => "update_player_position",
         }
     }
@@ -63,6 +89,16 @@ impl TryFrom<__ws::ReducerCallInfo<__ws::BsatnFormat>> for Reducer {
             "player_disconnected" => Ok(__sdk::parse_reducer_args::<
                 player_disconnected_reducer::PlayerDisconnectedArgs,
             >("player_disconnected", &value.args)?
+            .into()),
+            "reset_bots_if_no_players_online" => {
+                Ok(__sdk::parse_reducer_args::<
+                    reset_bots_if_no_players_online_reducer::ResetBotsIfNoPlayersOnlineArgs,
+                >("reset_bots_if_no_players_online", &value.args)?
+                .into())
+            }
+            "update_bot_position" => Ok(__sdk::parse_reducer_args::<
+                update_bot_position_reducer::UpdateBotPositionArgs,
+            >("update_bot_position", &value.args)?
             .into()),
             "update_player_position" => Ok(__sdk::parse_reducer_args::<
                 update_player_position_reducer::UpdatePlayerPositionArgs,
@@ -82,6 +118,8 @@ impl TryFrom<__ws::ReducerCallInfo<__ws::BsatnFormat>> for Reducer {
 #[allow(non_snake_case)]
 #[doc(hidden)]
 pub struct DbUpdate {
+    bots: __sdk::TableUpdate<Bot>,
+    obstacle: __sdk::TableUpdate<Obstacle>,
     player: __sdk::TableUpdate<Player>,
 }
 
@@ -91,6 +129,10 @@ impl TryFrom<__ws::DatabaseUpdate<__ws::BsatnFormat>> for DbUpdate {
         let mut db_update = DbUpdate::default();
         for table_update in raw.tables {
             match &table_update.table_name[..] {
+                "bots" => db_update.bots = bots_table::parse_table_update(table_update)?,
+                "obstacle" => {
+                    db_update.obstacle = obstacle_table::parse_table_update(table_update)?
+                }
                 "player" => db_update.player = player_table::parse_table_update(table_update)?,
 
                 unknown => {
@@ -118,6 +160,10 @@ impl __sdk::DbUpdate for DbUpdate {
     ) -> AppliedDiff<'_> {
         let mut diff = AppliedDiff::default();
 
+        diff.bots = cache
+            .apply_diff_to_table::<Bot>("bots", &self.bots)
+            .with_updates_by_pk(|row| &row.id);
+        diff.obstacle = cache.apply_diff_to_table::<Obstacle>("obstacle", &self.obstacle);
         diff.player = cache
             .apply_diff_to_table::<Player>("player", &self.player)
             .with_updates_by_pk(|row| &row.identity);
@@ -130,6 +176,8 @@ impl __sdk::DbUpdate for DbUpdate {
 #[allow(non_snake_case)]
 #[doc(hidden)]
 pub struct AppliedDiff<'r> {
+    bots: __sdk::TableAppliedDiff<'r, Bot>,
+    obstacle: __sdk::TableAppliedDiff<'r, Obstacle>,
     player: __sdk::TableAppliedDiff<'r, Player>,
 }
 
@@ -143,6 +191,8 @@ impl<'r> __sdk::AppliedDiff<'r> for AppliedDiff<'r> {
         event: &EventContext,
         callbacks: &mut __sdk::DbCallbacks<RemoteModule>,
     ) {
+        callbacks.invoke_table_row_callbacks::<Bot>("bots", &self.bots, event);
+        callbacks.invoke_table_row_callbacks::<Obstacle>("obstacle", &self.obstacle, event);
         callbacks.invoke_table_row_callbacks::<Player>("player", &self.player, event);
     }
 }
@@ -719,6 +769,8 @@ impl __sdk::SpacetimeModule for RemoteModule {
     type SubscriptionHandle = SubscriptionHandle;
 
     fn register_tables(client_cache: &mut __sdk::ClientCache<Self>) {
+        bots_table::register_table(client_cache);
+        obstacle_table::register_table(client_cache);
         player_table::register_table(client_cache);
     }
 }

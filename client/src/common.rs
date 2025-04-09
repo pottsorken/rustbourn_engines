@@ -4,6 +4,35 @@ use bevy_ecs_tilemap::prelude::*;
 /// Configuration and shared components for the game
 /// ------------------------------------------------
 
+
+/// Component to mark a bot and track its state
+#[derive(Component)]
+pub struct Bot {
+    pub id: u64,
+    pub spawn_point: Vec2,
+    pub movement_speed: f32,
+}
+
+/// Configuration for spawning bots
+pub struct BotConfig {
+    pub size: Vec2,
+    pub path: &'static str,
+    pub count: usize,
+    pub movement_speed: f32,
+    pub rotation_speed: f32,
+
+}
+
+/// Global bot config
+pub const BOT_CONFIG: BotConfig = BotConfig {
+    size: Vec2::new(80.0, 80.0),
+    path: "sprites/top-view/robot_3Dyellow.png",
+    count: 3,
+    movement_speed: 200.0,
+    rotation_speed: f32::to_radians(180.0),
+
+};
+
 // === Player defined constraints ===
 
 #[derive(Component)]
@@ -40,7 +69,9 @@ pub const PLAYER_CONFIG: PlayerConfig = PlayerConfig {
 // === Player defined constraints ===
 
 #[derive(Component)]
-pub struct Obstacle {}
+pub struct Obstacle {
+    pub id: u64,
+}
 
 /// Configuration struct for initializing the Player entity
 pub struct ObstacleConfig {
@@ -55,7 +86,6 @@ pub const OBSTACLE_CONFIG: ObstacleConfig = ObstacleConfig {
     count: 1000,
     path: "sprites/Obstacles/obstacle_rock.png",
 };
-
 
 // === Map related definitions ===
 

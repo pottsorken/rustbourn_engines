@@ -1,4 +1,5 @@
 use bevy::prelude::*;
+use bevy::reflect::List;
 
 // Spacetime dependencies
 use crate::module_bindings::*;
@@ -16,7 +17,7 @@ pub struct CtxWrapper {
 
 /// The database name we chose when we published our module.
 //const DB_NAME: &str = "c200083d815ce43080deb1559d525d655b7799ec50b1552f413b372555053a1c";
-const DB_NAME: &str = "test";
+pub const DB_NAME: &str = "test";
 
 pub fn update_player_position(ctx_wrapper: &CtxWrapper, player_transform: &Transform) {
     ctx_wrapper
@@ -30,6 +31,22 @@ pub fn update_player_position(ctx_wrapper: &CtxWrapper, player_transform: &Trans
             rotation: player_transform.rotation.to_euler(EulerRot::XYZ).2,
             scale: vec_2_type::Vec2 { x: 0.0, y: 0.0 },
         })
+        .unwrap();
+    //println!("{}", player_transform.rotation.to_euler(EulerRot::XYZ).2);
+}
+
+pub fn update_bot_position(ctx_wrapper: &CtxWrapper, bot_transform: &Transform, bot_id: u64) {
+    ctx_wrapper
+        .ctx
+        .reducers()
+        .update_bot_position(BevyTransform {
+            coordinates: vec_2_type::Vec2 {
+                x: bot_transform.translation.x,
+                y: bot_transform.translation.y,
+            },
+            rotation: bot_transform.rotation.to_euler(EulerRot::XYZ).2,
+            scale: vec_2_type::Vec2 { x: 0.0, y: 0.0 },
+        }, bot_id)
         .unwrap();
     //println!("{}", player_transform.rotation.to_euler(EulerRot::XYZ).2);
 }
@@ -59,7 +76,11 @@ fn subscribe_to_tables(ctx: &DbConnection) {
     ctx.subscription_builder()
         .on_applied(on_sub_applied)
         .on_error(on_sub_error)
-        .subscribe(["SELECT * FROM player WHERE online=true"]);
+        .subscribe([
+            "SELECT * FROM player WHERE online=true",
+            "SELECT * FROM obstacle",
+            "SELECT * FROM bots",
+        ]);
 }
 
 /// Our `on_subscription_applied` callback:
@@ -68,6 +89,10 @@ fn on_sub_applied(ctx: &SubscriptionEventContext) {
     for position in positions {
         println!("{:?}", position);
     }
+    // Forgot why i added this, but it seems to work wihtout
+    let bots = ctx.db.bots().iter().collect::<Vec<_>>();
+println!("[DEBUG] Bots in on_sub_applied: {}", bots.len());
+
 }
 
 fn on_sub_error(_ctx: &ErrorContext, err: Error) {
@@ -168,3 +193,30 @@ pub fn print_player_positions(
     }
     //println!("");
 }
+
+pub fn load_obstacles(ctx_wrapper: &CtxWrapper) -> Vec<(f32, f32, u64)> {
+    let obstacles: Vec<(f32, f32, u64)> = ctx_wrapper
+        .ctx
+        .db
+        .obstacle()
+        .iter()
+        .map(|obstacle| (obstacle.position.x, obstacle.position.y, obstacle.id))
+        .collect();
+    obstacles
+}
+
+pub fn load_bots(ctx_wrapper: &CtxWrapper) -> Vec<(f32, f32, u64)> {
+    println!(
+        "[DEBUG] object)",
+    );
+    let bots: Vec<(f32, f32, u64)> = ctx_wrapper
+        .ctx
+        .db
+        .bots()
+        .iter()
+        .map(|bot| (bot.position.coordinates.x, bot.position.coordinates.y, bot.id))
+        .collect();
+    bots
+}
+
+
