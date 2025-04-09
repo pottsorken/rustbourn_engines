@@ -30,7 +30,6 @@ A 2D multiplayer base building game built with **Rust**, **Bevy**, and **Spaceti
 
 ### Running Locally
 
-1. Clone the repository:
    ```bash
    git clone https://github.com/pottsorken/rustbourn_engines.git
    cd rustbourn_engines
@@ -44,7 +43,6 @@ A 2D multiplayer base building game built with **Rust**, **Bevy**, and **Spaceti
    cargo run -- --host 127.0.0.1 --port 3000 --clear
    ```
 # Command Line Options
----
 Option|	Description	|                            Default
 --- | --- | ---
 -h	   | Server host IP address	   |             127.0.0.1
