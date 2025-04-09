@@ -4,6 +4,8 @@ use crate::module_bindings::*;
 use bevy::prelude::*;
 use bevy::window::PrimaryWindow;
 
+use rand::Rng;
+
 // server
 use spacetimedb_sdk::{
     credentials, DbContext, Error, Event, Identity, Status, Table, TableWithPrimaryKey,
@@ -13,8 +15,10 @@ pub fn setup_player(
     mut commands: Commands,
     window_query: Query<&Window, With<PrimaryWindow>>,
     asset_server: Res<AssetServer>,
+    ctx: Res<CtxWrapper>,
 ) {
     let _window = window_query.get_single().unwrap();
+    let random_position = generate_random_spawnpoint(ctx.into_inner());
 
     // Spawn a player sprite at position (0, 0) at a higher z-index than map
     commands.spawn((
@@ -27,7 +31,7 @@ pub fn setup_player(
         //    layout: asset_server.load("sprites/top-view/robot_3Dblue.png"),
         //    index: 0,
         //}, -- NOTE: If asset-chart is ever used
-        Transform::from_xyz(0.0, 0.0, 2.0),
+        Transform::from_xyz(random_position.0, random_position.1, 2.0),
         Player {
             movement_speed: PLAYER_CONFIG.movement_speed, // meters per second
             rotation_speed: PLAYER_CONFIG.rotation_speed, // degrees per second
@@ -132,4 +136,39 @@ pub fn will_collide(
     obstacles
         .iter()
         .any(|transform| new_pos.distance(transform.translation.truncate()) < collision_distance)
+}
+
+fn generate_random_spawnpoint(ctx_wrapper: &CtxWrapper) -> (f32, f32){
+    let mut rng = rand::rng();
+    let mut too_close = false;
+    let mut random_x;
+    let mut random_y;
+
+    let online_players: Vec::<BevyTransform> = ctx_wrapper
+        .ctx
+        .db
+        .player()
+        .iter()
+        .map(|player| player.position)
+        .collect();
+
+    loop{
+        random_x = rng.random_range(-MAP_CONFIG.safe_zone_size..MAP_CONFIG.safe_zone_size) as f32;
+        random_y = rng.random_range(-MAP_CONFIG.safe_zone_size..MAP_CONFIG.safe_zone_size) as f32;
+
+        for player_position in &online_players{
+            let dx = player_position.coordinates.x - random_x;
+            let dy = player_position.coordinates.y - random_y;
+
+            if (dx < PLAYER_CONFIG.size.x && dy < PLAYER_CONFIG.size.y){
+                too_close = true;
+                break;
+            }
+        }
+        if too_close{
+            continue;
+        }
+        break;
+    }
+    (random_x, random_y)
 }

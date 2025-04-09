@@ -51,10 +51,10 @@ fn main() {
         .add_systems(
             Startup,
             (
+                setup_connection,
                 setup_camera,
                 setup_player,
                 setup_tilemap,
-                setup_connection,
                 setup_hook,
             ).chain(), // So the startup happens in order.
         )
