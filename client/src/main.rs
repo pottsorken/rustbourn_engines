@@ -31,7 +31,7 @@ use player_attach::*;
 
 use bots::{spawn_bot_blocks, spawn_bots, update_bots};
 use camera::{camera_follow, setup_camera};
-use db_connection::{print_player_positions, setup_connection};
+use db_connection::{print_player_positions, setup_connection, update_opponent_hooks};
 use map::setup_tilemap;
 use opponent::despawn_opponents;
 use player::{player_movement, setup_player};
@@ -72,6 +72,7 @@ fn main() {
                 attach_objects,
                 attach_items,
                 update_bots,
+                update_opponent_hooks,
             ),
         )
         .add_systems(

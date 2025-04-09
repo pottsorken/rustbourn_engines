@@ -34,6 +34,8 @@ pub struct Bot {
 pub struct Hook {
     position: Vec2,
     rotation: f32,
+    width: f32,
+    height: f32,
 }
 
 // Bevy transform data
@@ -58,12 +60,16 @@ pub fn update_hook_position(
     identity: Identity,
     position: Vec2,
     rotation: f32,
+    width: f32,
+    height: f32,
 ) -> Result<(), String> {
     // Find player by id
     if let Some(mut player) = ctx.db.player().identity().find(identity) {
         // Update player hook position
         player.hook.position = position;
         player.hook.rotation = rotation;
+        player.hook.width = width;
+        player.hook.height = height;
         ctx.db.player().identity().update(player);
         Ok(())
     } else {
@@ -163,6 +169,8 @@ pub fn player_connected(ctx: &ReducerContext) {
             hook: Hook {
                 position: Vec2 { x: 0.0, y: 0.0 },
                 rotation: 0.0,
+                width: 0.0,
+                height: 0.0,
             },
         });
     }

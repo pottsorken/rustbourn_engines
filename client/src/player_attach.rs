@@ -70,15 +70,25 @@ pub fn attach_items(
             let y = transform.translation.y;
             let rotation = transform.rotation.to_euler(EulerRot::XYZ).2;
 
-            ctx_wrapper
+            if let Some(player) = ctx_wrapper
                 .ctx
-                .reducers()
-                .update_hook_position(
-                    ctx_wrapper.ctx.identity(),
-                    vec_2_type::Vec2 { x: x, y: y },
-                    rotation,
-                )
-                .unwrap();
+                .db
+                .player()
+                .identity()
+                .find(&ctx_wrapper.ctx.identity())
+            {
+                ctx_wrapper
+                    .ctx
+                    .reducers()
+                    .update_hook_position(
+                        ctx_wrapper.ctx.identity(),
+                        vec_2_type::Vec2 { x: x, y: y },
+                        rotation,
+                        player.hook.width,
+                        player.hook.height,
+                    )
+                    .unwrap();
+            }
         }
     }
 }
