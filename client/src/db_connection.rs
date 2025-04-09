@@ -35,6 +35,22 @@ pub fn update_player_position(ctx_wrapper: &CtxWrapper, player_transform: &Trans
     //println!("{}", player_transform.rotation.to_euler(EulerRot::XYZ).2);
 }
 
+pub fn update_bot_position(ctx_wrapper: &CtxWrapper, bot_transform: &Transform, bot_id: u64) {
+    ctx_wrapper
+        .ctx
+        .reducers()
+        .update_bot_position(BevyTransform {
+            coordinates: vec_2_type::Vec2 {
+                x: bot_transform.translation.x,
+                y: bot_transform.translation.y,
+            },
+            rotation: bot_transform.rotation.to_euler(EulerRot::XYZ).2,
+            scale: vec_2_type::Vec2 { x: 0.0, y: 0.0 },
+        }, bot_id)
+        .unwrap();
+    //println!("{}", player_transform.rotation.to_euler(EulerRot::XYZ).2);
+}
+
 pub fn setup_connection(mut commands: Commands, asset_server: Res<AssetServer>) {
     // Connect to the database
     let ctx = connect_to_db();
@@ -63,6 +79,7 @@ fn subscribe_to_tables(ctx: &DbConnection) {
         .subscribe([
             "SELECT * FROM player WHERE online=true",
             "SELECT * FROM obstacle",
+            "SELECT * FROM bots",
         ]);
 }
 
@@ -72,6 +89,10 @@ fn on_sub_applied(ctx: &SubscriptionEventContext) {
     for position in positions {
         println!("{:?}", position);
     }
+    // Forgot why i added this, but it seems to work wihtout
+    let bots = ctx.db.bots().iter().collect::<Vec<_>>();
+println!("[DEBUG] Bots in on_sub_applied: {}", bots.len());
+
 }
 
 fn on_sub_error(_ctx: &ErrorContext, err: Error) {
@@ -183,3 +204,19 @@ pub fn load_obstacles(ctx_wrapper: &CtxWrapper) -> Vec<(f32, f32, u64)> {
         .collect();
     obstacles
 }
+
+pub fn load_bots(ctx_wrapper: &CtxWrapper) -> Vec<(f32, f32, u64)> {
+    println!(
+        "[DEBUG] object)",
+    );
+    let bots: Vec<(f32, f32, u64)> = ctx_wrapper
+        .ctx
+        .db
+        .bots()
+        .iter()
+        .map(|bot| (bot.position.coordinates.x, bot.position.coordinates.y, bot.id))
+        .collect();
+    bots
+}
+
+

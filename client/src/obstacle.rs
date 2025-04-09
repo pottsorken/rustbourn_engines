@@ -18,7 +18,7 @@ pub fn setup_obstacle(
         MAP_CONFIG.map_size.y as f32 * MAP_CONFIG.tile_size.y,
     );
 
-    let obstacles = load_obstacles(ctx_wrapper.into_inner());
+    let obstacles = load_obstacles(&ctx_wrapper);
 
     for obstacle in obstacles {
         // TODO: May need reducer callback for on
