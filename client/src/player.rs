@@ -281,10 +281,10 @@ fn generate_random_spawnpoint(ctx_wrapper: &CtxWrapper) -> (f32, f32) {
 
     loop {
         random_x = rng
-            .random_range(-MAP_CONFIG.safe_zone_size + 10.0..MAP_CONFIG.safe_zone_size - 10.0)
+            .random_range(-MAP_CONFIG.safe_zone_size + 50.0..MAP_CONFIG.safe_zone_size - 50.0)
             as f32;
         random_y = rng
-            .random_range(-MAP_CONFIG.safe_zone_size + 10.0..MAP_CONFIG.safe_zone_size - 10.0)
+            .random_range(-MAP_CONFIG.safe_zone_size + 50.0..MAP_CONFIG.safe_zone_size - 50.0)
             as f32;
 
         for player_position in &online_players {
