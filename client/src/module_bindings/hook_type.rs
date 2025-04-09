@@ -4,18 +4,15 @@
 #![allow(unused, clippy::all)]
 use spacetimedb_sdk::__codegen::{self as __sdk, __lib, __sats, __ws};
 
-use super::bevy_transform_type::BevyTransform;
-use super::hook_type::Hook;
+use super::vec_2_type::Vec2;
 
 #[derive(__lib::ser::Serialize, __lib::de::Deserialize, Clone, PartialEq, Debug)]
 #[sats(crate = __lib)]
-pub struct Player {
-    pub identity: __sdk::Identity,
-    pub position: BevyTransform,
-    pub online: bool,
-    pub hook: Hook,
+pub struct Hook {
+    pub position: Vec2,
+    pub rotation: f32,
 }
 
-impl __sdk::InModule for Player {
+impl __sdk::InModule for Hook {
     type Module = super::RemoteModule;
 }

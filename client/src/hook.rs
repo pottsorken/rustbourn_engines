@@ -1,11 +1,16 @@
 use bevy::prelude::*;
-use crate::common::{Hook, PlayerAttach};
+use crate::{common::{Hook, PlayerAttach}, db_connection::CtxWrapper};
+use spacetimedb_sdk::{
+    credentials, DbContext, Error, Event, Identity, Status, Table, TableWithPrimaryKey,
+};
+use crate::module_bindings::*;
+
 
 pub fn setup_hook(mut commands: Commands, asset_server: Res<AssetServer>) {
     // Spawn a player sprite at position (0, 0) at a higher z-index than map
     commands.spawn((
         Sprite {
-            custom_size: Some(Vec2::new(12.0, 26.0)), // Square size 100x100 pixels
+            custom_size: Some(bevy::prelude::Vec2::new(12.0, 26.0)), // Square size 100x100 pixels
             // image: asset_server.load("sprites/top-view/robot_yellow.png"),
             color:Color::srgb(0.8, 0.4, 0.2),
             anchor: bevy::sprite::Anchor::BottomCenter,
@@ -17,7 +22,7 @@ pub fn setup_hook(mut commands: Commands, asset_server: Res<AssetServer>) {
             hook_max_range: 100.0,
         },
         PlayerAttach {
-            offset: Vec2::new(0.0, 20.0), // Offset from player's center
+            offset: bevy::prelude::Vec2::new(0.0, 20.0), // Offset from player's center
         },
     ));
 }
@@ -32,6 +37,7 @@ pub fn hook_controls(
     keyboard_input: Res<ButtonInput<KeyCode>>,
     mut query: Query<(&mut Sprite, &mut Transform, &Hook)>,
     time: Res<Time>,
+    ctx: Res<CtxWrapper>,
 ) {
     for (mut sprite, mut transform, hook) in query.iter_mut() {
         let growth_rate = hook.hook_speed;
@@ -55,8 +61,20 @@ pub fn hook_controls(
                 }
             }
 
-            sprite.custom_size = Some(Vec2::new(size.x, new_height));
+            sprite.custom_size = Some(bevy::prelude::Vec2::new(size.x, new_height));
             
+            if let Some(player) = ctx.ctx.db.player().identity().find(&ctx.ctx.identity()) {
+                let current_rotation = player.hook.rotation;
+            
+                ctx.ctx.reducers().update_hook_position(
+                    ctx.ctx.identity(),
+                    vec_2_type::Vec2 {
+                        x: transform.translation.x,
+                        y: transform.translation.y + y_offset,
+                    },
+                    current_rotation,
+                ).unwrap();
+            }
         }
     }
 }

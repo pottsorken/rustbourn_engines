@@ -12,6 +12,7 @@ pub struct Player {
     identity: Identity,
     position: BevyTransform,
     online: bool,
+    hook: Hook,
 }
 
 #[spacetimedb::table(name = obstacle, public)]
@@ -29,7 +30,12 @@ pub struct Bot {
     alive: bool,   // instead of online we have alive that checks if that specific bot is alive
 }
 
-
+// Hook component data
+#[derive(Debug, SpacetimeType)]
+pub struct Hook{
+    position: Vec2,
+    rotation: f32,
+}
 
 // Bevy transform data
 #[derive(Debug, SpacetimeType)]
@@ -44,6 +50,26 @@ pub struct BevyTransform {
 pub struct Vec2 {
     x: f32,
     y: f32,
+}
+
+// Reducer for updating hook position
+#[spacetimedb::reducer]
+pub fn update_hook_position(
+    ctx: &ReducerContext,
+    identity: Identity,
+    position: Vec2,
+    rotation: f32,
+) -> Result<(), String>{
+    // Find player by id
+    if let Some(mut player) = ctx.db.player().identity().find(identity){
+        // Update player hook position
+        player.hook.position = position;
+        player.hook.rotation = rotation;
+        ctx.db.player().identity().update(player);
+        Ok(())
+    } else{
+        Err("Player not found".to_string())
+    }
 }
 
 // Reducer for updating player position
@@ -143,6 +169,10 @@ pub fn player_connected(ctx: &ReducerContext) {
                 scale: Vec2 { x: 50.0, y: 100.0 },
             },
             online: true,
+            hook: Hook { 
+                position: Vec2 { x: 0.0, y: 0.0 },
+                rotation: 0.0,
+                },
         });
     }
 }

@@ -7,6 +7,7 @@ use spacetimedb_sdk::__codegen::{self as __sdk, __lib, __sats, __ws};
 pub mod bevy_transform_type;
 pub mod bot_type;
 pub mod bots_table;
+pub mod hook_type;
 pub mod obstacle_table;
 pub mod obstacle_type;
 pub mod player_connected_reducer;
@@ -15,12 +16,14 @@ pub mod player_table;
 pub mod player_type;
 pub mod reset_bots_if_no_players_online_reducer;
 pub mod update_bot_position_reducer;
+pub mod update_hook_position_reducer;
 pub mod update_player_position_reducer;
 pub mod vec_2_type;
 
 pub use bevy_transform_type::BevyTransform;
 pub use bot_type::Bot;
 pub use bots_table::*;
+pub use hook_type::Hook;
 pub use obstacle_table::*;
 pub use obstacle_type::Obstacle;
 pub use player_connected_reducer::{
@@ -37,6 +40,9 @@ pub use reset_bots_if_no_players_online_reducer::{
 };
 pub use update_bot_position_reducer::{
     set_flags_for_update_bot_position, update_bot_position, UpdateBotPositionCallbackId,
+};
+pub use update_hook_position_reducer::{
+    set_flags_for_update_hook_position, update_hook_position, UpdateHookPositionCallbackId,
 };
 pub use update_player_position_reducer::{
     set_flags_for_update_player_position, update_player_position, UpdatePlayerPositionCallbackId,
@@ -58,6 +64,11 @@ pub enum Reducer {
         bevy_transform: BevyTransform,
         bot_id: u64,
     },
+    UpdateHookPosition {
+        identity: __sdk::Identity,
+        position: Vec2,
+        rotation: f32,
+    },
     UpdatePlayerPosition {
         bevy_transform: BevyTransform,
     },
@@ -74,6 +85,7 @@ impl __sdk::Reducer for Reducer {
             Reducer::PlayerDisconnected => "player_disconnected",
             Reducer::ResetBotsIfNoPlayersOnline => "reset_bots_if_no_players_online",
             Reducer::UpdateBotPosition { .. } => "update_bot_position",
+            Reducer::UpdateHookPosition { .. } => "update_hook_position",
             Reducer::UpdatePlayerPosition { .. } => "update_player_position",
         }
     }
@@ -99,6 +111,10 @@ impl TryFrom<__ws::ReducerCallInfo<__ws::BsatnFormat>> for Reducer {
             "update_bot_position" => Ok(__sdk::parse_reducer_args::<
                 update_bot_position_reducer::UpdateBotPositionArgs,
             >("update_bot_position", &value.args)?
+            .into()),
+            "update_hook_position" => Ok(__sdk::parse_reducer_args::<
+                update_hook_position_reducer::UpdateHookPositionArgs,
+            >("update_hook_position", &value.args)?
             .into()),
             "update_player_position" => Ok(__sdk::parse_reducer_args::<
                 update_player_position_reducer::UpdatePlayerPositionArgs,
