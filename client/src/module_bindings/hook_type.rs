@@ -11,6 +11,8 @@ use super::vec_2_type::Vec2;
 pub struct Hook {
     pub position: Vec2,
     pub rotation: f32,
+    pub width: f32,
+    pub height: f32,
 }
 
 impl __sdk::InModule for Hook {

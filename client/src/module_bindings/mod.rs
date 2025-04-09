@@ -68,6 +68,8 @@ pub enum Reducer {
         identity: __sdk::Identity,
         position: Vec2,
         rotation: f32,
+        width: f32,
+        height: f32,
     },
     UpdatePlayerPosition {
         bevy_transform: BevyTransform,

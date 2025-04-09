@@ -1,9 +1,11 @@
-use bevy::prelude::*;
-use crate::{common::{Hook, PlayerAttach}, db_connection::CtxWrapper};
+use bevy::{prelude::*, transform};
+use crate::{common::{Hook, PlayerAttach, OpponentHook}, db_connection::CtxWrapper, opponent};
 use spacetimedb_sdk::{
     credentials, DbContext, Error, Event, Identity, Status, Table, TableWithPrimaryKey,
 };
 use crate::module_bindings::*;
+
+
 
 
 pub fn setup_hook(mut commands: Commands, asset_server: Res<AssetServer>) {
@@ -64,17 +66,69 @@ pub fn hook_controls(
             sprite.custom_size = Some(bevy::prelude::Vec2::new(size.x, new_height));
             
             if let Some(player) = ctx.ctx.db.player().identity().find(&ctx.ctx.identity()) {
-                let current_rotation = player.hook.rotation;
-            
                 ctx.ctx.reducers().update_hook_position(
                     ctx.ctx.identity(),
-                    vec_2_type::Vec2 {
-                        x: transform.translation.x,
-                        y: transform.translation.y + y_offset,
-                    },
-                    current_rotation,
+                    vec_2_type::Vec2 { x: transform.translation.x, y: transform.translation.y },
+                    player.hook.rotation,
+                    size.x,
+                    new_height,
                 ).unwrap();
             }
+        }
+    }
+}
+
+pub fn spawn_opponent_hook(
+    mut commands: &mut Commands,
+    asset_server: &Res<AssetServer>,
+    existing_hooks_query: &Query<(&OpponentHook, &Transform), Without<Transform>>,
+    opponent_id: &Identity,
+    local_player_id: &Identity,
+    x: f32,
+    y: f32,
+){
+    // Don't spawn hook for yourself
+    if opponent_id == local_player_id{
+        return;
+    }
+
+    // Don't spawn already existing hooks
+    for (hook, _) in existing_hooks_query.iter() {
+        if hook.id == *opponent_id {
+            return; // Hook already exists
+        }
+    }
+
+    commands.spawn((
+        Sprite {
+            custom_size: Some(bevy::prelude::Vec2::new(12.0, 26.0)),
+            color: Color::srgb(0.8, 0.4, 0.2), // Opponent hook color
+            anchor: bevy::sprite::Anchor::BottomCenter,
+            ..default()
+        },
+        Transform::from_xyz(x, y, 5.0),
+        OpponentHook {
+            id: *opponent_id,
+        },
+    ));
+
+}
+
+pub fn update_opponent_hook(
+    query: &mut Query<(&mut Sprite, &mut Transform, &OpponentHook), With<OpponentHook>>,
+    id: &Identity,
+    x: f32,
+    y: f32,
+    rotation: f32,
+    width: f32,
+    height: f32,
+){
+    for (mut sprite, mut transform, hook) in query.iter_mut(){
+        if hook.id == *id{
+            transform.translation.x = x;
+            transform.translation.y = y;
+            transform.rotation = Quat:: from_rotation_z(rotation).normalize();
+            sprite.custom_size = Some(bevy::prelude::Vec2::new(width, height));
         }
     }
 }

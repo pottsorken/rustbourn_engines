@@ -30,7 +30,7 @@ use bots::*;
 // Spacedime dependencies
 
 use camera::{camera_follow, setup_camera};
-use db_connection::{print_player_positions, setup_connection};
+use db_connection::{print_player_positions, setup_connection, update_opponent_hooks};
 use map::setup_tilemap;
 use opponent::despawn_opponents;
 use parse::*;
@@ -68,6 +68,7 @@ fn main() {
                 hook_controls,
                 attatch_objects,
                 update_bots,
+                update_opponent_hooks,
             ),
         )
         .add_systems(

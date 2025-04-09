@@ -10,6 +10,9 @@ use spacetimedb_sdk::{
 
 use crate::parse::*;
 
+use crate::hook::*;
+use crate::common::OpponentHook;
+
 #[derive(Resource)]
 pub struct CtxWrapper {
     pub ctx: DbConnection,
@@ -217,6 +220,43 @@ pub fn load_bots(ctx_wrapper: &CtxWrapper) -> Vec<(f32, f32, u64)> {
         .map(|bot| (bot.position.coordinates.x, bot.position.coordinates.y, bot.id))
         .collect();
     bots
+}
+
+pub fn update_opponent_hooks(
+    ctx_wrapper: Res<CtxWrapper>,
+    mut commands: Commands,
+    asset_server: Res<AssetServer>,
+    mut query: Query<(&mut Sprite, &mut Transform, &OpponentHook), With<OpponentHook>>,
+    existing_hooks_query: Query<(&OpponentHook, &Transform), Without<Transform>>,
+){
+    let players = ctx_wrapper.ctx.db.player().iter().collect::<Vec<_>>();
+
+    let local_player_id = ctx_wrapper.ctx.identity(); //Get local player's ID
+
+    for player in players{
+        let player_id = player.identity;
+        spawn_opponent_hook(
+            &mut commands,
+            &asset_server,
+            &existing_hooks_query,
+            &player_id, 
+            &local_player_id, 
+            player.hook.position.x, 
+            player.hook.position.y,
+        );
+
+        update_opponent_hook(
+            &mut query, 
+            &player_id, 
+            player.hook.position.x, 
+            player.hook.position.y, 
+            player.hook.rotation,
+            player.hook.width,
+            player.hook.height,
+        );
+    }
+
+
 }
 
 

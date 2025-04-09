@@ -1,5 +1,6 @@
 use bevy::prelude::*;
 use bevy_ecs_tilemap::prelude::*;
+use spacetimedb_sdk::Identity;
 
 /// Configuration and shared components for the game
 /// ------------------------------------------------
@@ -57,6 +58,10 @@ pub struct Hook {
 #[derive(Component)]
 pub struct PlayerAttach {
     pub offset: Vec2,
+}
+#[derive(Component)]
+pub struct OpponentHook {
+    pub id: Identity, // Match with the opponent's identity
 }
 /// Global constant config for the player
 pub const PLAYER_CONFIG: PlayerConfig = PlayerConfig {
