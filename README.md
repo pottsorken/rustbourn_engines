@@ -16,7 +16,7 @@ A 2D multiplayer base building game built with **Rust**, **Bevy**, and **Spaceti
 ## Tech Stack 🛠️
 
 - **Game Engine**: [Bevy](https://bevyengine.org) (Rust)
-- **Database**: [SpacetimeDB](https://spacetimedb.com)
+- **Database**: [SpacetimeDB](https://spacetimedb.com/home)
 - **Networking**: SpacetimeDB's native networking
 - **Physics**: No physics
 
