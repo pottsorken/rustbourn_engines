@@ -17,7 +17,7 @@ pub struct CtxWrapper {
 
 /// The database name we chose when we published our module.
 //const DB_NAME: &str = "c200083d815ce43080deb1559d525d655b7799ec50b1552f413b372555053a1c";
-pub const DB_NAME: &str = "c2004f2063b6bab3562a3caa05c24a4c39c1d036ccd7d0dfda20ea6d3e20c5f4";
+pub const DB_NAME: &str = "test";
 
 pub fn update_player_position(ctx_wrapper: &CtxWrapper, player_transform: &Transform) {
     ctx_wrapper
@@ -39,14 +39,17 @@ pub fn update_bot_position(ctx_wrapper: &CtxWrapper, bot_transform: &Transform, 
     ctx_wrapper
         .ctx
         .reducers()
-        .update_bot_position(BevyTransform {
-            coordinates: vec_2_type::Vec2 {
-                x: bot_transform.translation.x,
-                y: bot_transform.translation.y,
+        .update_bot_position(
+            BevyTransform {
+                coordinates: vec_2_type::Vec2 {
+                    x: bot_transform.translation.x,
+                    y: bot_transform.translation.y,
+                },
+                rotation: bot_transform.rotation.to_euler(EulerRot::XYZ).2,
+                scale: vec_2_type::Vec2 { x: 0.0, y: 0.0 },
             },
-            rotation: bot_transform.rotation.to_euler(EulerRot::XYZ).2,
-            scale: vec_2_type::Vec2 { x: 0.0, y: 0.0 },
-        }, bot_id)
+            bot_id,
+        )
         .unwrap();
     //println!("{}", player_transform.rotation.to_euler(EulerRot::XYZ).2);
 }
@@ -91,8 +94,7 @@ fn on_sub_applied(ctx: &SubscriptionEventContext) {
     }
     // Forgot why i added this, but it seems to work wihtout
     let bots = ctx.db.bots().iter().collect::<Vec<_>>();
-println!("[DEBUG] Bots in on_sub_applied: {}", bots.len());
-
+    println!("[DEBUG] Bots in on_sub_applied: {}", bots.len());
 }
 
 fn on_sub_error(_ctx: &ErrorContext, err: Error) {
@@ -206,17 +208,19 @@ pub fn load_obstacles(ctx_wrapper: &CtxWrapper) -> Vec<(f32, f32, u64)> {
 }
 
 pub fn load_bots(ctx_wrapper: &CtxWrapper) -> Vec<(f32, f32, u64)> {
-    println!(
-        "[DEBUG] object)",
-    );
+    println!("[DEBUG] object)",);
     let bots: Vec<(f32, f32, u64)> = ctx_wrapper
         .ctx
         .db
         .bots()
         .iter()
-        .map(|bot| (bot.position.coordinates.x, bot.position.coordinates.y, bot.id))
+        .map(|bot| {
+            (
+                bot.position.coordinates.x,
+                bot.position.coordinates.y,
+                bot.id,
+            )
+        })
         .collect();
     bots
 }
-
-
