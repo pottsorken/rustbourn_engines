@@ -1,9 +1,9 @@
 use bevy::prelude::*;
 use bevy_ecs_tilemap::prelude::*;
+use std::collections::HashMap;
 
 /// Configuration and shared components for the game
 /// ------------------------------------------------
-
 
 /// Component to mark a bot and track its state
 #[derive(Component)]
@@ -20,7 +20,6 @@ pub struct BotConfig {
     pub count: usize,
     pub movement_speed: f32,
     pub rotation_speed: f32,
-
 }
 
 /// Global bot config
@@ -30,7 +29,6 @@ pub const BOT_CONFIG: BotConfig = BotConfig {
     count: 3,
     movement_speed: 200.0,
     rotation_speed: f32::to_radians(180.0),
-
 };
 
 // === Player defined constraints ===
@@ -60,6 +58,20 @@ pub struct PlayerAttach {
     pub offset: Vec2,
 }
 
+#[derive(Component)]
+pub struct PlayerGrid {
+    pub block_position: HashMap<(i32, i32), Entity>,
+    pub grid_size: (i32, i32),
+    pub cell_size: f32,
+    pub next_free_pos: (i32, i32),
+}
+
+#[derive(Component)]
+pub struct AttachedBlock {
+    pub grid_offset: (i32, i32),
+    pub player_entity: Entity,
+}
+
 /// Global constant config for the player
 pub const PLAYER_CONFIG: PlayerConfig = PlayerConfig {
     size: Vec2::new(80.0, 80.0),
@@ -71,9 +83,7 @@ pub const PLAYER_CONFIG: PlayerConfig = PlayerConfig {
 // === Block defined constraints ===
 
 #[derive(Component)]
-pub struct Block{
-    
-}
+pub struct Block {}
 pub struct BlockConfig {
     pub size: Vec2,
     pub rotation_speed: f32,
@@ -87,7 +97,6 @@ pub const BLOCK_CONFIG: BlockConfig = BlockConfig {
     path: "sprites/top-view/robot_green.png",
     count: 100,
 };
-
 
 // === Obstacle defined constraints ===
 
