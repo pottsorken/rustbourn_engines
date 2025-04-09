@@ -1,6 +1,13 @@
 use bevy::prelude::*;
 
-use crate::common::{AttachedBlock, Bot, Hook, Player, PlayerAttach, PlayerGrid, PLAYER_CONFIG};
+use crate::module_bindings::*;
+use crate::{
+    common::{AttachedBlock, Bot, Hook, Player, PlayerAttach, PlayerGrid, PLAYER_CONFIG},
+    db_connection::CtxWrapper,
+};
+use spacetimedb_sdk::{
+    credentials, DbContext, Error, Event, Identity, Status, Table, TableWithPrimaryKey,
+};
 
 pub fn attach_objects(
     player_query: Query<(Entity, &Transform, &PlayerGrid), (With<Player>, Without<AttachedBlock>)>,
@@ -58,6 +65,20 @@ pub fn attach_items(
             // Update position and rotation
             transform.translation = player_transform.translation + rotated_offset;
             transform.rotation = player_transform.rotation;
+
+            let x = transform.translation.x;
+            let y = transform.translation.y;
+            let rotation = transform.rotation.to_euler(EulerRot::XYZ).2;
+
+            ctx_wrapper
+                .ctx
+                .reducers()
+                .update_hook_position(
+                    ctx_wrapper.ctx.identity(),
+                    vec_2_type::Vec2 { x: x, y: y },
+                    rotation,
+                )
+                .unwrap();
         }
     }
 }

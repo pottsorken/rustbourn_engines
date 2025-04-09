@@ -1,9 +1,16 @@
-use crate::common::{
-    AttachedBlock, Block, Hook, HookCharge, Obstacle, Player, PlayerAttach, PlayerGrid,
-    BLOCK_CONFIG, HOOK_CONFIG, PLAYER_CONFIG,
+use crate::module_bindings::*;
+use crate::{
+    common::{
+        AttachedBlock, Block, Hook, HookCharge, Obstacle, Player, PlayerAttach, PlayerGrid,
+        BLOCK_CONFIG, HOOK_CONFIG, PLAYER_CONFIG,
+    },
+    db_connection::CtxWrapper,
+    grid::increment_grid_pos,
 };
-use crate::grid::increment_grid_pos;
 use bevy::prelude::*;
+use spacetimedb_sdk::{
+    credentials, DbContext, Error, Event, Identity, Status, Table, TableWithPrimaryKey,
+};
 
 pub fn setup_hook(mut commands: Commands, asset_server: Res<AssetServer>) {
     commands.spawn((
@@ -45,6 +52,7 @@ pub fn hook_controls(
     attachable_blocks: Query<&PlayerAttach>,
     mut commands: Commands,
     time: Res<Time>,
+    ctx: Res<CtxWrapper>,
 ) {
     for (mut sprite, mut transform, hook, mut charge) in hook_query.iter_mut() {
         if keyboard_input.pressed(KeyCode::Space) && charge.target_length == 0.0 {
@@ -73,7 +81,24 @@ pub fn hook_controls(
             let next_height =
                 (current_height - HOOK_CONFIG.retract_speed * time.delta_secs()).max(0.0);
             transform.translation.y -= (current_height - next_height) / 2.0;
+
             sprite.custom_size = Some(Vec2::new(sprite.custom_size.unwrap().x, next_height));
+
+            if let Some(player) = ctx.ctx.db.player().identity().find(&ctx.ctx.identity()) {
+                let current_rotation = player.hook.rotation;
+
+                ctx.ctx
+                    .reducers()
+                    .update_hook_position(
+                        ctx.ctx.identity(),
+                        vec_2_type::Vec2 {
+                            x: transform.translation.x,
+                            y: transform.translation.y + y_offset,
+                        },
+                        current_rotation,
+                    )
+                    .unwrap();
+            }
         }
     }
 }
