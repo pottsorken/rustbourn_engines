@@ -1,7 +1,7 @@
 // Game engine
 use bevy::prelude::*;
 use bevy_ecs_tilemap::prelude::*;
-use noisy_bevy::simplex_noise_2d; // For map generation. May be temporary
+//use noisy_bevy::simplex_noise_2d; // For map generation. May be temporary
 
 mod block;
 mod bots;
@@ -18,10 +18,7 @@ mod player;
 mod player_attach;
 
 use block::*;
-use bots::*;
-use camera::*;
 use hook::*;
-use map::*;
 use obstacle::*;
 use player::*;
 use player_attach::*;
@@ -36,7 +33,6 @@ use camera::{camera_follow, setup_camera};
 use db_connection::{print_player_positions, setup_connection};
 use map::setup_tilemap;
 use opponent::despawn_opponents;
-use parse::*;
 use player::{player_movement, setup_player};
 
 fn main() {

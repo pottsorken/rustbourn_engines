@@ -1,8 +1,5 @@
 use bevy::prelude::*;
-
-use crate::player::*;
-use crate::common::{Player};
-
+use crate::common::Player;
 
 pub fn setup_camera(mut commands: Commands) {
     commands.spawn((
@@ -10,7 +7,6 @@ pub fn setup_camera(mut commands: Commands) {
         Transform::from_xyz(0.0, 0.0, 999.9),
     ));
 }
-
 
 pub fn camera_follow(
     player_query: Query<&Transform, With<Player>>,

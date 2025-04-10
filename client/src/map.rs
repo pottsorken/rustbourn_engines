@@ -1,29 +1,33 @@
+//use noisy_bevy::simplex_noise_2d;
 use crate::common::MAP_CONFIG;
 use bevy::prelude::*;
 use bevy_ecs_tilemap::prelude::*;
-use image::{io::Reader as ImageReader, GenericImageView};
-use noisy_bevy::simplex_noise_2d;
+use image::{
+    ImageReader, 
+    GenericImageView
+};
 
-pub fn setup_tilemap(mut commands: Commands, asset_server: Res<AssetServer>) {
+
+pub fn setup_tilemap(
+    mut commands: Commands, 
+    asset_server: Res<AssetServer>
+) {
     // Tile images. ORDER IS IMPORTANT!
     let texture_handle: Vec<Handle<Image>> = vec![
-        asset_server.load("sprites/td_tanks/grass.png"),
-        asset_server.load("sprites/td_tanks/water.png"),
-        asset_server.load("sprites/td_tanks/stone.png"),
-        asset_server.load("sprites/td_tanks/dirt.png"),
+        asset_server.load(MAP_CONFIG.tile_textures[0]),
+        asset_server.load(MAP_CONFIG.tile_textures[1]),   
+        asset_server.load(MAP_CONFIG.tile_textures[2]),  
+        asset_server.load(MAP_CONFIG.tile_textures[3]),  
     ];
     // New map with 64x64 chunks being 32x32 tiles
-    let map_size = TilemapSize { x: 64, y: 64 };
-    let tile_size = TilemapTileSize { x: 128.0, y: 128.0 }; // tiles are 16x16 pixels
-    let grid_size = tile_size.into(); // Grid size == tile size
+    let grid_size = MAP_CONFIG.tile_size.into(); // Grid size == tile size
     let map_type = TilemapType::default();
 
-    let mut tile_storage = TileStorage::empty(map_size);
+    let mut tile_storage = TileStorage::empty(MAP_CONFIG.map_size);
     let tilemap_entity = commands.spawn_empty().id();
-    let image_path = r"assets/tribasicmap64.png";
 
     // Load the image
-    let img = ImageReader::open(image_path)
+    let img = ImageReader::open(MAP_CONFIG.image_path)
         .expect("Failed to open image")
         .decode()
         .expect("Failed to decode image");
@@ -67,11 +71,11 @@ pub fn setup_tilemap(mut commands: Commands, asset_server: Res<AssetServer>) {
     commands.entity(tilemap_entity).insert(TilemapBundle {
         grid_size,
         map_type,
-        size: map_size,
+        size: MAP_CONFIG.map_size,
         storage: tile_storage,
         texture: TilemapTexture::Vector(texture_handle),
-        tile_size,
-        transform: get_tilemap_center_transform(&map_size, &grid_size, &map_type, 0.0),
+        tile_size: MAP_CONFIG.tile_size,
+        transform: get_tilemap_center_transform(&MAP_CONFIG.map_size, &grid_size, &map_type, 0.0),
         ..Default::default()
     });
 }

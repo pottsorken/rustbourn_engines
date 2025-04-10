@@ -1,11 +1,15 @@
 use bevy::prelude::*;
-use bevy::reflect::List;
 
 // Spacetime dependencies
 use crate::module_bindings::*;
 use crate::opponent::*;
+use crate::common::Opponent;
 use spacetimedb_sdk::{
-    credentials, DbContext, Error, Event, Identity, Status, Table, TableWithPrimaryKey,
+    credentials, 
+    DbContext, 
+    Error, 
+    Identity, 
+    Table,
 };
 
 use crate::parse::*;
@@ -19,7 +23,10 @@ pub struct CtxWrapper {
 //const DB_NAME: &str = "c200083d815ce43080deb1559d525d655b7799ec50b1552f413b372555053a1c";
 pub const DB_NAME: &str = "test";
 
-pub fn update_player_position(ctx_wrapper: &CtxWrapper, player_transform: &Transform) {
+pub fn update_player_position(
+    ctx_wrapper: &CtxWrapper, 
+    player_transform: &Transform
+) {
     ctx_wrapper
         .ctx
         .reducers()
@@ -35,7 +42,11 @@ pub fn update_player_position(ctx_wrapper: &CtxWrapper, player_transform: &Trans
     //println!("{}", player_transform.rotation.to_euler(EulerRot::XYZ).2);
 }
 
-pub fn update_bot_position(ctx_wrapper: &CtxWrapper, bot_transform: &Transform, bot_id: u64) {
+pub fn update_bot_position(
+    ctx_wrapper: &CtxWrapper, 
+    bot_transform: &Transform, 
+    bot_id: u64
+) {
     ctx_wrapper
         .ctx
         .reducers()
@@ -54,7 +65,10 @@ pub fn update_bot_position(ctx_wrapper: &CtxWrapper, bot_transform: &Transform, 
     //println!("{}", player_transform.rotation.to_euler(EulerRot::XYZ).2);
 }
 
-pub fn setup_connection(mut commands: Commands, asset_server: Res<AssetServer>) {
+pub fn setup_connection(
+    mut commands: Commands, 
+    asset_server: Res<AssetServer>
+) {
     // Connect to the database
     let ctx = connect_to_db();
 
@@ -75,7 +89,9 @@ pub fn setup_connection(mut commands: Commands, asset_server: Res<AssetServer>) 
 }
 
 /// Register subscriptions for all rows of the player tables.
-fn subscribe_to_tables(ctx: &DbConnection) {
+fn subscribe_to_tables(
+    ctx: &DbConnection
+) {
     ctx.subscription_builder()
         .on_applied(on_sub_applied)
         .on_error(on_sub_error)
@@ -87,7 +103,9 @@ fn subscribe_to_tables(ctx: &DbConnection) {
 }
 
 /// Our `on_subscription_applied` callback:
-fn on_sub_applied(ctx: &SubscriptionEventContext) {
+fn on_sub_applied(
+    ctx: &SubscriptionEventContext
+) {
     let mut positions = ctx.db.player().iter().collect::<Vec<_>>();
     for position in positions {
         println!("{:?}", position);
@@ -97,7 +115,10 @@ fn on_sub_applied(ctx: &SubscriptionEventContext) {
     println!("[DEBUG] Bots in on_sub_applied: {}", bots.len());
 }
 
-fn on_sub_error(_ctx: &ErrorContext, err: Error) {
+fn on_sub_error(
+    _ctx: &ErrorContext, 
+    err: Error
+) {
     eprintln!("Subscription failed: {}", err);
     std::process::exit(1);
 }
@@ -138,20 +159,30 @@ fn creds_store() -> credentials::File {
 }
 
 /// Our `on_connect` callback: save our credentials to a file.
-fn on_connected(_ctx: &DbConnection, _identity: Identity, token: &str) {
+fn on_connected(
+    _ctx: &DbConnection, 
+    _identity: Identity, 
+    token: &str
+) {
     if let Err(e) = creds_store().save(token) {
         eprintln!("Failed to save credentials: {:?}", e);
     }
 }
 
 /// Our `on_connect_error` callback: print the error, then exit the process.
-fn on_connect_error(_ctx: &ErrorContext, err: Error) {
+fn on_connect_error(
+    _ctx: &ErrorContext, 
+    err: Error
+) {
     eprintln!("Connection error: {:?}", err);
     std::process::exit(1);
 }
 
 /// Our `on_disconnect` callback: print a note, then exit the process.
-fn on_disconnected(_ctx: &ErrorContext, err: Option<Error>) {
+fn on_disconnected(
+    _ctx: &ErrorContext, 
+    err: Option<Error>
+) {
     if let Some(err) = err {
         eprintln!("Disconnected: {}", err);
         std::process::exit(1);
