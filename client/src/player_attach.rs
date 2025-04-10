@@ -1,14 +1,6 @@
 use bevy::prelude::*;
 
-use crate::common::{
-    PlayerAttach, 
-    AttachedBlock,
-    PlayerGrid,
-    Player, 
-    Hook, 
-    PLAYER_CONFIG,
-};
-
+use crate::common::{AttachedBlock, Hook, Player, PlayerAttach, PlayerGrid, PLAYER_CONFIG};
 
 pub fn attach_objects(
     player_query: Query<(&Transform, &PlayerGrid), With<Player>>,

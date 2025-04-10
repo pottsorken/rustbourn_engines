@@ -86,6 +86,7 @@ pub fn hook_controls(
                 player_query.get_single_mut()
             {
                 let mut collided_with_block = false;
+
                 for (block_entity, block_transform) in block_query.iter() {
                     let block_radius = BLOCK_CONFIG.size.x.min(BLOCK_CONFIG.size.y) / 2.0;
                     let hook_radius = 5.0; // Hook tip radius
@@ -120,6 +121,8 @@ pub fn hook_controls(
                                 grid.next_free_pos.0 = -grid.grid_size.0;
                                 grid.next_free_pos.1 -= 1;
                             }
+
+                            player.block_count += 1;
                         }
                     }
                 }
