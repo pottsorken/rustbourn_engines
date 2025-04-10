@@ -55,6 +55,11 @@ pub struct Hook {
     pub hook_max_range: f32,
 }
 #[derive(Component)]
+pub struct HookCharge {
+    pub time_held: f32,
+    pub target_length: f32,
+}
+#[derive(Component)]
 pub struct PlayerAttach {
     pub offset: Vec2,
 }

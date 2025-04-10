@@ -70,7 +70,9 @@ fn main() {
                 confine_player_movement,
                 camera_follow,
                 print_player_positions,
+                hook_collision_system,
                 hook_controls,
+                
                 attach_objects,
                 attach_items,
                 attach_block,

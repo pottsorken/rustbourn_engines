@@ -1,4 +1,16 @@
-use crate::common::{Bot, Obstacle, BOT_CONFIG, OBSTACLE_CONFIG};
+use crate::common::{
+    AttachedBlock, 
+    Block, 
+    Bot, 
+    Obstacle, 
+    Player, 
+    PlayerAttach, 
+    PlayerGrid, 
+    BLOCK_CONFIG, 
+    PLAYER_CONFIG,
+    BOT_CONFIG, 
+    OBSTACLE_CONFIG,
+};
 use crate::db_connection::{load_bots, update_bot_position, CtxWrapper};
 use bevy::prelude::*;
 use spacetimedb_sdk::Identity;
