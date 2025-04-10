@@ -43,7 +43,7 @@ pub fn setup_player(
             block_position: HashMap::new(),
             grid_size: (1, 1),
             cell_size: 84.,
-            next_free_pos: (-1, -1),
+            next_free_pos: (-1, 0),
         },
     ));
 }
@@ -74,6 +74,7 @@ pub fn attach_block(
         }
         if keyboard_input.pressed(KeyCode::KeyS) || keyboard_input.pressed(KeyCode::ArrowDown) {
             move_dir.y -= 1.0;
+            //rotation_dir *= -1.;
         }
 
         // Apply movement relative to player's rotation
@@ -109,12 +110,13 @@ pub fn attach_block(
 
                     // increment grid pos
                     grid.next_free_pos.0 += 1;
+                    // skip if center block
                     if grid.next_free_pos == (0, 0) {
                         grid.next_free_pos.0 += 1;
                     }
                     if grid.next_free_pos.0 > grid.grid_size.0 {
                         grid.next_free_pos.0 = -grid.grid_size.0;
-                        grid.next_free_pos.1 += 1;
+                        grid.next_free_pos.1 -= 1;
                     }
 
                     //block_transform.translation.x += 300.;
@@ -158,11 +160,6 @@ pub fn player_movement(
             rotation_dir -= 1.0;
         }
 
-        // Apply rotation
-        if rotation_dir != 0.0 {
-            transform.rotate_z(rotation_dir * PLAYER_CONFIG.rotation_speed * time.delta_secs());
-        }
-
         // Handle movement with W/S keys (forward/backward relative to rotation)
         let mut move_dir = Vec3::ZERO;
         if keyboard_input.pressed(KeyCode::KeyW) || keyboard_input.pressed(KeyCode::ArrowUp) {
@@ -170,6 +167,7 @@ pub fn player_movement(
         }
         if keyboard_input.pressed(KeyCode::KeyS) || keyboard_input.pressed(KeyCode::ArrowDown) {
             move_dir.y -= 1.0;
+            //rotation_dir *= -1.;
         }
 
         // Apply movement relative to player's rotation
@@ -187,12 +185,28 @@ pub fn player_movement(
 
             let mut blocks_collided_obstacles = false;
 
+            // copy tanslation ----
+            let mut next_frame_pos = transform.clone();
+            next_frame_pos.translation = new_pos;
+            // Apply rotation
+            if rotation_dir != 0.0 {
+                next_frame_pos
+                    .rotate_z(rotation_dir * PLAYER_CONFIG.rotation_speed * time.delta_secs());
+            }
+
             // Check collision for all attached blocks
             for (attached_block_entity, attached_block_transform, attached_block_link) in
                 attached_block_query.iter()
             {
                 if attached_block_link.player_entity == player_entity {
-                    let rotated_offset = transform.rotation
+                    //let mut new_rotation = transform.clone();
+
+                    //if rotation_dir != 0.0 {
+                    //    new_rotation
+                    //        .rotate_z(rotation_dir * player.rotation_speed * time.delta_secs());
+                    //}
+
+                    let rotated_offset = next_frame_pos.rotation
                         * Vec3::new(
                             attached_block_link.grid_offset.0 as f32 * grid.cell_size,
                             attached_block_link.grid_offset.1 as f32 * grid.cell_size,
@@ -200,11 +214,14 @@ pub fn player_movement(
                         );
                     //* rotation_dir
                     //* player.rotation_speed
-                    //* time.delta_secs();
+                    //* time.delta_secs()
+                    //* 4.;
 
-                    let new_block_pos = (attached_block_transform.translation
-                        + move_direction * player.movement_speed * time.delta_secs());
-                    //+ (rotated_offset);
+                    //let mut block_transform_copy = attached_block_transform.translation.clone();
+
+                    let new_block_pos = (next_frame_pos.translation)
+                        //+ move_direction * player.movement_speed * time.delta_secs());
+                    + (rotated_offset);
                     //
                     //* rotation_dir
                     //* player.rotation_speed
@@ -242,6 +259,11 @@ pub fn player_movement(
             if !collided_with_obstacle && !collided_with_block && !blocks_collided_obstacles {
                 // Apply tanslation
                 transform.translation = new_pos;
+                // Apply rotation
+                if rotation_dir != 0.0 {
+                    transform
+                        .rotate_z(rotation_dir * PLAYER_CONFIG.rotation_speed * time.delta_secs());
+                }
             }
         }
         update_player_position(ctx_wrapper, &transform);
