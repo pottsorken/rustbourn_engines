@@ -44,6 +44,8 @@ pub fn setup_player(
             grid_size: (1, 1),
             cell_size: 84.,
             next_free_pos: (-1, 0),
+            capacity: 5,
+            load: 0,
         },
     ));
 }

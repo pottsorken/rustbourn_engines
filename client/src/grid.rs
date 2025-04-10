@@ -11,5 +11,6 @@ pub fn increment_grid_pos(grid: &mut PlayerGrid) {
         grid.next_free_pos.1 -= 1;
     }
 
+    grid.load += 1;
     //player.block_count += 1;
 }

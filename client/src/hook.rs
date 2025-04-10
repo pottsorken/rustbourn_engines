@@ -2,6 +2,7 @@ use crate::common::{
     AttachedBlock, Block, Hook, Obstacle, Player, PlayerAttach, PlayerGrid, BLOCK_CONFIG,
     PLAYER_CONFIG,
 };
+use crate::grid::increment_grid_pos;
 use bevy::prelude::*;
 use std::collections::HashMap;
 
@@ -98,7 +99,8 @@ pub fn hook_controls(
                         < collision_distance
                     {
                         // Check if block already attached
-                        if attachable_blocks.get(block_entity).is_err()
+                        if grid.load < grid.capacity
+                            && attachable_blocks.get(block_entity).is_err()
                             && player.block_count < PLAYER_CONFIG.max_block_count
                         {
                             let nextpos = grid.next_free_pos.clone();
@@ -113,14 +115,7 @@ pub fn hook_controls(
                             );
 
                             // increment grid pos
-                            grid.next_free_pos.0 += 1;
-                            if grid.next_free_pos == (0, 0) {
-                                grid.next_free_pos.0 += 1;
-                            }
-                            if grid.next_free_pos.0 > grid.grid_size.0 {
-                                grid.next_free_pos.0 = -grid.grid_size.0;
-                                grid.next_free_pos.1 -= 1;
-                            }
+                            increment_grid_pos(&mut grid);
 
                             player.block_count += 1;
                         }

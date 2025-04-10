@@ -39,6 +39,8 @@ pub fn spawn_bots(
                     grid_size: (1, 1),
                     cell_size: 84.,
                     next_free_pos: (-1, 0),
+                    capacity: 5,
+                    load: 0,
                 },
             ));
         }
@@ -50,24 +52,26 @@ pub fn spawn_bot_blocks(
     mut commands: Commands,
     asset_server: Res<AssetServer>,
 ) {
-    println!("spawn_bot_blocks run here --------------");
+    //println!("spawn_bot_blocks run here --------------");
     for (bot_entity, mut bot_grid) in bots_query.iter_mut() {
-        println!("Spawning for bot: {}", bot_entity);
+        //println!("Spawning for bot: {}", bot_entity);
         for x in 0..3 {
-            commands.spawn((
-                Sprite {
-                    custom_size: Some(BLOCK_CONFIG.size),
-                    image: asset_server.load(BLOCK_CONFIG.path),
-                    ..default()
-                },
-                Transform::from_xyz(0., 0., 1.0),
-                Block {},
-                AttachedBlock {
-                    grid_offset: bot_grid.next_free_pos,
-                    player_entity: bot_entity,
-                },
-            ));
-            increment_grid_pos(&mut bot_grid);
+            if bot_grid.load < bot_grid.capacity {
+                commands.spawn((
+                    Sprite {
+                        custom_size: Some(BLOCK_CONFIG.size),
+                        image: asset_server.load(BLOCK_CONFIG.path),
+                        ..default()
+                    },
+                    Transform::from_xyz(0., 0., 1.0),
+                    Block {},
+                    AttachedBlock {
+                        grid_offset: bot_grid.next_free_pos,
+                        player_entity: bot_entity,
+                    },
+                ));
+                increment_grid_pos(&mut bot_grid);
+            }
         }
     }
 }

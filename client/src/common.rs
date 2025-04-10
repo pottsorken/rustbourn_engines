@@ -65,6 +65,8 @@ pub struct PlayerGrid {
     pub grid_size: (i32, i32),
     pub cell_size: f32,
     pub next_free_pos: (i32, i32),
+    pub capacity: u32,
+    pub load: u32,
 }
 
 #[derive(Component)]
