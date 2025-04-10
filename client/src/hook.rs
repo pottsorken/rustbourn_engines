@@ -79,7 +79,7 @@ pub fn hook_controls(
 pub fn spawn_opponent_hook(
     mut commands: &mut Commands,
     asset_server: &Res<AssetServer>,
-    existing_hooks_query: &Query<(&OpponentHook, &Transform), Without<Transform>>,
+    existing_hooks_query: &Query<(&OpponentHook)>,
     opponent_id: &Identity,
     local_player_id: &Identity,
     x: f32,
@@ -91,9 +91,10 @@ pub fn spawn_opponent_hook(
     }
 
     // Don't spawn already existing hooks
-    for (hook, _) in existing_hooks_query.iter() {
+    for (hook) in existing_hooks_query.iter() {
         if hook.id == *opponent_id {
             return; // Hook already exists
+            println!("Works?");
         }
     }
 
