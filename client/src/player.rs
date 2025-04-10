@@ -3,6 +3,8 @@ use crate::common::{
     PLAYER_CONFIG,
 };
 use crate::db_connection::{update_player_position, CtxWrapper};
+use crate::module_bindings::*;
+use crate::opponent::Opponent;
 use crate::player_attach::*;
 use bevy::prelude::*;
 use bevy::window::PrimaryWindow;
@@ -58,8 +60,9 @@ pub fn player_movement(
     attached_block_query: Query<(Entity, &Transform, &AttachedBlock), With<Block>>,
     mut player_query: Query<
         (Entity, &mut Transform, &mut Player, &mut PlayerGrid),
-        (Without<Obstacle>, Without<Block>),
+        (Without<Obstacle>, Without<Block>, Without<Opponent>),
     >,
+    opponent_query: Query<&Transform, With<Opponent>>,
     obstacle_query: Query<&Transform, With<Obstacle>>,
     //attachable_blocks: Query<&PlayerAttach>,
     mut _commands: Commands,
@@ -69,6 +72,7 @@ pub fn player_movement(
     //if let Ok((mut transform, _player)) = query.get_single_mut() { // NOTE: merge conflict
     let ctx_wrapper = &ctx.into_inner();
 
+    let opponent_transforms: Vec<Transform> = opponent_query().iter().cloned().collect();
     for (player_entity, mut transform, player, grid) in &mut player_query {
         // Handle rotation with A/D keys
         let mut rotation_dir = 0.0;
@@ -198,7 +202,12 @@ pub fn player_movement(
             }
 
             //println!(" ");
-            if !collided_with_obstacle && !collided_with_block && !blocks_collided_obstacles {
+            if !collided_with_obstacle
+                && !collided_with_block
+                && !blocks_collided_obstacles
+                && !will_collide(new_pos.truncate(), &obstacle_query)
+                && !will_collide_with_opponent(new_pos.truncate(), &opponent_transforms)
+            {
                 // Apply tanslation
                 transform.translation = new_pos;
                 // Apply rotation
@@ -261,6 +270,15 @@ pub fn will_collide(
     let collision_distance = player_radius + obstacle_radius;
 
     obstacles
+        .iter()
+        .any(|transform| new_pos.distance(transform.translation.truncate()) < collision_distance)
+}
+
+pub fn will_collide_with_opponent(new_pos: bevy::prelude::Vec2, opponents: &[Transform]) -> bool {
+    let player_radius = PLAYER_CONFIG.size.x.min(PLAYER_CONFIG.size.y) / 2.0;
+    let collision_distance = player_radius * 2.0;
+
+    opponents
         .iter()
         .any(|transform| new_pos.distance(transform.translation.truncate()) < collision_distance)
 }
