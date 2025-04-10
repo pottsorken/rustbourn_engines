@@ -12,8 +12,6 @@ pub(super) struct UpdateHookPositionArgs {
     pub identity: __sdk::Identity,
     pub position: Vec2,
     pub rotation: f32,
-    pub width: f32,
-    pub height: f32,
 }
 
 impl From<UpdateHookPositionArgs> for super::Reducer {
@@ -22,8 +20,6 @@ impl From<UpdateHookPositionArgs> for super::Reducer {
             identity: args.identity,
             position: args.position,
             rotation: args.rotation,
-            width: args.width,
-            height: args.height,
         }
     }
 }
@@ -49,8 +45,6 @@ pub trait update_hook_position {
         identity: __sdk::Identity,
         position: Vec2,
         rotation: f32,
-        width: f32,
-        height: f32,
     ) -> __sdk::Result<()>;
     /// Register a callback to run whenever we are notified of an invocation of the reducer `update_hook_position`.
     ///
@@ -61,7 +55,7 @@ pub trait update_hook_position {
     /// to cancel the callback.
     fn on_update_hook_position(
         &self,
-        callback: impl FnMut(&super::ReducerEventContext, &__sdk::Identity, &Vec2, &f32, &f32, &f32)
+        callback: impl FnMut(&super::ReducerEventContext, &__sdk::Identity, &Vec2, &f32)
             + Send
             + 'static,
     ) -> UpdateHookPositionCallbackId;
@@ -76,8 +70,6 @@ impl update_hook_position for super::RemoteReducers {
         identity: __sdk::Identity,
         position: Vec2,
         rotation: f32,
-        width: f32,
-        height: f32,
     ) -> __sdk::Result<()> {
         self.imp.call_reducer(
             "update_hook_position",
@@ -85,14 +77,12 @@ impl update_hook_position for super::RemoteReducers {
                 identity,
                 position,
                 rotation,
-                width,
-                height,
             },
         )
     }
     fn on_update_hook_position(
         &self,
-        mut callback: impl FnMut(&super::ReducerEventContext, &__sdk::Identity, &Vec2, &f32, &f32, &f32)
+        mut callback: impl FnMut(&super::ReducerEventContext, &__sdk::Identity, &Vec2, &f32)
             + Send
             + 'static,
     ) -> UpdateHookPositionCallbackId {
@@ -107,8 +97,6 @@ impl update_hook_position for super::RemoteReducers {
                                     identity,
                                     position,
                                     rotation,
-                                    width,
-                                    height,
                                 },
                             ..
                         },
@@ -117,7 +105,7 @@ impl update_hook_position for super::RemoteReducers {
                 else {
                     unreachable!()
                 };
-                callback(ctx, identity, position, rotation, width, height)
+                callback(ctx, identity, position, rotation)
             }),
         ))
     }

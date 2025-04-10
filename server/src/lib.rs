@@ -1,6 +1,7 @@
 use spacetimedb::{
-    reducer, spacetimedb_lib::db, table, DbContext, Identity, ReducerContext, SpacetimeType, Table,
-    Timestamp,
+    reducer,
+    spacetimedb_lib::{db, identity},
+    table, DbContext, Identity, ReducerContext, SpacetimeType, Table, Timestamp,
 };
 
 use noise::{NoiseFn, Perlin};
@@ -68,6 +69,21 @@ pub fn update_hook_position(
         // Update player hook position
         player.hook.position = position;
         player.hook.rotation = rotation;
+        ctx.db.player().identity().update(player);
+        Ok(())
+    } else {
+        Err("Player not found".to_string())
+    }
+}
+
+#[spacetimedb::reducer]
+pub fn update_hook_movement(
+    ctx: &ReducerContext,
+    identity: Identity,
+    width: f32,
+    height: f32,
+) -> Result<(), String> {
+    if let Some(mut player) = ctx.db.player().identity().find(identity) {
         player.hook.width = width;
         player.hook.height = height;
         ctx.db.player().identity().update(player);
