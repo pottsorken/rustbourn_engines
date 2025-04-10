@@ -8,6 +8,11 @@ const TEXT_COLOR: Color = Color::srgb(0.9, 0.9, 0.9);
 const BACKGROUND_COLOR: Color = Color::srgb(0.498, 0.498, 0.498);
 const SPLASH_COLOR: Color = Color::srgb(0.0, 0.0, 0.0);
 
+const NORMAL_BUTTON: Color = Color::srgb(0.15, 0.15, 0.15);
+const HOVERED_BUTTON: Color = Color::srgb(0.25, 0.25, 0.25);
+const HOVERED_PRESSED_BUTTON: Color = Color::srgb(0.25, 0.65, 0.25);
+const PRESSED_BUTTON: Color = Color::srgb(0.35, 0.75, 0.35);
+
 #[derive(Clone, Copy, Default, Eq, PartialEq, Debug, Hash, States)]
 pub enum GameState {
     #[default]
@@ -16,8 +21,6 @@ pub enum GameState {
     Game,
 }
 
-
-// One of the two settings that can be set through the menu. It will be a resource in the app
 #[derive(Resource, Debug, Component, PartialEq, Eq, Clone, Copy)]
 pub enum DisplayQuality {
     Low,
@@ -25,38 +28,75 @@ pub enum DisplayQuality {
     High,
 }
 
-// One of the two settings that can be set through the menu. It will be a resource in the app
 #[derive(Resource, Debug, Component, PartialEq, Eq, Clone, Copy)]
 pub struct Volume(pub u32);
 
-
-// ###################################### SPLASH ##########################################
-
-// This plugin will display a splash screen with Bevy logo for 1 second before switching to the menu
-pub fn splash_plugin(app: &mut App) {
-    // As this plugin is managing the splash screen, it will focus on the state `GameState::Splash`
-    app
-        // When entering the state, spawn everything needed for this screen
-        .add_systems(OnEnter(GameState::Splash), splash_setup)
-        // While in this state, run the `countdown` system
-        .add_systems(Update, countdown.run_if(in_state(GameState::Splash)))
-        // When exiting the state, despawn everything that was spawned for this screen
-        .add_systems(OnExit(GameState::Splash), despawn_screen::<OnSplashScreen>);
-}
-
-// Tag component used to tag entities added on the splash screen
 #[derive(Component)]
 pub struct OnSplashScreen;
 
-// Newtype to use a `Timer` for this screen as a resource
 #[derive(Resource, Deref, DerefMut)]
 pub struct SplashTimer(Timer);
 
 
+#[derive(Component)]
+pub struct OnGameScreen;
+
+// State used for the current menu screen
+#[derive(Clone, Copy, Default, Eq, PartialEq, Debug, Hash, States)]
+pub enum MenuState {
+    Main,
+    Settings,
+    SettingsDisplay,
+    SettingsSound,
+    #[default]
+    Disabled,
+}
+
+// Tag component used to tag entities added on the main menu screen
+#[derive(Component)]
+pub struct OnMainMenuScreen;
+
+// Tag component used to tag entities added on the settings menu screen
+#[derive(Component)]
+pub struct OnSettingsMenuScreen;
+
+// Tag component used to tag entities added on the display settings menu screen
+#[derive(Component)]
+pub struct OnDisplaySettingsMenuScreen;
+
+// Tag component used to tag entities added on the sound settings menu screen
+#[derive(Component)]
+pub struct OnSoundSettingsMenuScreen;
+
+// Tag component used to mark which setting is currently selected
+#[derive(Component)]
+pub struct SelectedOption;
+
+// All actions that can be triggered from a button click
+#[derive(Component)]
+pub enum MenuButtonAction {
+    Play,
+    Settings,
+    SettingsDisplay,
+    SettingsSound,
+    BackToMainMenu,
+    BackToSettings,
+    Quit,
+}
+
+
+// ###################################### SPLASH ##########################################
+
+pub fn splash_plugin(app: &mut App) {
+    app
+        .add_systems(OnEnter(GameState::Splash), splash_setup)
+        .add_systems(Update, countdown.run_if(in_state(GameState::Splash)))
+        .add_systems(OnExit(GameState::Splash), despawn_screen::<OnSplashScreen>);
+}
 
 pub fn splash_setup(mut commands: Commands, asset_server: Res<AssetServer>) {
     let icon = asset_server.load(r"C:\Users\Denise\Desktop\Studier\CINTE\II1305 Projektkurs\rustbourn_engines\client\assets\basicmap.png");
-    // Display the logo
+    // Display the logo on splash screen
     commands
     .spawn((
         Node {
@@ -86,16 +126,13 @@ pub fn splash_setup(mut commands: Commands, asset_server: Res<AssetServer>) {
                         margin: UiRect::all(Val::Percent(20.0)), // How far from the top the splash logo is placed
                         ..default()
                     },
-            ));
-        });
+                ));
+            });
     });
 
-
-    // Insert the timer as a resource
     commands.insert_resource(SplashTimer(Timer::from_seconds(2.0, TimerMode::Once)));
 }
 
-// Tick the timer, and change state when finished
 pub fn countdown(
     mut game_state: ResMut<NextState<GameState>>,
     time: Res<Time>,
@@ -108,17 +145,11 @@ pub fn countdown(
 
 
 // ###################################### GAME ##########################################
+
 pub fn game_plugin(app: &mut App) {
     app.add_systems(OnEnter(GameState::Game), game_setup)
         .add_systems(OnExit(GameState::Game), despawn_screen::<OnGameScreen>);
 }
-
-#[derive(Component)]
-struct OnGameScreen;
-
-// #[derive(Resource, Deref, DerefMut)]
-// struct GameTimer(Timer);
-
 
 pub fn game_setup(mut commands: Commands) {
     commands.spawn(Camera2dBundle::default());
@@ -138,16 +169,13 @@ pub fn game_setup(mut commands: Commands) {
 pub fn menu_plugin(app: &mut App) {
     app.init_state::<MenuState>()
         .add_systems(OnEnter(GameState::Menu), menu_setup)
-        // Systems to handle the main menu screen
         .add_systems(OnEnter(MenuState::Main), main_menu_setup)
         .add_systems(OnExit(MenuState::Main), despawn_screen::<OnMainMenuScreen>)
-        // Systems to handle the settings menu screen
         .add_systems(OnEnter(MenuState::Settings), settings_menu_setup)
         .add_systems(
             OnExit(MenuState::Settings),
             despawn_screen::<OnSettingsMenuScreen>,
         )
-        // Systems to handle the display settings screen
         .add_systems(
             OnEnter(MenuState::SettingsDisplay),
             display_settings_menu_setup,
@@ -160,7 +188,6 @@ pub fn menu_plugin(app: &mut App) {
             OnExit(MenuState::SettingsDisplay),
             despawn_screen::<OnDisplaySettingsMenuScreen>,
         )
-        // Systems to handle the sound settings screen
         .add_systems(OnEnter(MenuState::SettingsSound), sound_settings_menu_setup)
         .add_systems(
             Update,
@@ -170,59 +197,11 @@ pub fn menu_plugin(app: &mut App) {
             OnExit(MenuState::SettingsSound),
             despawn_screen::<OnSoundSettingsMenuScreen>,
         )
-        // Common systems to all screens that handles buttons behavior
+        // Common systems to all screens that handle buttons
         .add_systems(
             Update,
             (menu_action, button_system).run_if(in_state(GameState::Menu)),
         );
-}
-
-// State used for the current menu screen
-#[derive(Clone, Copy, Default, Eq, PartialEq, Debug, Hash, States)]
-pub enum MenuState {
-    Main,
-    Settings,
-    SettingsDisplay,
-    SettingsSound,
-    #[default]
-    Disabled,
-}
-
-// Tag component used to tag entities added on the main menu screen
-#[derive(Component)]
-pub struct OnMainMenuScreen;
-
-// Tag component used to tag entities added on the settings menu screen
-#[derive(Component)]
-pub struct OnSettingsMenuScreen;
-
-// Tag component used to tag entities added on the display settings menu screen
-#[derive(Component)]
-pub struct OnDisplaySettingsMenuScreen;
-
-// Tag component used to tag entities added on the sound settings menu screen
-#[derive(Component)]
-pub struct OnSoundSettingsMenuScreen;
-
-const NORMAL_BUTTON: Color = Color::srgb(0.15, 0.15, 0.15);
-const HOVERED_BUTTON: Color = Color::srgb(0.25, 0.25, 0.25);
-const HOVERED_PRESSED_BUTTON: Color = Color::srgb(0.25, 0.65, 0.25);
-const PRESSED_BUTTON: Color = Color::srgb(0.35, 0.75, 0.35);
-
-// Tag component used to mark which setting is currently selected
-#[derive(Component)]
-struct SelectedOption;
-
-// All actions that can be triggered from a button click
-#[derive(Component)]
-pub enum MenuButtonAction {
-    Play,
-    Settings,
-    SettingsDisplay,
-    SettingsSound,
-    BackToMainMenu,
-    BackToSettings,
-    Quit,
 }
 
 // This system handles changing all buttons color based on mouse interaction
@@ -261,6 +240,8 @@ pub fn setting_button<T: Resource + Component + PartialEq + Copy>(
     }
 }
 
+// ###################################### MENU ##########################################
+
 pub fn menu_setup(mut menu_state: ResMut<NextState<MenuState>>) {
     menu_state.set(MenuState::Main);
 }
@@ -296,7 +277,6 @@ pub fn main_menu_setup(mut commands: Commands, asset_server: Res<AssetServer>) {
                 ..default()
             },
             OnMainMenuScreen,
-            // Add background color to the root node
             BackgroundColor(BACKGROUND_COLOR),
         ))
         .with_children(|parent| {
