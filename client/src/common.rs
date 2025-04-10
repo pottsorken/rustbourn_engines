@@ -37,7 +37,7 @@ pub const BOT_CONFIG: BotConfig = BotConfig {
 pub struct Player {
     pub movement_speed: f32,
     pub rotation_speed: f32,
-    pub max_block_count: i32,
+    pub block_count: i32,
 }
 
 /// Configuration struct for initializing the Player entity
@@ -47,6 +47,7 @@ pub struct PlayerConfig {
     pub movement_speed: f32,
     pub rotation_speed: f32,
     pub path: &'static str,
+    pub max_block_count: i32,
 }
 #[derive(Component)]
 pub struct Hook {
@@ -78,6 +79,7 @@ pub const PLAYER_CONFIG: PlayerConfig = PlayerConfig {
     movement_speed: 300.0,
     rotation_speed: f32::to_radians(180.0),
     path: "sprites/top-view/robot_3Dblue.png",
+    max_block_count: 5,
 };
 
 // === Block defined constraints ===

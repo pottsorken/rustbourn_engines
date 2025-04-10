@@ -1,5 +1,5 @@
-use crate::common::{Hook, PlayerAttach};
 use bevy::prelude::*;
+use crate::common::{Hook, Obstacle, Player, Block, PlayerAttach, BLOCK_CONFIG, PLAYER_CONFIG};
 
 pub fn setup_hook(mut commands: Commands, asset_server: Res<AssetServer>) {
     // Spawn a player sprite at position (0, 0) at a higher z-index than map
@@ -38,10 +38,14 @@ pub fn hook_controls_short(
 
 pub fn hook_controls(
     keyboard_input: Res<ButtonInput<KeyCode>>,
-    mut query: Query<(&mut Sprite, &mut Transform, &Hook)>,
+    mut hook_query: Query<(&mut Sprite, &mut Transform, &Hook), (With<Hook>, Without<Obstacle>, Without<Block>)>,
+    block_query: Query<(Entity, &Transform), With<Block>>,
+    mut player_query: Query<(Entity, &Transform, &mut Player), (Without<Obstacle>, Without<Block>, Without<Hook>)>,
+    attachable_blocks: Query<&PlayerAttach>,
+    mut commands: Commands,
     time: Res<Time>,
 ) {
-    for (mut sprite, mut transform, hook) in query.iter_mut() {
+    for (mut sprite, mut transform, hook) in hook_query.iter_mut() {
         let growth_rate = hook.hook_speed;
         let growth_amount = growth_rate * time.delta_secs();
 
@@ -50,13 +54,11 @@ pub fn hook_controls(
             let mut y_offset = 0.0;
 
             if keyboard_input.pressed(KeyCode::Space) {
-                // Extend
                 if size.y < hook.hook_max_range {
                     new_height = (size.y + growth_amount).min(hook.hook_max_range);
                     y_offset = (new_height - size.y) / 2.0;
                 }
             } else {
-                // Retract
                 if size.y > 0.0 {
                     new_height = (size.y - growth_amount).max(0.0);
                     y_offset = -(size.y - new_height) / 2.0;
@@ -64,6 +66,32 @@ pub fn hook_controls(
             }
 
             sprite.custom_size = Some(Vec2::new(size.x, new_height));
+            transform.translation.y += y_offset;
+
+            // Hook tip position
+            let hook_tip = transform.translation + transform.rotation * Vec3::new(0.0, new_height, 0.0);
+
+            if let Ok((_player_entity, player_transform, mut player)) = player_query.get_single_mut() {
+                for (block_entity, block_transform) in block_query.iter() {
+                    let block_radius = BLOCK_CONFIG.size.x.min(BLOCK_CONFIG.size.y) / 2.0;
+                    let hook_radius = 5.0; // Hook tip radius
+                    let collision_distance = block_radius + hook_radius;
+
+                    if hook_tip.truncate().distance(block_transform.translation.truncate()) < collision_distance {
+                        // Check if block already attached
+                        if attachable_blocks.get(block_entity).is_err()
+                            && player.block_count < PLAYER_CONFIG.max_block_count
+                        {
+                            let offset = block_transform.translation - player_transform.translation;
+                            commands.entity(block_entity).insert(PlayerAttach {
+                                offset: offset.truncate(),
+                            });
+
+                            player.block_count += 1;
+                        }
+                    }
+                }
+            }
         }
     }
 }

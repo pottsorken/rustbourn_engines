@@ -1,11 +1,20 @@
 use crate::common::{
-    AttachedBlock, Block, Obstacle, Player, PlayerGrid, BLOCK_CONFIG, MAP_CONFIG, OBSTACLE_CONFIG,
-    PLAYER_CONFIG,
+    Obstacle, 
+    Block, 
+    Hook, 
+    Player, 
+    PlayerGrid,
+    AttachedBlock,
+    PlayerAttach, 
+    MAP_CONFIG, 
+    OBSTACLE_CONFIG, 
+    BLOCK_CONFIG, 
+    PLAYER_CONFIG
 };
 use crate::db_connection::{update_player_position, CtxWrapper};
-use crate::module_bindings::Vec2 as DBVec2;
 use crate::player_attach::*;
 use bevy::math::Vec2 as BevyVec2;
+use crate::module_bindings::Vec2 as DBVec2;
 use bevy::prelude::*;
 use bevy::window::PrimaryWindow;
 use std::collections::HashMap;
@@ -37,7 +46,7 @@ pub fn setup_player(
         Player {
             movement_speed: PLAYER_CONFIG.movement_speed, // meters per second
             rotation_speed: PLAYER_CONFIG.rotation_speed, // degrees per second
-            max_block_count: 0,
+            block_count: 0,
         },
         PlayerGrid {
             block_position: HashMap::new(),
@@ -266,6 +275,7 @@ pub fn player_movement(
                 }
             }
         }
+
         update_player_position(ctx_wrapper, &transform);
     }
 }
@@ -307,18 +317,4 @@ pub fn confine_player_movement(
 
         player_transform.translation = translation;
     }
-}
-
-pub fn check_collision<T: Component>(
-    new_pos: Vec2,
-    targets: &Query<&Transform, With<T>>,
-    target_size: Vec2,
-) -> bool {
-    let player_radius = PLAYER_CONFIG.size.x.min(PLAYER_CONFIG.size.y) / 2.0;
-    let target_radius = target_size.x.min(target_size.y) / 2.0;
-    let collision_distance = player_radius + target_radius;
-
-    targets
-        .iter()
-        .any(|transform| new_pos.distance(transform.translation.truncate()) < collision_distance)
 }

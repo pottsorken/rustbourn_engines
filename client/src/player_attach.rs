@@ -1,6 +1,14 @@
 use bevy::prelude::*;
 
-use crate::common::{AttachedBlock, Hook, Player, PlayerAttach, PlayerGrid};
+use crate::common::{
+    PlayerAttach, 
+    AttachedBlock,
+    PlayerGrid,
+    Player, 
+    Hook, 
+    PLAYER_CONFIG,
+};
+
 
 pub fn attach_objects(
     player_query: Query<(&Transform, &PlayerGrid), With<Player>>,
@@ -39,4 +47,18 @@ pub fn attach_items(
             transform.rotation = player_transform.rotation;
         }
     }
+}
+
+pub fn check_collision<T: Component>(
+    new_pos: Vec2,
+    targets: &Query<&Transform, With<T>>,
+    target_size: Vec2,
+) -> bool {
+    let player_radius = PLAYER_CONFIG.size.x.min(PLAYER_CONFIG.size.y) / 2.0;
+    let target_radius = target_size.x.min(target_size.y) / 2.0;
+    let collision_distance = player_radius + target_radius;
+
+    targets
+        .iter()
+        .any(|transform| new_pos.distance(transform.translation.truncate()) < collision_distance)
 }
