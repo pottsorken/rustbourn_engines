@@ -1,6 +1,7 @@
 use crate::common::{Obstacle, Player, MAP_CONFIG, OBSTACLE_CONFIG, PLAYER_CONFIG};
 use crate::db_connection::{update_player_position, CtxWrapper};
 use crate::module_bindings::*;
+use crate::opponent::Opponent;
 use bevy::prelude::*;
 use bevy::window::PrimaryWindow;
 
@@ -41,14 +42,20 @@ pub fn setup_player(
 
 pub fn player_movement(
     keyboard_input: Res<ButtonInput<KeyCode>>,
-    mut query: Query<(&mut Transform, &Player), Without<Obstacle>>,
+    mut param_set: ParamSet<(
+        Query<(&mut Transform, &Player), Without<Obstacle>>,
+        Query<&Transform, With<Opponent>>,
+    )>,
     obstacle_query: Query<&Transform, With<Obstacle>>,
     time: Res<Time>,
     ctx: Res<CtxWrapper>,
 ) {
     //if let Ok((mut transform, _player)) = query.get_single_mut() { // NOTE: merge conflict
     let ctx_wrapper = &ctx.into_inner();
-    for (mut transform, player) in &mut query {
+
+    let opponent_transforms: Vec<Transform> = param_set.p1().iter().cloned().collect();
+
+    for (mut transform, player) in &mut param_set.p0() {
         // Handle rotation with A/D keys
         let mut rotation_dir = 0.0;
         if keyboard_input.pressed(KeyCode::KeyA) || keyboard_input.pressed(KeyCode::ArrowLeft) {
@@ -78,7 +85,8 @@ pub fn player_movement(
             let new_pos = transform.translation
                 + move_direction * PLAYER_CONFIG.movement_speed * time.delta_secs();
 
-            if !will_collide(new_pos.truncate(), &obstacle_query) {
+            if !will_collide(new_pos.truncate(), &obstacle_query) 
+                && !will_collide_with_opponent(new_pos.truncate(), &opponent_transforms) {
                 transform.translation = new_pos;
             }
         }
@@ -134,6 +142,18 @@ pub fn will_collide(
     let collision_distance = player_radius + obstacle_radius;
 
     obstacles
+        .iter()
+        .any(|transform| new_pos.distance(transform.translation.truncate()) < collision_distance)
+}
+
+pub fn will_collide_with_opponent(
+    new_pos: bevy::prelude::Vec2,
+    opponents: &[Transform]
+) -> bool {
+    let player_radius = PLAYER_CONFIG.size.x.min(PLAYER_CONFIG.size.y) / 2.0;
+    let collision_distance = player_radius * 2.0;
+
+    opponents
         .iter()
         .any(|transform| new_pos.distance(transform.translation.truncate()) < collision_distance)
 }
