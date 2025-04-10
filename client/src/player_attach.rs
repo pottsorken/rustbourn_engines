@@ -1,28 +1,49 @@
 use bevy::prelude::*;
 
-use crate::common::{AttachedBlock, Hook, Player, PlayerAttach, PlayerGrid, PLAYER_CONFIG};
+use crate::common::{AttachedBlock, Bot, Hook, Player, PlayerAttach, PlayerGrid, PLAYER_CONFIG};
 
 pub fn attach_objects(
-    player_query: Query<(&Transform, &PlayerGrid), With<Player>>,
-    mut objects_query: Query<(&AttachedBlock, &mut Transform), Without<Player>>,
+    player_query: Query<(Entity, &Transform, &PlayerGrid), (With<Player>, Without<AttachedBlock>)>,
+    bot_query: Query<
+        (Entity, &Transform, &PlayerGrid),
+        (With<Bot>, (Without<Player>, Without<AttachedBlock>)),
+    >,
+    mut param_set: ParamSet<(Query<(&AttachedBlock, &mut Transform), Without<Player>>,)>,
 ) {
-    //if let Ok(player_transform) = player_query.get_single() {
-    for (player_transform, player_grid) in player_query.iter() {
-        for (attach, mut transform) in objects_query.iter_mut() {
-            // Calculate the rotated offset
-            let rotated_offset = player_transform.rotation
-                * Vec3::new(
-                    attach.grid_offset.0 as f32 * player_grid.cell_size,
-                    attach.grid_offset.1 as f32 * player_grid.cell_size,
-                    5.0,
-                );
-
-            // Update position and rotation
-            transform.translation = player_transform.translation + rotated_offset;
-            transform.rotation = player_transform.rotation;
+    let mut block_query = param_set.p0();
+    for (attach, mut transform) in block_query.iter_mut() {
+        for (player_entity, player_transform, player_grid) in player_query.iter() {
+            if attach.player_entity == player_entity {
+                update_slave_pos(&player_transform, &player_grid, &mut transform, &attach);
+            }
+        }
+        for (bot_entity, bot_transform, bot_grid) in bot_query.iter() {
+            if attach.player_entity == bot_entity {
+                update_slave_pos(&bot_transform, &bot_grid, &mut transform, &attach);
+            }
         }
     }
 }
+
+fn update_slave_pos(
+    owner_transform: &Transform,
+    owner_grid: &PlayerGrid,
+    slave_transform: &mut Transform,
+    slave_attach: &AttachedBlock,
+) {
+    // Calculate the rotated offset
+    let rotated_offset = owner_transform.rotation
+        * Vec3::new(
+            slave_attach.grid_offset.0 as f32 * owner_grid.cell_size,
+            slave_attach.grid_offset.1 as f32 * owner_grid.cell_size,
+            5.0,
+        );
+
+    // Update position and rotation
+    slave_transform.translation = owner_transform.translation + rotated_offset;
+    slave_transform.rotation = owner_transform.rotation;
+}
+
 pub fn attach_items(
     player_query: Query<(&Transform, &PlayerGrid), With<Player>>,
     mut items_query: Query<(&PlayerAttach, &mut Transform), Without<Player>>,

@@ -1,7 +1,11 @@
-use crate::common::{Bot, Obstacle, BOT_CONFIG, OBSTACLE_CONFIG};
+use crate::common::{
+    AttachedBlock, Block, Bot, Obstacle, PlayerGrid, BLOCK_CONFIG, BOT_CONFIG, OBSTACLE_CONFIG,
+};
 use crate::db_connection::{load_bots, update_bot_position, CtxWrapper};
+use crate::grid::increment_grid_pos;
 use bevy::prelude::*;
 use spacetimedb_sdk::Identity;
+use std::collections::HashMap;
 
 pub fn spawn_bots(
     mut commands: Commands,
@@ -18,7 +22,7 @@ pub fn spawn_bots(
         for (x, y, bot_id) in bots {
             println!("[BOTS] Spawning bot {} at ({}, {})", bot_id, x, y);
 
-            commands.spawn((
+            let bot_entity = commands.spawn((
                 Sprite {
                     custom_size: Some(BOT_CONFIG.size),
                     image: asset_server.load(BOT_CONFIG.path),
@@ -30,7 +34,40 @@ pub fn spawn_bots(
                     spawn_point: Vec2 { x, y },
                     movement_speed: BOT_CONFIG.movement_speed,
                 },
+                PlayerGrid {
+                    block_position: HashMap::new(),
+                    grid_size: (1, 1),
+                    cell_size: 84.,
+                    next_free_pos: (-1, 0),
+                },
             ));
+        }
+    }
+}
+
+pub fn spawn_bot_blocks(
+    mut bots_query: Query<(Entity, &mut PlayerGrid), With<Bot>>,
+    mut commands: Commands,
+    asset_server: Res<AssetServer>,
+) {
+    println!("spawn_bot_blocks run here --------------");
+    for (bot_entity, mut bot_grid) in bots_query.iter_mut() {
+        println!("Spawning for bot: {}", bot_entity);
+        for x in 0..3 {
+            commands.spawn((
+                Sprite {
+                    custom_size: Some(BLOCK_CONFIG.size),
+                    image: asset_server.load(BLOCK_CONFIG.path),
+                    ..default()
+                },
+                Transform::from_xyz(0., 0., 1.0),
+                Block {},
+                AttachedBlock {
+                    grid_offset: bot_grid.next_free_pos,
+                    player_entity: bot_entity,
+                },
+            ));
+            increment_grid_pos(&mut bot_grid);
         }
     }
 }

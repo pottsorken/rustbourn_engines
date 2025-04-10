@@ -152,33 +152,14 @@ pub fn player_movement(
                 attached_block_query.iter()
             {
                 if attached_block_link.player_entity == player_entity {
-                    //let mut new_rotation = transform.clone();
-
-                    //if rotation_dir != 0.0 {
-                    //    new_rotation
-                    //        .rotate_z(rotation_dir * player.rotation_speed * time.delta_secs());
-                    //}
-
                     let rotated_offset = next_frame_pos.rotation
                         * Vec3::new(
                             attached_block_link.grid_offset.0 as f32 * grid.cell_size,
                             attached_block_link.grid_offset.1 as f32 * grid.cell_size,
                             5.0,
                         );
-                    //* rotation_dir
-                    //* player.rotation_speed
-                    //* time.delta_secs()
-                    //* 4.;
 
-                    //let mut block_transform_copy = attached_block_transform.translation.clone();
-
-                    let new_block_pos = (next_frame_pos.translation)
-                        //+ move_direction * player.movement_speed * time.delta_secs());
-                    + (rotated_offset);
-                    //
-                    //* rotation_dir
-                    //* player.rotation_speed
-                    //* time.delta_secs());
+                    let new_block_pos = (next_frame_pos.translation) + (rotated_offset);
 
                     blocks_collided_obstacles = check_collision(
                         new_block_pos.truncate(),
