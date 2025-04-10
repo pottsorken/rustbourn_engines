@@ -174,7 +174,7 @@ pub fn hook_collision_system(
 pub fn spawn_opponent_hook(
     mut commands: &mut Commands,
     asset_server: &Res<AssetServer>,
-    existing_hooks_query: &Query<(&OpponentHook)>,
+    existing_hooks_query: &Query<&OpponentHook>,
     opponent_id: &Identity,
     local_player_id: &Identity,
     x: f32,
@@ -186,10 +186,9 @@ pub fn spawn_opponent_hook(
     }
 
     // Don't spawn already existing hooks
-    for (hook) in existing_hooks_query.iter() {
+    for hook in existing_hooks_query.iter() {
         if hook.id == *opponent_id {
             return; // Hook already exists
-            println!("Works?");
         }
     }
 
@@ -220,6 +219,27 @@ pub fn update_opponent_hook(
             transform.translation.y = y;
             transform.rotation = Quat::from_rotation_z(rotation).normalize();
             sprite.custom_size = Some(bevy::prelude::Vec2::new(width, height));
+        }
+    }
+}
+
+pub fn despawn_opponent_hooks(
+    mut commands: Commands,
+    ctx_wrapper: Res<CtxWrapper>,
+    query: Query<(Entity, &OpponentHook)>,
+) {
+    // List all online players
+    let online_players: Vec<Identity> = ctx_wrapper
+        .ctx
+        .db
+        .player()
+        .iter()
+        .map(|player| player.identity)
+        .collect();
+
+    for (entity, hook) in query.iter() {
+        if !online_players.contains(&hook.id) {
+            commands.entity(entity).despawn();
         }
     }
 }
