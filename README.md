@@ -40,12 +40,12 @@ A 2D multiplayer base building game built with **Rust**, **Bevy**, and **Spaceti
 
    #Run the game client:
    cd client
-   cargo run -- --host 127.0.0.1 --port 3000 --clear
+   cargo run -- --ip 127.0.0.1 --port 3000 --clear
    ```
 # Command Line Options
 Option|	Description	|                            Default
 --- | --- | ---
--h	   | Server host IP address	   |             127.0.0.1
+-i	   | Server host IP address	   |             127.0.0.1
 -p	   | Server port number |	                    3000
 -c    |  Clear spacetime authentication token  |  false
 
