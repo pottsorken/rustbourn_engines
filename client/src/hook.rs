@@ -85,23 +85,12 @@ pub fn hook_controls(
 
             sprite.custom_size = Some(Vec2::new(sprite.custom_size.unwrap().x, next_height));
 
-            if let Some(player) = ctx.ctx.db.player().identity().find(&ctx.ctx.identity()) {
-                let current_rotation = player.hook.rotation;
+            sprite.custom_size = Some(bevy::prelude::Vec2::new(size.x, new_height));
 
-                ctx.ctx
-                    .reducers()
-                    .update_hook_position(
-                        ctx.ctx.identity(),
-                        vec_2_type::Vec2 {
-                            x: transform.translation.x,
-                            y: transform.translation.y + y_offset,
-                        },
-                        player.hook.rotation,
-                        size.x,
-                        new_height,
-                    )
-                    .unwrap();
-            }
+            ctx.ctx
+                .reducers()
+                .update_hook_movement(ctx.ctx.identity(), size.x, new_height)
+                .unwrap();
         }
     }
 }
@@ -172,7 +161,7 @@ pub fn hook_collision_system(
     }
 }
 pub fn spawn_opponent_hook(
-    mut commands: &mut Commands,
+    commands: &mut Commands,
     asset_server: &Res<AssetServer>,
     existing_hooks_query: &Query<&OpponentHook>,
     opponent_id: &Identity,
