@@ -44,7 +44,7 @@ pub fn spawn_opponent(
         //    layout: asset_server.load("sprites/top-view/robot_3Dblue.png"),
         //    index: 0,
         //}, -- NOTE: If asset-chart is ever used
-        Transform::from_xyz(x, y, 20.0)
+        Transform::from_xyz(x, y, 2.0)
             .with_scale(Vec3::new(1.0, 1.0, 1.0))
             .with_rotation(Quat::from_rotation_z(rotation)),
         Opponent {
