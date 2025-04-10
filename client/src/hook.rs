@@ -66,10 +66,8 @@ pub fn hook_controls(
             sprite.custom_size = Some(bevy::prelude::Vec2::new(size.x, new_height));
             
             if let Some(player) = ctx.ctx.db.player().identity().find(&ctx.ctx.identity()) {
-                ctx.ctx.reducers().update_hook_position(
+                ctx.ctx.reducers().update_hook_movement(
                     ctx.ctx.identity(),
-                    vec_2_type::Vec2 { x: transform.translation.x, y: transform.translation.y },
-                    player.hook.rotation,
                     size.x,
                     new_height,
                 ).unwrap();

@@ -16,6 +16,7 @@ pub mod player_table;
 pub mod player_type;
 pub mod reset_bots_if_no_players_online_reducer;
 pub mod update_bot_position_reducer;
+pub mod update_hook_movement_reducer;
 pub mod update_hook_position_reducer;
 pub mod update_player_position_reducer;
 pub mod vec_2_type;
@@ -41,6 +42,9 @@ pub use reset_bots_if_no_players_online_reducer::{
 pub use update_bot_position_reducer::{
     set_flags_for_update_bot_position, update_bot_position, UpdateBotPositionCallbackId,
 };
+pub use update_hook_movement_reducer::{
+    set_flags_for_update_hook_movement, update_hook_movement, UpdateHookMovementCallbackId,
+};
 pub use update_hook_position_reducer::{
     set_flags_for_update_hook_position, update_hook_position, UpdateHookPositionCallbackId,
 };
@@ -64,12 +68,15 @@ pub enum Reducer {
         bevy_transform: BevyTransform,
         bot_id: u64,
     },
+    UpdateHookMovement {
+        identity: __sdk::Identity,
+        width: f32,
+        height: f32,
+    },
     UpdateHookPosition {
         identity: __sdk::Identity,
         position: Vec2,
         rotation: f32,
-        width: f32,
-        height: f32,
     },
     UpdatePlayerPosition {
         bevy_transform: BevyTransform,
@@ -87,6 +94,7 @@ impl __sdk::Reducer for Reducer {
             Reducer::PlayerDisconnected => "player_disconnected",
             Reducer::ResetBotsIfNoPlayersOnline => "reset_bots_if_no_players_online",
             Reducer::UpdateBotPosition { .. } => "update_bot_position",
+            Reducer::UpdateHookMovement { .. } => "update_hook_movement",
             Reducer::UpdateHookPosition { .. } => "update_hook_position",
             Reducer::UpdatePlayerPosition { .. } => "update_player_position",
         }
@@ -113,6 +121,10 @@ impl TryFrom<__ws::ReducerCallInfo<__ws::BsatnFormat>> for Reducer {
             "update_bot_position" => Ok(__sdk::parse_reducer_args::<
                 update_bot_position_reducer::UpdateBotPositionArgs,
             >("update_bot_position", &value.args)?
+            .into()),
+            "update_hook_movement" => Ok(__sdk::parse_reducer_args::<
+                update_hook_movement_reducer::UpdateHookMovementArgs,
+            >("update_hook_movement", &value.args)?
             .into()),
             "update_hook_position" => Ok(__sdk::parse_reducer_args::<
                 update_hook_position_reducer::UpdateHookPositionArgs,

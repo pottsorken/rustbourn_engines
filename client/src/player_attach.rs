@@ -30,8 +30,6 @@ pub fn attatch_objects(
                     ctx_wrapper.ctx.identity(),
                     vec_2_type::Vec2 { x: x, y: y },
                     rotation,
-                    player.hook.width,
-                    player.hook.height,
                 ).unwrap();
             }
         }
