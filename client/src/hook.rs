@@ -47,7 +47,10 @@ pub fn hook_controls(
         (&mut Sprite, &mut Transform, &Hook),
         (With<Hook>, Without<Obstacle>, Without<Block>),
     >,
-    block_query: Query<(Entity, &Transform), (With<Block>, Without<AttachedBlock>)>,
+    mut block_query: Query<
+        (Entity, &Transform, Option<&mut AttachedBlock>),
+        (With<Block>, Without<Player>),
+    >,
     mut player_query: Query<
         (Entity, &Transform, &mut Player, &mut PlayerGrid),
         (Without<Obstacle>, Without<Block>, Without<Hook>),
@@ -88,7 +91,9 @@ pub fn hook_controls(
             {
                 let mut collided_with_block = false;
 
-                for (block_entity, block_transform) in block_query.iter() {
+                for (block_entity, block_transform, mut attach_link_option) in
+                    block_query.iter_mut()
+                {
                     let block_radius = BLOCK_CONFIG.size.x.min(BLOCK_CONFIG.size.y) / 2.0;
                     let hook_radius = 5.0; // Hook tip radius
                     let collision_distance = block_radius + hook_radius;
@@ -104,16 +109,23 @@ pub fn hook_controls(
                             && player.block_count < PLAYER_CONFIG.max_block_count
                         {
                             let nextpos = grid.next_free_pos.clone();
-                            commands.entity(block_entity).insert(AttachedBlock {
-                                grid_offset: nextpos, // WARN: subject to change constants
-                                player_entity: _player_entity,
-                            });
+
+                            // NOTE: If block is attached or not. (Option<AttachedBlock>)
+                            if let Some(mut attach_link) = attach_link_option {
+                                attach_link.player_entity = _player_entity;
+                                // TODO: Remove entity from previous owner hashmap
+                                attach_link.grid_offset = nextpos;
+                            } else {
+                                commands.entity(block_entity).insert(AttachedBlock {
+                                    grid_offset: nextpos, // WARN: subject to change constants
+                                    player_entity: _player_entity,
+                                });
+                            }
                             grid.block_position.insert(nextpos, block_entity);
                             println!(
                                 "Attach at gridpos ({}, {})",
                                 grid.next_free_pos.0, grid.next_free_pos.1
                             );
-
                             // increment grid pos
                             increment_grid_pos(&mut grid);
 
