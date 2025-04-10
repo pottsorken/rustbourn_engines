@@ -227,7 +227,7 @@ pub fn update_opponent_hooks(
     mut commands: Commands,
     asset_server: Res<AssetServer>,
     mut query: Query<(&mut Sprite, &mut Transform, &OpponentHook), With<OpponentHook>>,
-    existing_hooks_query: Query<(&OpponentHook)>,
+    existing_hooks_query: Query<&OpponentHook>,
     despawn_query: Query<(Entity, &OpponentHook)>,
 ){
     let players = ctx_wrapper.ctx.db.player().iter().collect::<Vec<_>>();

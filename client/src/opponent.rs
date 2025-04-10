@@ -56,7 +56,7 @@ pub fn spawn_opponent(
 }
 
 pub fn update_opponent(
-    mut query: &mut Query<(&mut Transform, &Opponent)>,
+    query: &mut Query<(&mut Transform, &Opponent)>,
     id: &Identity,
     x: f32,
     y: f32,

@@ -65,19 +65,17 @@ pub fn hook_controls(
 
             sprite.custom_size = Some(bevy::prelude::Vec2::new(size.x, new_height));
             
-            if let Some(player) = ctx.ctx.db.player().identity().find(&ctx.ctx.identity()) {
-                ctx.ctx.reducers().update_hook_movement(
-                    ctx.ctx.identity(),
-                    size.x,
-                    new_height,
-                ).unwrap();
-            }
+            ctx.ctx.reducers().update_hook_movement(
+                ctx.ctx.identity(),
+                size.x,
+                new_height,
+            ).unwrap();
         }
     }
 }
 
 pub fn spawn_opponent_hook(
-    mut commands: &mut Commands,
+    commands: &mut Commands,
     asset_server: &Res<AssetServer>,
     existing_hooks_query: &Query<&OpponentHook>,
     opponent_id: &Identity,
