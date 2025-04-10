@@ -1,20 +1,11 @@
 use crate::common::{
-    Obstacle, 
-    Block, 
-    Hook, 
-    Player, 
-    PlayerGrid,
-    AttachedBlock,
-    PlayerAttach, 
-    MAP_CONFIG, 
-    OBSTACLE_CONFIG, 
-    BLOCK_CONFIG, 
-    PLAYER_CONFIG
+    AttachedBlock, Block, Hook, Obstacle, Player, PlayerAttach, PlayerGrid, BLOCK_CONFIG,
+    MAP_CONFIG, OBSTACLE_CONFIG, PLAYER_CONFIG,
 };
 use crate::db_connection::{update_player_position, CtxWrapper};
+use crate::module_bindings::Vec2 as DBVec2;
 use crate::player_attach::*;
 use bevy::math::Vec2 as BevyVec2;
-use crate::module_bindings::Vec2 as DBVec2;
 use bevy::prelude::*;
 use bevy::window::PrimaryWindow;
 use std::collections::HashMap;
@@ -91,53 +82,6 @@ pub fn attach_block(
             let move_direction = transform.rotation * move_dir.normalize();
             let new_pos =
                 transform.translation + move_direction * player.movement_speed * time.delta_secs();
-
-            // NOTE: Block collision here
-            let mut collided_with_block = false;
-            for (block_entity, mut block_transform) in block_query.iter_mut() {
-                let block_radius = BLOCK_CONFIG.size.x.min(BLOCK_CONFIG.size.y) / 2.0;
-                let player_radius = PLAYER_CONFIG.size.x.min(PLAYER_CONFIG.size.y) / 2.0;
-                let collision_distance = block_radius + player_radius;
-
-                if new_pos
-                    .truncate()
-                    .distance(block_transform.translation.truncate())
-                    < collision_distance
-                {
-                    collided_with_block = true;
-
-                    let nextpos = grid.next_free_pos.clone();
-                    commands.entity(block_entity).insert(AttachedBlock {
-                        grid_offset: nextpos, // WARN: subject to change constants
-                        player_entity,
-                    });
-                    grid.block_position.insert(nextpos, block_entity);
-                    println!(
-                        "Attach at gridpos ({}, {})",
-                        grid.next_free_pos.0, grid.next_free_pos.1
-                    );
-
-                    // increment grid pos
-                    grid.next_free_pos.0 += 1;
-                    // skip if center block
-                    if grid.next_free_pos == (0, 0) {
-                        grid.next_free_pos.0 += 1;
-                    }
-                    if grid.next_free_pos.0 > grid.grid_size.0 {
-                        grid.next_free_pos.0 = -grid.grid_size.0;
-                        grid.next_free_pos.1 -= 1;
-                    }
-
-                    //block_transform.translation.x += 300.;
-                    //block_transform.translation.y += 300.;
-                    // Check if already attached
-                    //if attachable_blocks.get(block_entity).is_err() && player.max_block_count < 2 {
-                    //let offset = block_transform.translation - transform.translation;
-
-                    //player.max_block_count += 1;
-                    //}
-                }
-            }
         }
     }
 }

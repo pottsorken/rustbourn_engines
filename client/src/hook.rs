@@ -1,5 +1,9 @@
+use crate::common::{
+    AttachedBlock, Block, Hook, Obstacle, Player, PlayerAttach, PlayerGrid, BLOCK_CONFIG,
+    PLAYER_CONFIG,
+};
 use bevy::prelude::*;
-use crate::common::{Hook, Obstacle, Player, Block, PlayerAttach, BLOCK_CONFIG, PLAYER_CONFIG};
+use std::collections::HashMap;
 
 pub fn setup_hook(mut commands: Commands, asset_server: Res<AssetServer>) {
     // Spawn a player sprite at position (0, 0) at a higher z-index than map
@@ -38,9 +42,15 @@ pub fn hook_controls_short(
 
 pub fn hook_controls(
     keyboard_input: Res<ButtonInput<KeyCode>>,
-    mut hook_query: Query<(&mut Sprite, &mut Transform, &Hook), (With<Hook>, Without<Obstacle>, Without<Block>)>,
-    block_query: Query<(Entity, &Transform), With<Block>>,
-    mut player_query: Query<(Entity, &Transform, &mut Player), (Without<Obstacle>, Without<Block>, Without<Hook>)>,
+    mut hook_query: Query<
+        (&mut Sprite, &mut Transform, &Hook),
+        (With<Hook>, Without<Obstacle>, Without<Block>),
+    >,
+    block_query: Query<(Entity, &Transform), (With<Block>, Without<AttachedBlock>)>,
+    mut player_query: Query<
+        (Entity, &Transform, &mut Player, &mut PlayerGrid),
+        (Without<Obstacle>, Without<Block>, Without<Hook>),
+    >,
     attachable_blocks: Query<&PlayerAttach>,
     mut commands: Commands,
     time: Res<Time>,
@@ -69,25 +79,47 @@ pub fn hook_controls(
             transform.translation.y += y_offset;
 
             // Hook tip position
-            let hook_tip = transform.translation + transform.rotation * Vec3::new(0.0, new_height, 0.0);
+            let hook_tip =
+                transform.translation + transform.rotation * Vec3::new(0.0, new_height, 0.0);
 
-            if let Ok((_player_entity, player_transform, mut player)) = player_query.get_single_mut() {
+            if let Ok((_player_entity, player_transform, mut player, mut grid)) =
+                player_query.get_single_mut()
+            {
+                let mut collided_with_block = false;
                 for (block_entity, block_transform) in block_query.iter() {
                     let block_radius = BLOCK_CONFIG.size.x.min(BLOCK_CONFIG.size.y) / 2.0;
                     let hook_radius = 5.0; // Hook tip radius
                     let collision_distance = block_radius + hook_radius;
 
-                    if hook_tip.truncate().distance(block_transform.translation.truncate()) < collision_distance {
+                    if hook_tip
+                        .truncate()
+                        .distance(block_transform.translation.truncate())
+                        < collision_distance
+                    {
                         // Check if block already attached
                         if attachable_blocks.get(block_entity).is_err()
                             && player.block_count < PLAYER_CONFIG.max_block_count
                         {
-                            let offset = block_transform.translation - player_transform.translation;
-                            commands.entity(block_entity).insert(PlayerAttach {
-                                offset: offset.truncate(),
+                            let nextpos = grid.next_free_pos.clone();
+                            commands.entity(block_entity).insert(AttachedBlock {
+                                grid_offset: nextpos, // WARN: subject to change constants
+                                player_entity: _player_entity,
                             });
+                            grid.block_position.insert(nextpos, block_entity);
+                            println!(
+                                "Attach at gridpos ({}, {})",
+                                grid.next_free_pos.0, grid.next_free_pos.1
+                            );
 
-                            player.block_count += 1;
+                            // increment grid pos
+                            grid.next_free_pos.0 += 1;
+                            if grid.next_free_pos == (0, 0) {
+                                grid.next_free_pos.0 += 1;
+                            }
+                            if grid.next_free_pos.0 > grid.grid_size.0 {
+                                grid.next_free_pos.0 = -grid.grid_size.0;
+                                grid.next_free_pos.1 -= 1;
+                            }
                         }
                     }
                 }
