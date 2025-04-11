@@ -38,7 +38,8 @@ pub fn update_player_position(ctx_wrapper: &CtxWrapper, player_transform: &Trans
     //println!("{}", player_transform.rotation.to_euler(EulerRot::XYZ).2);
 }
 
-pub fn update_bot_position(ctx_wrapper: &CtxWrapper, bot_transform: &Transform, bot_id: u64) {
+// db_connection
+pub fn update_bot_position(ctx_wrapper: &CtxWrapper, bot_transform: &Transform, bot_id: u64, new_rotate_dir: f32) {
     ctx_wrapper
         .ctx
         .reducers()
@@ -49,10 +50,13 @@ pub fn update_bot_position(ctx_wrapper: &CtxWrapper, bot_transform: &Transform, 
             },
             rotation: bot_transform.rotation.to_euler(EulerRot::XYZ).2,
             scale: vec_2_type::Vec2 { x: 0.0, y: 0.0 },
-        }, bot_id)
+        }, bot_id
+        , new_rotate_dir
+    )
         .unwrap();
     //println!("{}", player_transform.rotation.to_euler(EulerRot::XYZ).2);
 }
+
 
 pub fn setup_connection(mut commands: Commands, asset_server: Res<AssetServer>) {
     // Connect to the database

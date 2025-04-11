@@ -45,7 +45,7 @@ pub fn spawn_opponent(
         //    index: 0,
         //}, -- NOTE: If asset-chart is ever used
         Transform::from_xyz(x, y, 2.0)
-            .with_scale(Vec3::new(1.0, 1.0, 1.0))
+            .with_scale(bevy::prelude::Vec3::new(1.0, 1.0, 1.0))
             .with_rotation(Quat::from_rotation_z(rotation)),
         Opponent {
             movement_speed: 300.0,                  // meters per second

@@ -35,7 +35,7 @@ use map::setup_tilemap;
 use opponent::despawn_opponents;
 use parse::*;
 use player::{player_movement, setup_player};
-use bots::{spawn_bots, update_bots};
+use bots::{spawn_bots, render_bots_from_db};
 use hook::handle_obstacle_hit;
 
 fn main() {
@@ -68,7 +68,7 @@ fn main() {
                 print_player_positions,
                 hook_controls,
                 attatch_objects,
-                update_bots,
+                render_bots_from_db,
                 update_opponent_hooks,
                 handle_obstacle_hit,
             ),

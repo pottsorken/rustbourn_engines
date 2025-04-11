@@ -24,12 +24,17 @@ pub struct Obstacle {
 }
 
 
+
+
+
 #[spacetimedb::table(name = bots, public)]
 pub struct Bot {
     #[primary_key]
     id: u64,
     position: BevyTransform,
     alive: bool,   // instead of online we have alive that checks if that specific bot is alive
+    movement_dir: Vec3,
+    rotation_dir: f32, 
 }
 
 // Hook component data
@@ -55,6 +60,16 @@ pub struct Vec2 {
     x: f32,
     y: f32,
 }
+
+// New
+// Vector with x, y coordinates
+#[derive(Debug, SpacetimeType)]
+pub struct Vec3 {
+    x: f32,
+    y: f32,
+    z: f32,
+}
+
 
 //Reducer for damaging obstacle
 #[spacetimedb::reducer]
@@ -136,6 +151,7 @@ pub fn update_bot_position(
     ctx: &ReducerContext,
     bevy_transform: BevyTransform,
     bot_id: u64,
+    new_rotate_dir: f32
 ) -> Result<(), String> {
     log::info!(
         "Code reaches this point! --------{:?}------",
@@ -144,6 +160,7 @@ pub fn update_bot_position(
     if let Some(mut _bot) = ctx.db.bots().iter().find(|b| b.id == bot_id){
 
         _bot.position = bevy_transform;
+        _bot.rotation_dir = new_rotate_dir;
 
         ctx.db.bots().id().update(_bot);
 
@@ -266,6 +283,8 @@ fn generate_bots(ctx: &ReducerContext){
             id: bot_id,
             position: bot_transform,
             alive: true, // Bots are alive when generated
+            movement_dir: Vec3{x: 0.5, y: 0.0, z: 0.0},
+            rotation_dir: 0.0,
         });
 
     }

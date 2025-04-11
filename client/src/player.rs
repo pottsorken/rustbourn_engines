@@ -71,7 +71,7 @@ pub fn player_movement(
         }
 
         // Handle movement with W/S keys (forward/backward relative to rotation)
-        let mut move_dir = Vec3::ZERO;
+        let mut move_dir = bevy::prelude::Vec3::ZERO;
         if keyboard_input.pressed(KeyCode::KeyW) || keyboard_input.pressed(KeyCode::ArrowUp) {
             move_dir.y += 1.0;
         }
@@ -80,7 +80,7 @@ pub fn player_movement(
         }
 
         // Apply movement relative to player's rotation
-        if move_dir != Vec3::ZERO {
+        if move_dir != bevy::prelude::Vec3::ZERO {
             let move_direction = transform.rotation * move_dir.normalize();
             let new_pos = transform.translation
                 + move_direction * PLAYER_CONFIG.movement_speed * time.delta_secs();

@@ -169,7 +169,7 @@ pub fn handle_obstacle_hit(
 
         for (obstacle, obstacle_transform) in &obstacle_query {
             let obstacle_pos = obstacle_transform.translation.truncate();
-            let obstacle_pos_3d = Vec3::new(obstacle_pos.x, obstacle_pos.y, 0.0);
+            let obstacle_pos_3d = bevy::prelude::Vec3::new(obstacle_pos.x, obstacle_pos.y, 0.0);
             let distance = hook_tip.distance(obstacle_pos_3d);
 
             if distance < (hook_radius + obstacle_radius) {

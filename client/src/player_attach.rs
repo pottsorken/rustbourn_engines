@@ -15,7 +15,7 @@ pub fn attatch_objects(
     if let Ok(player_transform) = player_query.get_single() {
         for (attach, mut transform) in objects_query.iter_mut() {
             // Calculate the rotated offset
-            let rotated_offset = player_transform.rotation * Vec3::new(attach.offset.x, attach.offset.y, 5.0);
+            let rotated_offset = player_transform.rotation * bevy::prelude::Vec3::new(attach.offset.x, attach.offset.y, 5.0);
             
             // Update position and rotation
             transform.translation = player_transform.translation + rotated_offset;
