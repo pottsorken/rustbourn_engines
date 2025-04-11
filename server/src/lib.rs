@@ -1,6 +1,7 @@
 use spacetimedb::{
-    reducer, spacetimedb_lib::db, table, DbContext, Identity, ReducerContext, SpacetimeType, Table,
-    Timestamp,
+    reducer,
+    spacetimedb_lib::{db, identity},
+    table, DbContext, Identity, ReducerContext, SpacetimeType, Table, Timestamp,
 };
 
 use noise::{NoiseFn, Perlin};
@@ -12,12 +13,15 @@ pub struct Player {
     identity: Identity,
     position: BevyTransform,
     online: bool,
+    hook: Hook,
 }
 
 #[spacetimedb::table(name = obstacle, public)]
 pub struct Obstacle {
     position: Vec2,
+    #[primary_key]
     id: u64,
+    hp: u32,
 }
 
 #[spacetimedb::table(name = bots, public)]
@@ -26,6 +30,17 @@ pub struct Bot {
     id: u64,
     position: BevyTransform,
     alive: bool, // instead of online we have alive that checks if that specific bot is alive
+    movement_dir: Vec3,
+    rotation_dir: f32,
+}
+
+// Hook component data
+#[derive(Debug, SpacetimeType)]
+pub struct Hook {
+    position: Vec2,
+    rotation: f32,
+    width: f32,
+    height: f32,
 }
 
 // Bevy transform data
@@ -41,6 +56,64 @@ pub struct BevyTransform {
 pub struct Vec2 {
     x: f32,
     y: f32,
+}
+
+// New
+// Vector with x, y coordinates
+#[derive(Debug, SpacetimeType)]
+pub struct Vec3 {
+    x: f32,
+    y: f32,
+    z: f32,
+}
+
+//Reducer for damaging obstacle
+#[spacetimedb::reducer]
+pub fn damage_obstacle(ctx: &ReducerContext, id: u64, damage: u32) -> Result<(), String> {
+    if let Some(mut obstacle) = ctx.db.obstacle().id().find(id) {
+        obstacle.hp = obstacle.hp.saturating_sub(damage);
+        ctx.db.obstacle().id().update(obstacle);
+        Ok(())
+    } else {
+        Err("Obstacle does not exist!".to_string())
+    }
+}
+
+// Reducer for updating hook position
+#[spacetimedb::reducer]
+pub fn update_hook_position(
+    ctx: &ReducerContext,
+    identity: Identity,
+    position: Vec2,
+    rotation: f32,
+) -> Result<(), String> {
+    // Find player by id
+    if let Some(mut player) = ctx.db.player().identity().find(identity) {
+        // Update player hook position
+        player.hook.position = position;
+        player.hook.rotation = rotation;
+        ctx.db.player().identity().update(player);
+        Ok(())
+    } else {
+        Err("Player not found".to_string())
+    }
+}
+
+#[spacetimedb::reducer]
+pub fn update_hook_movement(
+    ctx: &ReducerContext,
+    identity: Identity,
+    width: f32,
+    height: f32,
+) -> Result<(), String> {
+    if let Some(mut player) = ctx.db.player().identity().find(identity) {
+        player.hook.width = width;
+        player.hook.height = height;
+        ctx.db.player().identity().update(player);
+        Ok(())
+    } else {
+        Err("Player not found".to_string())
+    }
 }
 
 // Reducer for updating player position
@@ -70,6 +143,7 @@ pub fn update_bot_position(
     ctx: &ReducerContext,
     bevy_transform: BevyTransform,
     bot_id: u64,
+    new_rotate_dir: f32,
 ) -> Result<(), String> {
     log::info!(
         "Code reaches this point! --------{:?}------",
@@ -77,6 +151,7 @@ pub fn update_bot_position(
     );
     if let Some(mut _bot) = ctx.db.bots().iter().find(|b| b.id == bot_id) {
         _bot.position = bevy_transform;
+        _bot.rotation_dir = new_rotate_dir;
 
         ctx.db.bots().id().update(_bot);
 
@@ -132,6 +207,12 @@ pub fn player_connected(ctx: &ReducerContext) {
                 scale: Vec2 { x: 50.0, y: 100.0 },
             },
             online: true,
+            hook: Hook {
+                position: Vec2 { x: 0.0, y: 0.0 },
+                rotation: 0.0,
+                width: 0.0,
+                height: 0.0,
+            },
         });
     }
 }
@@ -180,6 +261,12 @@ fn generate_bots(ctx: &ReducerContext) {
             id: bot_id,
             position: bot_transform,
             alive: true, // Bots are alive when generated
+            movement_dir: Vec3 {
+                x: 0.5,
+                y: 0.0,
+                z: 0.0,
+            },
+            rotation_dir: 0.0,
         });
     }
 }
@@ -207,6 +294,7 @@ fn generate_obstacles(ctx: &ReducerContext) {
                 y: random_y,
             },
             id: i,
+            hp: 100,
         });
     }
 }

@@ -7,6 +7,8 @@ use spacetimedb_sdk::__codegen::{self as __sdk, __lib, __sats, __ws};
 pub mod bevy_transform_type;
 pub mod bot_type;
 pub mod bots_table;
+pub mod damage_obstacle_reducer;
+pub mod hook_type;
 pub mod obstacle_table;
 pub mod obstacle_type;
 pub mod player_connected_reducer;
@@ -15,12 +17,19 @@ pub mod player_table;
 pub mod player_type;
 pub mod reset_bots_if_no_players_online_reducer;
 pub mod update_bot_position_reducer;
+pub mod update_hook_movement_reducer;
+pub mod update_hook_position_reducer;
 pub mod update_player_position_reducer;
 pub mod vec_2_type;
+pub mod vec_3_type;
 
 pub use bevy_transform_type::BevyTransform;
 pub use bot_type::Bot;
 pub use bots_table::*;
+pub use damage_obstacle_reducer::{
+    damage_obstacle, set_flags_for_damage_obstacle, DamageObstacleCallbackId,
+};
+pub use hook_type::Hook;
 pub use obstacle_table::*;
 pub use obstacle_type::Obstacle;
 pub use player_connected_reducer::{
@@ -38,10 +47,17 @@ pub use reset_bots_if_no_players_online_reducer::{
 pub use update_bot_position_reducer::{
     set_flags_for_update_bot_position, update_bot_position, UpdateBotPositionCallbackId,
 };
+pub use update_hook_movement_reducer::{
+    set_flags_for_update_hook_movement, update_hook_movement, UpdateHookMovementCallbackId,
+};
+pub use update_hook_position_reducer::{
+    set_flags_for_update_hook_position, update_hook_position, UpdateHookPositionCallbackId,
+};
 pub use update_player_position_reducer::{
     set_flags_for_update_player_position, update_player_position, UpdatePlayerPositionCallbackId,
 };
 pub use vec_2_type::Vec2;
+pub use vec_3_type::Vec3;
 
 #[derive(Clone, PartialEq, Debug)]
 
@@ -51,12 +67,27 @@ pub use vec_2_type::Vec2;
 /// to indicate which reducer caused the event.
 
 pub enum Reducer {
+    DamageObstacle {
+        id: u64,
+        damage: u32,
+    },
     PlayerConnected,
     PlayerDisconnected,
     ResetBotsIfNoPlayersOnline,
     UpdateBotPosition {
         bevy_transform: BevyTransform,
         bot_id: u64,
+        new_rotate_dir: f32,
+    },
+    UpdateHookMovement {
+        identity: __sdk::Identity,
+        width: f32,
+        height: f32,
+    },
+    UpdateHookPosition {
+        identity: __sdk::Identity,
+        position: Vec2,
+        rotation: f32,
     },
     UpdatePlayerPosition {
         bevy_transform: BevyTransform,
@@ -70,10 +101,13 @@ impl __sdk::InModule for Reducer {
 impl __sdk::Reducer for Reducer {
     fn reducer_name(&self) -> &'static str {
         match self {
+            Reducer::DamageObstacle { .. } => "damage_obstacle",
             Reducer::PlayerConnected => "player_connected",
             Reducer::PlayerDisconnected => "player_disconnected",
             Reducer::ResetBotsIfNoPlayersOnline => "reset_bots_if_no_players_online",
             Reducer::UpdateBotPosition { .. } => "update_bot_position",
+            Reducer::UpdateHookMovement { .. } => "update_hook_movement",
+            Reducer::UpdateHookPosition { .. } => "update_hook_position",
             Reducer::UpdatePlayerPosition { .. } => "update_player_position",
         }
     }
@@ -82,6 +116,10 @@ impl TryFrom<__ws::ReducerCallInfo<__ws::BsatnFormat>> for Reducer {
     type Error = __sdk::Error;
     fn try_from(value: __ws::ReducerCallInfo<__ws::BsatnFormat>) -> __sdk::Result<Self> {
         match &value.reducer_name[..] {
+            "damage_obstacle" => Ok(__sdk::parse_reducer_args::<
+                damage_obstacle_reducer::DamageObstacleArgs,
+            >("damage_obstacle", &value.args)?
+            .into()),
             "player_connected" => Ok(__sdk::parse_reducer_args::<
                 player_connected_reducer::PlayerConnectedArgs,
             >("player_connected", &value.args)?
@@ -99,6 +137,14 @@ impl TryFrom<__ws::ReducerCallInfo<__ws::BsatnFormat>> for Reducer {
             "update_bot_position" => Ok(__sdk::parse_reducer_args::<
                 update_bot_position_reducer::UpdateBotPositionArgs,
             >("update_bot_position", &value.args)?
+            .into()),
+            "update_hook_movement" => Ok(__sdk::parse_reducer_args::<
+                update_hook_movement_reducer::UpdateHookMovementArgs,
+            >("update_hook_movement", &value.args)?
+            .into()),
+            "update_hook_position" => Ok(__sdk::parse_reducer_args::<
+                update_hook_position_reducer::UpdateHookPositionArgs,
+            >("update_hook_position", &value.args)?
             .into()),
             "update_player_position" => Ok(__sdk::parse_reducer_args::<
                 update_player_position_reducer::UpdatePlayerPositionArgs,
@@ -163,7 +209,9 @@ impl __sdk::DbUpdate for DbUpdate {
         diff.bots = cache
             .apply_diff_to_table::<Bot>("bots", &self.bots)
             .with_updates_by_pk(|row| &row.id);
-        diff.obstacle = cache.apply_diff_to_table::<Obstacle>("obstacle", &self.obstacle);
+        diff.obstacle = cache
+            .apply_diff_to_table::<Obstacle>("obstacle", &self.obstacle)
+            .with_updates_by_pk(|row| &row.id);
         diff.player = cache
             .apply_diff_to_table::<Player>("player", &self.player)
             .with_updates_by_pk(|row| &row.identity);

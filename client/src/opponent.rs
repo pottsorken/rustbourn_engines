@@ -1,15 +1,7 @@
 use bevy::prelude::*;
 
-use crate::{
-    db_connection::CtxWrapper, 
-    module_bindings::*,
-    common::Opponent,
-};
-use spacetimedb_sdk::{
-    Identity,
-    Table,
-};
-
+use crate::{common::Opponent, db_connection::CtxWrapper, module_bindings::*};
+use spacetimedb_sdk::{Identity, Table};
 
 pub fn spawn_opponent(
     commands: &mut Commands,
@@ -41,8 +33,8 @@ pub fn spawn_opponent(
         //    layout: asset_server.load("sprites/top-view/robot_3Dblue.png"),
         //    index: 0,
         //}, -- NOTE: If asset-chart is ever used
-        Transform::from_xyz(x, y, 20.0)
-            .with_scale(Vec3::new(1.0, 1.0, 1.0))
+        Transform::from_xyz(x, y, 2.0)
+            .with_scale(bevy::prelude::Vec3::new(1.0, 1.0, 1.0))
             .with_rotation(Quat::from_rotation_z(rotation)),
         Opponent {
             movement_speed: 300.0,                  // meters per second
@@ -77,9 +69,9 @@ pub fn despawn_opponents(
     mut commands: Commands,
     ctx_wrapper: Res<CtxWrapper>,
     query: Query<(Entity, &Opponent)>,
-){
+) {
     // List all online players
-    let online_players: Vec::<Identity> = ctx_wrapper
+    let online_players: Vec<Identity> = ctx_wrapper
         .ctx
         .db
         .player()
@@ -87,9 +79,10 @@ pub fn despawn_opponents(
         .map(|player| player.identity)
         .collect();
 
-    for (entity, opponent) in query.iter(){
-        if !online_players.contains(&opponent.id){
+    for (entity, opponent) in query.iter() {
+        if !online_players.contains(&opponent.id) {
             commands.entity(entity).despawn();
         }
     }
 }
+

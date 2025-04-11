@@ -1,6 +1,13 @@
 use bevy::prelude::*;
 
-use crate::common::{AttachedBlock, Bot, Hook, Player, PlayerAttach, PlayerGrid, PLAYER_CONFIG};
+use crate::module_bindings::*;
+use crate::{
+    common::{AttachedBlock, Bot, Hook, Player, PlayerAttach, PlayerGrid, PLAYER_CONFIG},
+    db_connection::CtxWrapper,
+};
+use spacetimedb_sdk::{
+    credentials, DbContext, Error, Event, Identity, Status, Table, TableWithPrimaryKey,
+};
 
 pub fn attach_objects(
     player_query: Query<(Entity, &Transform, &PlayerGrid), (With<Player>, Without<AttachedBlock>)>,
@@ -33,7 +40,7 @@ fn update_slave_pos(
 ) {
     // Calculate the rotated offset
     let rotated_offset = owner_transform.rotation
-        * Vec3::new(
+        * bevy::prelude::Vec3::new(
             slave_attach.grid_offset.0 as f32 * owner_grid.cell_size,
             slave_attach.grid_offset.1 as f32 * owner_grid.cell_size,
             5.0,
@@ -47,26 +54,42 @@ fn update_slave_pos(
 pub fn attach_items(
     player_query: Query<(&Transform, &PlayerGrid), With<Player>>,
     mut items_query: Query<(&PlayerAttach, &mut Transform), Without<Player>>,
+    ctx_wrapper: Res<CtxWrapper>,
 ) {
     //if let Ok(player_transform) = player_query.get_single() {
     for (player_transform, player_grid) in player_query.iter() {
         for (attach, mut transform) in items_query.iter_mut() {
             // Calculate the rotated offset
+
             let rotated_offset = player_transform.rotation
-                * Vec3::new(attach.offset.x as f32, attach.offset.y as f32, 5.0);
+                * bevy::prelude::Vec3::new(attach.offset.x as f32, attach.offset.y as f32, 5.0);
 
             // Update position and rotation
             transform.translation = player_transform.translation + rotated_offset;
             transform.rotation = player_transform.rotation;
+
+            let x = transform.translation.x;
+            let y = transform.translation.y;
+            let rotation = transform.rotation.to_euler(EulerRot::XYZ).2;
+
+            ctx_wrapper
+                .ctx
+                .reducers()
+                .update_hook_position(
+                    ctx_wrapper.ctx.identity(),
+                    vec_2_type::Vec2 { x: x, y: y },
+                    rotation,
+                )
+                .unwrap();
         }
     }
 }
 
 pub fn check_collision<T: Component>(
-    new_pos: Vec2,
+    new_pos: bevy::prelude::Vec2,
     targets: &Query<&Transform, With<T>>,
-    origin_size: Vec2,
-    target_size: Vec2,
+    origin_size: bevy::prelude::Vec2,
+    target_size: bevy::prelude::Vec2,
 ) -> bool {
     let origin_radius = origin_size.x.min(origin_size.y) / 2.0;
     let target_radius = target_size.x.min(target_size.y) / 2.0;

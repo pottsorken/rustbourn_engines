@@ -11,6 +11,7 @@ use super::bevy_transform_type::BevyTransform;
 pub(super) struct UpdateBotPositionArgs {
     pub bevy_transform: BevyTransform,
     pub bot_id: u64,
+    pub new_rotate_dir: f32,
 }
 
 impl From<UpdateBotPositionArgs> for super::Reducer {
@@ -18,6 +19,7 @@ impl From<UpdateBotPositionArgs> for super::Reducer {
         Self::UpdateBotPosition {
             bevy_transform: args.bevy_transform,
             bot_id: args.bot_id,
+            new_rotate_dir: args.new_rotate_dir,
         }
     }
 }
@@ -38,7 +40,12 @@ pub trait update_bot_position {
     /// This method returns immediately, and errors only if we are unable to send the request.
     /// The reducer will run asynchronously in the future,
     ///  and its status can be observed by listening for [`Self::on_update_bot_position`] callbacks.
-    fn update_bot_position(&self, bevy_transform: BevyTransform, bot_id: u64) -> __sdk::Result<()>;
+    fn update_bot_position(
+        &self,
+        bevy_transform: BevyTransform,
+        bot_id: u64,
+        new_rotate_dir: f32,
+    ) -> __sdk::Result<()>;
     /// Register a callback to run whenever we are notified of an invocation of the reducer `update_bot_position`.
     ///
     /// Callbacks should inspect the [`__sdk::ReducerEvent`] contained in the [`super::ReducerEventContext`]
@@ -48,7 +55,7 @@ pub trait update_bot_position {
     /// to cancel the callback.
     fn on_update_bot_position(
         &self,
-        callback: impl FnMut(&super::ReducerEventContext, &BevyTransform, &u64) + Send + 'static,
+        callback: impl FnMut(&super::ReducerEventContext, &BevyTransform, &u64, &f32) + Send + 'static,
     ) -> UpdateBotPositionCallbackId;
     /// Cancel a callback previously registered by [`Self::on_update_bot_position`],
     /// causing it not to run in the future.
@@ -56,18 +63,26 @@ pub trait update_bot_position {
 }
 
 impl update_bot_position for super::RemoteReducers {
-    fn update_bot_position(&self, bevy_transform: BevyTransform, bot_id: u64) -> __sdk::Result<()> {
+    fn update_bot_position(
+        &self,
+        bevy_transform: BevyTransform,
+        bot_id: u64,
+        new_rotate_dir: f32,
+    ) -> __sdk::Result<()> {
         self.imp.call_reducer(
             "update_bot_position",
             UpdateBotPositionArgs {
                 bevy_transform,
                 bot_id,
+                new_rotate_dir,
             },
         )
     }
     fn on_update_bot_position(
         &self,
-        mut callback: impl FnMut(&super::ReducerEventContext, &BevyTransform, &u64) + Send + 'static,
+        mut callback: impl FnMut(&super::ReducerEventContext, &BevyTransform, &u64, &f32)
+            + Send
+            + 'static,
     ) -> UpdateBotPositionCallbackId {
         UpdateBotPositionCallbackId(self.imp.on_reducer(
             "update_bot_position",
@@ -79,6 +94,7 @@ impl update_bot_position for super::RemoteReducers {
                                 super::Reducer::UpdateBotPosition {
                                     bevy_transform,
                                     bot_id,
+                                    new_rotate_dir,
                                 },
                             ..
                         },
@@ -87,7 +103,7 @@ impl update_bot_position for super::RemoteReducers {
                 else {
                     unreachable!()
                 };
-                callback(ctx, bevy_transform, bot_id)
+                callback(ctx, bevy_transform, bot_id, new_rotate_dir)
             }),
         ))
     }

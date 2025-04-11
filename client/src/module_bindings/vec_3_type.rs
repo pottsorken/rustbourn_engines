@@ -4,16 +4,14 @@
 #![allow(unused, clippy::all)]
 use spacetimedb_sdk::__codegen::{self as __sdk, __lib, __sats, __ws};
 
-use super::vec_2_type::Vec2;
-
 #[derive(__lib::ser::Serialize, __lib::de::Deserialize, Clone, PartialEq, Debug)]
 #[sats(crate = __lib)]
-pub struct Obstacle {
-    pub position: Vec2,
-    pub id: u64,
-    pub hp: u32,
+pub struct Vec3 {
+    pub x: f32,
+    pub y: f32,
+    pub z: f32,
 }
 
-impl __sdk::InModule for Obstacle {
+impl __sdk::InModule for Vec3 {
     type Module = super::RemoteModule;
 }

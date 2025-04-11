@@ -1,9 +1,17 @@
-use crate::common::{
-    AttachedBlock, Block, Hook, HookCharge, Obstacle, Player, PlayerAttach, PlayerGrid,
-    BLOCK_CONFIG, HOOK_CONFIG, PLAYER_CONFIG,
+use crate::module_bindings::*;
+use crate::{
+    common::{
+        AttachedBlock, Block, Hook, HookCharge, Obstacle, OpponentHook, Player, PlayerAttach,
+        PlayerGrid, BLOCK_CONFIG, HOOK_CONFIG, OBSTACLE_CONFIG, PLAYER_CONFIG,
+    },
+    db_connection::{load_obstacles, CtxWrapper},
+    grid::increment_grid_pos,
+    opponent,
 };
-use crate::grid::increment_grid_pos;
-use bevy::prelude::*;
+use bevy::{prelude::*, transform};
+use spacetimedb_sdk::{
+    credentials, DbContext, Error, Event, Identity, Status, Table, TableWithPrimaryKey,
+};
 
 pub fn setup_hook(mut commands: Commands, asset_server: Res<AssetServer>) {
     commands.spawn((
@@ -45,6 +53,7 @@ pub fn hook_controls(
     attachable_blocks: Query<&PlayerAttach>,
     mut commands: Commands,
     time: Res<Time>,
+    ctx: Res<CtxWrapper>,
 ) {
     for (mut sprite, mut transform, hook, mut charge) in hook_query.iter_mut() {
         if keyboard_input.pressed(KeyCode::Space) && charge.target_length == 0.0 {
@@ -64,7 +73,17 @@ pub fn hook_controls(
                 .min(charge.target_length);
 
             transform.translation.y += (next_height - current_height) / 2.0;
-            sprite.custom_size = Some(Vec2::new(sprite.custom_size.unwrap().x, next_height));
+            sprite.custom_size = Some(bevy::prelude::Vec2::new(
+                sprite.custom_size.unwrap().x,
+                next_height,
+            ));
+
+            let old_size = sprite.custom_size.unwrap().clone();
+
+            ctx.ctx
+                .reducers()
+                .update_hook_movement(ctx.ctx.identity(), old_size.x, next_height)
+                .unwrap();
 
             if (next_height - charge.target_length).abs() < 0.1 {
                 charge.target_length = 0.0;
@@ -73,7 +92,18 @@ pub fn hook_controls(
             let next_height =
                 (current_height - HOOK_CONFIG.retract_speed * time.delta_secs()).max(0.0);
             transform.translation.y -= (current_height - next_height) / 2.0;
-            sprite.custom_size = Some(Vec2::new(sprite.custom_size.unwrap().x, next_height));
+
+            let old_size = sprite.custom_size.unwrap().clone();
+
+            sprite.custom_size = Some(bevy::prelude::Vec2::new(
+                sprite.custom_size.unwrap().x,
+                next_height,
+            ));
+
+            ctx.ctx
+                .reducers()
+                .update_hook_movement(ctx.ctx.identity(), old_size.x, next_height)
+                .unwrap();
         }
     }
 }
@@ -95,7 +125,8 @@ pub fn hook_collision_system(
     };
 
     let hook_tip = hook_transform.translation
-        + hook_transform.rotation * Vec3::new(0.0, sprite.custom_size.unwrap().y, 0.0);
+        + hook_transform.rotation
+            * bevy::prelude::Vec3::new(0.0, sprite.custom_size.unwrap().y, 0.0);
 
     if let Ok((player_entity, _player_transform, mut player, mut grid)) =
         player_query.get_single_mut()
@@ -139,6 +170,108 @@ pub fn hook_collision_system(
 
                     player.block_count += 1;
                 }
+            }
+        }
+    }
+}
+pub fn spawn_opponent_hook(
+    commands: &mut Commands,
+    asset_server: &Res<AssetServer>,
+    existing_hooks_query: &Query<&OpponentHook>,
+    opponent_id: &Identity,
+    local_player_id: &Identity,
+    x: f32,
+    y: f32,
+) {
+    // Don't spawn hook for yourself
+    if opponent_id == local_player_id {
+        return;
+    }
+
+    // Don't spawn already existing hooks
+    for hook in existing_hooks_query.iter() {
+        if hook.id == *opponent_id {
+            return; // Hook already exists
+        }
+    }
+
+    commands.spawn((
+        Sprite {
+            custom_size: Some(HOOK_CONFIG.hook_size),
+            image: asset_server.load(HOOK_CONFIG.hook_path),
+            anchor: bevy::sprite::Anchor::BottomCenter,
+            ..default()
+        },
+        Transform::from_xyz(x, y, 5.0),
+        OpponentHook { id: *opponent_id },
+    ));
+}
+
+pub fn update_opponent_hook(
+    query: &mut Query<(&mut Sprite, &mut Transform, &OpponentHook), With<OpponentHook>>,
+    id: &Identity,
+    x: f32,
+    y: f32,
+    rotation: f32,
+    width: f32,
+    height: f32,
+) {
+    for (mut sprite, mut transform, hook) in query.iter_mut() {
+        if hook.id == *id {
+            transform.translation.x = x;
+            transform.translation.y = y;
+            transform.rotation = Quat::from_rotation_z(rotation).normalize();
+            sprite.custom_size = Some(bevy::prelude::Vec2::new(width, height));
+        }
+    }
+}
+
+pub fn despawn_opponent_hooks(
+    mut commands: Commands,
+    ctx_wrapper: Res<CtxWrapper>,
+    query: Query<(Entity, &OpponentHook)>,
+) {
+    // List all online players
+    let online_players: Vec<Identity> = ctx_wrapper
+        .ctx
+        .db
+        .player()
+        .iter()
+        .map(|player| player.identity)
+        .collect();
+
+    for (entity, hook) in query.iter() {
+        if !online_players.contains(&hook.id) {
+            commands.entity(entity).despawn();
+        }
+    }
+}
+
+pub fn handle_obstacle_hit(
+    ctx_wrapper: Res<CtxWrapper>,
+    hook_query: Query<(&Transform, &Sprite), With<Hook>>,
+    obstacle_query: Query<(&Obstacle, &Transform)>,
+) {
+    let obstacle_radius = OBSTACLE_CONFIG.size.x.min(OBSTACLE_CONFIG.size.y) / 2.0;
+    let hook_radius = 6.0;
+
+    // Ensure hook_query and obstacle_query contain valid entities
+    if hook_query.is_empty() || obstacle_query.is_empty() {
+        return; // Skip if no hooks or obstacles exist
+    }
+
+    for (hook_transform, hook_sprite) in &hook_query {
+        let hook_tip =
+            hook_transform.translation + hook_transform.up() * (hook_sprite.custom_size.unwrap().y); // tip = base + height
+
+        for (obstacle, obstacle_transform) in &obstacle_query {
+            let obstacle_pos = obstacle_transform.translation.truncate();
+            let obstacle_pos_3d = bevy::prelude::Vec3::new(obstacle_pos.x, obstacle_pos.y, 0.0);
+            let distance = hook_tip.distance(obstacle_pos_3d);
+
+            if distance < (hook_radius + obstacle_radius) {
+                // Ask SpaceTimeDB to handle the damage
+                let _ = ctx_wrapper.ctx.reducers.damage_obstacle(obstacle.id, 1);
             }
         }
     }

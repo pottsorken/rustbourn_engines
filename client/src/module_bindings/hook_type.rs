@@ -8,12 +8,13 @@ use super::vec_2_type::Vec2;
 
 #[derive(__lib::ser::Serialize, __lib::de::Deserialize, Clone, PartialEq, Debug)]
 #[sats(crate = __lib)]
-pub struct Obstacle {
+pub struct Hook {
     pub position: Vec2,
-    pub id: u64,
-    pub hp: u32,
+    pub rotation: f32,
+    pub width: f32,
+    pub height: f32,
 }
 
-impl __sdk::InModule for Obstacle {
+impl __sdk::InModule for Hook {
     type Module = super::RemoteModule;
 }

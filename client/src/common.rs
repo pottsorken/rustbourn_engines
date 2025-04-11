@@ -1,15 +1,11 @@
-
 //
 // Configuration and shared components for the game
 //
 
 use bevy::prelude::*;
 use bevy_ecs_tilemap::prelude::*;
-use std::collections::HashMap;
 use spacetimedb_sdk::Identity;
-
-
-
+use std::collections::HashMap;
 
 //
 // === Bot defined constraints ===
@@ -41,9 +37,6 @@ pub const BOT_CONFIG: BotConfig = BotConfig {
     rotation_speed: f32::to_radians(180.0),
 };
 
-
-
-
 //
 // === Player defined constraints ===
 //
@@ -54,7 +47,6 @@ pub struct Player {
     pub rotation_speed: f32,
     pub block_count: i32,
 }
-
 
 #[derive(Component)]
 pub struct PlayerAttach {
@@ -86,6 +78,11 @@ pub struct PlayerConfig {
     pub max_block_count: i32,
 }
 // Global constant config for the player
+#[derive(Component)]
+pub struct OpponentHook {
+    pub id: Identity, // Match with the opponent's identity
+}
+/// Global constant config for the player
 pub const PLAYER_CONFIG: PlayerConfig = PlayerConfig {
     size: Vec2::new(80.0, 80.0),
     movement_speed: 300.0,
@@ -93,9 +90,6 @@ pub const PLAYER_CONFIG: PlayerConfig = PlayerConfig {
     path: "sprites/top-view/robot_3Dblue.png",
     max_block_count: 100,
 };
-
-
-
 
 //
 // === Grid defined constraints ===
@@ -117,9 +111,6 @@ pub const GRID_CONFIG: GridConfig = GridConfig {
     load: 0,
 };
 
-
-
-
 //
 // === Camera defined constraints ===
 //
@@ -134,11 +125,7 @@ pub const CAMERA_CONFIG: CameraConfig = CameraConfig {
     zoom_base: 1.0,
     zoom_per_blocks: 0.2,
     zoom_after_blocks: 5,
-    
 };
-
-
-
 
 //
 // === Opps defined constraints ===
@@ -153,9 +140,6 @@ pub struct Opponent {
     // DB identity
     pub id: Identity,
 }
-
-
-
 
 //
 // === Hook defined constraints ===
@@ -193,11 +177,8 @@ pub const HOOK_CONFIG: HookConfig = HookConfig {
     extend_speed: 500.0,
     retract_speed: 500.0, // Could use hook_speed here too
     hook_radius: 5.0,
-    player_attach_offset: Vec2::new(0.0, 20.0)
+    player_attach_offset: Vec2::new(0.0, 20.0),
 };
-
-
-
 
 //
 // === Block defined constraints ===
@@ -218,9 +199,6 @@ pub const BLOCK_CONFIG: BlockConfig = BlockConfig {
     path: "sprites/top-view/robot_green.png",
     count: 100,
 };
-
-
-
 
 //
 // === Obstacle defined constraints ===
@@ -244,9 +222,6 @@ pub const OBSTACLE_CONFIG: ObstacleConfig = ObstacleConfig {
     count: 1000,
     path: "sprites/Obstacles/obstacle_rock.png",
 };
-
-
-
 
 //
 // === Map related definitions ===
