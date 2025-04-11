@@ -1,12 +1,5 @@
 use crate::common::{
-    AttachedBlock, 
-    Block, 
-    Obstacle, 
-    Player, 
-    PlayerGrid, 
-    BLOCK_CONFIG,
-    MAP_CONFIG, 
-    OBSTACLE_CONFIG, 
+    AttachedBlock, Block, Obstacle, Player, PlayerGrid, BLOCK_CONFIG, MAP_CONFIG, OBSTACLE_CONFIG,
     PLAYER_CONFIG,
 };
 use crate::db_connection::{update_player_position, CtxWrapper};
@@ -53,44 +46,6 @@ pub fn setup_player(
             load: 0,
         },
     ));
-}
-
-pub fn attach_block(
-    keyboard_input: Res<ButtonInput<KeyCode>>,
-    mut _block_query: Query<(Entity, &mut Transform), (With<Block>, Without<AttachedBlock>)>,
-    mut player_query: Query<
-        (Entity, &Transform, &mut Player, &mut PlayerGrid),
-        (Without<Obstacle>, Without<Block>),
-    >,
-    mut _commands: Commands,
-    time: Res<Time>,
-) {
-    for (_player_entity, transform, player, mut _grid) in &mut player_query {
-        let mut _rotation_dir = 0.0;
-        if keyboard_input.pressed(KeyCode::KeyA) || keyboard_input.pressed(KeyCode::ArrowLeft) {
-            _rotation_dir += 1.0;
-        }
-        if keyboard_input.pressed(KeyCode::KeyD) || keyboard_input.pressed(KeyCode::ArrowRight) {
-            _rotation_dir -= 1.0;
-        }
-
-        // Handle movement with W/S keys (forward/backward relative to rotation)
-        let mut move_dir = Vec3::ZERO;
-        if keyboard_input.pressed(KeyCode::KeyW) || keyboard_input.pressed(KeyCode::ArrowUp) {
-            move_dir.y += 1.0;
-        }
-        if keyboard_input.pressed(KeyCode::KeyS) || keyboard_input.pressed(KeyCode::ArrowDown) {
-            move_dir.y -= 1.0;
-            //rotation_dir *= -1.;
-        }
-
-        // Apply movement relative to player's rotation
-        if move_dir != Vec3::ZERO {
-            let move_direction = transform.rotation * move_dir.normalize();
-            let _new_pos =
-                transform.translation + move_direction * player.movement_speed * time.delta_secs();
-        }
-    }
 }
 
 pub fn player_movement(
@@ -140,8 +95,12 @@ pub fn player_movement(
             let new_pos =
                 transform.translation + move_direction * player.movement_speed * time.delta_secs();
 
-            let collided_with_obstacle =
-                check_collision(new_pos.truncate(), &obstacle_query, PLAYER_CONFIG.size, OBSTACLE_CONFIG.size);
+            let collided_with_obstacle = check_collision(
+                new_pos.truncate(),
+                &obstacle_query,
+                PLAYER_CONFIG.size,
+                OBSTACLE_CONFIG.size,
+            );
 
             let mut blocks_collided_obstacles = false;
 
