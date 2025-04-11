@@ -1,5 +1,5 @@
 use bevy::{prelude::*, transform};
-use crate::{common::{Hook, PlayerAttach, OpponentHook}, db_connection::CtxWrapper, opponent};
+use crate::{common::{Hook, PlayerAttach, OpponentHook, OBSTACLE_CONFIG, Obstacle}, db_connection::{CtxWrapper, load_obstacles}};
 use spacetimedb_sdk::{
     credentials, DbContext, Error, Event, Identity, Status, Table, TableWithPrimaryKey,
 };
@@ -150,3 +150,32 @@ pub fn despawn_opponent_hooks(
         }
 }
 
+pub fn handle_obstacle_hit(
+    ctx_wrapper: Res<CtxWrapper>,
+    hook_query: Query<(&Transform, &Sprite), With<Hook>>,
+    obstacle_query: Query<(&Obstacle, &Transform)>,
+) {
+    let obstacle_radius = OBSTACLE_CONFIG.size.x.min(OBSTACLE_CONFIG.size.y) / 2.0;
+    let hook_radius = 6.0;
+
+    // Ensure hook_query and obstacle_query contain valid entities
+    if hook_query.is_empty() || obstacle_query.is_empty() {
+        return; // Skip if no hooks or obstacles exist
+    }
+
+    for (hook_transform, hook_sprite) in &hook_query {
+        let hook_tip = hook_transform.translation
+            + hook_transform.up() * (hook_sprite.custom_size.unwrap().y); // tip = base + height
+
+        for (obstacle, obstacle_transform) in &obstacle_query {
+            let obstacle_pos = obstacle_transform.translation.truncate();
+            let obstacle_pos_3d = Vec3::new(obstacle_pos.x, obstacle_pos.y, 0.0);
+            let distance = hook_tip.distance(obstacle_pos_3d);
+
+            if distance < (hook_radius + obstacle_radius) {
+                // Ask SpaceTimeDB to handle the damage
+                let _ = ctx_wrapper.ctx.reducers.damage_obstacle(obstacle.id, 1);
+            }
+        }
+    }
+}

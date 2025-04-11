@@ -11,6 +11,7 @@ use super::vec_2_type::Vec2;
 pub struct Obstacle {
     pub position: Vec2,
     pub id: u64,
+    pub hp: u32,
 }
 
 impl __sdk::InModule for Obstacle {

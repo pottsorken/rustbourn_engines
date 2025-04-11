@@ -197,13 +197,13 @@ pub fn print_player_positions(
     //println!("");
 }
 
-pub fn load_obstacles(ctx_wrapper: &CtxWrapper) -> Vec<(f32, f32, u64)> {
-    let obstacles: Vec<(f32, f32, u64)> = ctx_wrapper
+pub fn load_obstacles(ctx_wrapper: &CtxWrapper) -> Vec<(f32, f32, u64, u32)> {
+    let obstacles: Vec<(f32, f32, u64, u32)> = ctx_wrapper
         .ctx
         .db
         .obstacle()
         .iter()
-        .map(|obstacle| (obstacle.position.x, obstacle.position.y, obstacle.id))
+        .map(|obstacle| (obstacle.position.x, obstacle.position.y, obstacle.id, obstacle.hp))
         .collect();
     obstacles
 }

@@ -36,6 +36,7 @@ use opponent::despawn_opponents;
 use parse::*;
 use player::{player_movement, setup_player};
 use bots::{spawn_bots, update_bots};
+use hook::handle_obstacle_hit;
 
 fn main() {
     App::new()
@@ -69,6 +70,7 @@ fn main() {
                 attatch_objects,
                 update_bots,
                 update_opponent_hooks,
+                handle_obstacle_hit,
             ),
         )
         .add_systems(
@@ -82,6 +84,7 @@ fn main() {
             )
         )
         .insert_resource(Time::from_seconds(0.5))
+        .insert_resource(SpawnedObstacles::default())
         .run();
 }
 

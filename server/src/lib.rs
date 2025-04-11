@@ -18,7 +18,9 @@ pub struct Player {
 #[spacetimedb::table(name = obstacle, public)]
 pub struct Obstacle {
     position: Vec2,
+    #[primary_key]
     id: u64,
+    hp: u32,
 }
 
 
@@ -52,6 +54,22 @@ pub struct BevyTransform {
 pub struct Vec2 {
     x: f32,
     y: f32,
+}
+
+//Reducer for damaging obstacle
+#[spacetimedb::reducer]
+pub fn damage_obstacle(
+    ctx: &ReducerContext,
+    id: u64,
+    damage: u32,
+) -> Result<(), String>{
+    if let Some(mut obstacle) = ctx.db.obstacle().id().find(id){
+        obstacle.hp = obstacle.hp.saturating_sub(damage);
+        ctx.db.obstacle().id().update(obstacle);
+        Ok(())
+    } else {
+        Err("Obstacle does not exist!".to_string())
+    }
 }
 
 // Reducer for updating hook position
@@ -278,6 +296,7 @@ fn generate_obstacles(ctx: &ReducerContext) {
                 y: random_y,
             },
             id: i,
+            hp: 100,
         });
     }
 }
