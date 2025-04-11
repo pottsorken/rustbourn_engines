@@ -18,6 +18,7 @@ mod parse;
 mod player;
 mod player_attach;
 
+use camera::*;
 use block::*;
 use hook::*;
 use obstacle::*;
@@ -66,6 +67,7 @@ fn main() {
                 update_block,
                 confine_player_movement,
                 camera_follow,
+                camera_zoom,
                 print_player_positions,
                 hook_collision_system,
                 hook_controls,

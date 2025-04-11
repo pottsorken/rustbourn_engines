@@ -1,6 +1,6 @@
 use crate::common::{
     AttachedBlock, Block, Obstacle, Player, PlayerGrid, BLOCK_CONFIG, MAP_CONFIG, OBSTACLE_CONFIG,
-    PLAYER_CONFIG,
+    PLAYER_CONFIG, GRID_CONFIG,
 };
 use crate::db_connection::{update_player_position, CtxWrapper};
 use crate::player_attach::*;
@@ -39,11 +39,11 @@ pub fn setup_player(
         },
         PlayerGrid {
             block_position: HashMap::new(),
-            grid_size: (1, 1),
-            cell_size: 84.,
-            next_free_pos: (-1, 0),
-            capacity: 5,
-            load: 0,
+            grid_size: GRID_CONFIG.grid_size,
+            cell_size: GRID_CONFIG.cell_size,
+            next_free_pos: GRID_CONFIG.next_free_pos,
+            capacity: GRID_CONFIG.capacity,
+            load: GRID_CONFIG.load,
         },
     ));
 }
@@ -66,6 +66,11 @@ pub fn player_movement(
     let ctx_wrapper = &ctx.into_inner();
 
     for (player_entity, mut transform, player, grid) in &mut player_query {
+        let speed_scale = 1.0 / (1.0 + player.block_count as f32 * 0.1);
+        let rotation_scale = 1.0 / (1.0 + player.block_count as f32 * 0.1);
+
+        let move_speed = PLAYER_CONFIG.movement_speed * speed_scale;
+        let rot_speed = PLAYER_CONFIG.rotation_speed * rotation_scale;
         // Handle rotation with A/D keys
         let mut rotation_dir = 0.0;
         if keyboard_input.pressed(KeyCode::KeyA) || keyboard_input.pressed(KeyCode::ArrowLeft) {
@@ -88,12 +93,11 @@ pub fn player_movement(
         // Apply movement relative to player's rotation
         if move_dir != Vec3::ZERO {
             //|| rotation_dir != 0. {
-            let mut move_direction = Vec3::ZERO.clone();
+            let move_direction = transform.rotation * move_dir.normalize();
             //if move_dir != Vec3::ZERO {
-            move_direction = transform.rotation * move_dir.normalize();
             //}
             let new_pos =
-                transform.translation + move_direction * player.movement_speed * time.delta_secs();
+                transform.translation + move_direction *  move_speed * time.delta_secs();
 
             let collided_with_obstacle = check_collision(
                 new_pos.truncate(),
@@ -200,7 +204,7 @@ pub fn player_movement(
                 // Apply rotation
                 if rotation_dir != 0.0 {
                     transform
-                        .rotate_z(rotation_dir * PLAYER_CONFIG.rotation_speed * time.delta_secs());
+                        .rotate_z(rotation_dir * rot_speed * time.delta_secs());
                 }
             }
         }

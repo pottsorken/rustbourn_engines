@@ -55,15 +55,7 @@ pub struct Player {
     pub block_count: i32,
 }
 
-// Configuration struct for initializing the Player entity
-#[derive(Component)]
-pub struct PlayerConfig {
-    pub size: Vec2,
-    pub movement_speed: f32,
-    pub rotation_speed: f32,
-    pub path: &'static str,
-    pub max_block_count: i32,
-}
+
 #[derive(Component)]
 pub struct PlayerAttach {
     pub offset: Vec2,
@@ -84,7 +76,15 @@ pub struct AttachedBlock {
     pub grid_offset: (i32, i32),
     pub player_entity: Entity,
 }
-
+// Configuration struct for initializing the Player entity
+#[derive(Component)]
+pub struct PlayerConfig {
+    pub size: Vec2,
+    pub movement_speed: f32,
+    pub rotation_speed: f32,
+    pub path: &'static str,
+    pub max_block_count: i32,
+}
 // Global constant config for the player
 pub const PLAYER_CONFIG: PlayerConfig = PlayerConfig {
     size: Vec2::new(80.0, 80.0),
@@ -93,6 +93,50 @@ pub const PLAYER_CONFIG: PlayerConfig = PlayerConfig {
     path: "sprites/top-view/robot_3Dblue.png",
     max_block_count: 100,
 };
+
+
+
+
+//
+// === Grid defined constraints ===
+//
+#[derive(Component)]
+pub struct GridConfig {
+    pub grid_size: (i32, i32),
+    pub cell_size: f32,
+    pub next_free_pos: (i32, i32),
+    pub capacity: u32,
+    pub load: u32,
+}
+// Global constant config for the player
+pub const GRID_CONFIG: GridConfig = GridConfig {
+    grid_size: (1, 1),
+    cell_size: 84.,
+    next_free_pos: (-1, 0),
+    capacity: 100,
+    load: 0,
+};
+
+
+
+//
+// === Grid defined constraints ===
+//
+#[derive(Component)]
+pub struct CameraConfig {
+    pub zoom_base: f32,
+    pub zoom_per_blocks: f32,
+    pub zoom_after_blocks: i32,
+}
+// Global constant config for the player
+pub const CAMERA_CONFIG: CameraConfig = CameraConfig {
+    zoom_base: 1.0,
+    zoom_per_blocks: 0.2,
+    zoom_after_blocks: 5,
+    
+};
+
+
 
 
 
