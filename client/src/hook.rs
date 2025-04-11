@@ -196,8 +196,8 @@ pub fn spawn_opponent_hook(
 
     commands.spawn((
         Sprite {
-            custom_size: Some(bevy::prelude::Vec2::new(12.0, 26.0)),
-            color: Color::srgb(0.8, 0.4, 0.2), // Opponent hook color
+            custom_size: Some(HOOK_CONFIG.hook_size),
+            image: asset_server.load(HOOK_CONFIG.hook_path),
             anchor: bevy::sprite::Anchor::BottomCenter,
             ..default()
         },
