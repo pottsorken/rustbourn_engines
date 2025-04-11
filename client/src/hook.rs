@@ -78,6 +78,13 @@ pub fn hook_controls(
                 next_height,
             ));
 
+            let old_size = sprite.custom_size.unwrap().clone();
+
+            ctx.ctx
+                .reducers()
+                .update_hook_movement(ctx.ctx.identity(), old_size.x, next_height)
+                .unwrap();
+
             if (next_height - charge.target_length).abs() < 0.1 {
                 charge.target_length = 0.0;
             }
