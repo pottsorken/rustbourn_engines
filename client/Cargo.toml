@@ -18,3 +18,5 @@ rand = "0.9.0"
 bevy_ecs_tilemap = "0.15.0"
 noisy_bevy = "0.8"
 clap = { version = "4.0", features = ["derive"] }
+image = "0.25.6"
+

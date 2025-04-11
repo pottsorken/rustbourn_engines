@@ -1,6 +1,7 @@
 use spacetimedb::{
-    reducer, spacetimedb_lib::{db, identity}, table, DbContext, Identity, ReducerContext, SpacetimeType, Table,
-    Timestamp,
+    reducer,
+    spacetimedb_lib::{db, identity},
+    table, DbContext, Identity, ReducerContext, SpacetimeType, Table, Timestamp,
 };
 
 use noise::{NoiseFn, Perlin};
@@ -23,23 +24,19 @@ pub struct Obstacle {
     hp: u32,
 }
 
-
-
-
-
 #[spacetimedb::table(name = bots, public)]
 pub struct Bot {
     #[primary_key]
     id: u64,
     position: BevyTransform,
-    alive: bool,   // instead of online we have alive that checks if that specific bot is alive
+    alive: bool, // instead of online we have alive that checks if that specific bot is alive
     movement_dir: Vec3,
-    rotation_dir: f32, 
+    rotation_dir: f32,
 }
 
 // Hook component data
 #[derive(Debug, SpacetimeType)]
-pub struct Hook{
+pub struct Hook {
     position: Vec2,
     rotation: f32,
     width: f32,
@@ -70,15 +67,10 @@ pub struct Vec3 {
     z: f32,
 }
 
-
 //Reducer for damaging obstacle
 #[spacetimedb::reducer]
-pub fn damage_obstacle(
-    ctx: &ReducerContext,
-    id: u64,
-    damage: u32,
-) -> Result<(), String>{
-    if let Some(mut obstacle) = ctx.db.obstacle().id().find(id){
+pub fn damage_obstacle(ctx: &ReducerContext, id: u64, damage: u32) -> Result<(), String> {
+    if let Some(mut obstacle) = ctx.db.obstacle().id().find(id) {
         obstacle.hp = obstacle.hp.saturating_sub(damage);
         ctx.db.obstacle().id().update(obstacle);
         Ok(())
@@ -94,15 +86,15 @@ pub fn update_hook_position(
     identity: Identity,
     position: Vec2,
     rotation: f32,
-) -> Result<(), String>{
+) -> Result<(), String> {
     // Find player by id
-    if let Some(mut player) = ctx.db.player().identity().find(identity){
+    if let Some(mut player) = ctx.db.player().identity().find(identity) {
         // Update player hook position
         player.hook.position = position;
         player.hook.rotation = rotation;
         ctx.db.player().identity().update(player);
         Ok(())
-    } else{
+    } else {
         Err("Player not found".to_string())
     }
 }
@@ -113,13 +105,13 @@ pub fn update_hook_movement(
     identity: Identity,
     width: f32,
     height: f32,
-) -> Result<(), String>{
-    if let Some(mut player) = ctx.db.player().identity().find(identity){
+) -> Result<(), String> {
+    if let Some(mut player) = ctx.db.player().identity().find(identity) {
         player.hook.width = width;
         player.hook.height = height;
         ctx.db.player().identity().update(player);
         Ok(())
-    } else{
+    } else {
         Err("Player not found".to_string())
     }
 }
@@ -151,14 +143,13 @@ pub fn update_bot_position(
     ctx: &ReducerContext,
     bevy_transform: BevyTransform,
     bot_id: u64,
-    new_rotate_dir: f32
+    new_rotate_dir: f32,
 ) -> Result<(), String> {
     log::info!(
         "Code reaches this point! --------{:?}------",
         bevy_transform
     );
-    if let Some(mut _bot) = ctx.db.bots().iter().find(|b| b.id == bot_id){
-
+    if let Some(mut _bot) = ctx.db.bots().iter().find(|b| b.id == bot_id) {
         _bot.position = bevy_transform;
         _bot.rotation_dir = new_rotate_dir;
 
@@ -180,21 +171,14 @@ pub fn reset_bots_if_no_players_online(ctx: &ReducerContext) -> Result<(), Strin
     }
 
     // Your original bot spawn points
-    let bot_spawn_positions = vec![
-        (200.0, 20.0),
-        (-200.0, -20.0),
-        (200.0, -250.0),
-    ];
+    let bot_spawn_positions = vec![(200.0, 20.0), (-200.0, -20.0), (200.0, -250.0)];
 
     // Reset each bot (e.g., set them to some default positions)
     for (i, mut bot) in ctx.db.bots().iter().enumerate() {
-        let (x, y) = bot_spawn_positions
-            .get(i)
-            .cloned()
-            .unwrap_or((0.0, 0.0));
+        let (x, y) = bot_spawn_positions.get(i).cloned().unwrap_or((0.0, 0.0));
 
         bot.position = BevyTransform {
-            coordinates: Vec2 {x, y},
+            coordinates: Vec2 { x, y },
             rotation: 0.0,
             scale: Vec2 { x: 0.0, y: 0.0 },
         };
@@ -223,12 +207,12 @@ pub fn player_connected(ctx: &ReducerContext) {
                 scale: Vec2 { x: 50.0, y: 100.0 },
             },
             online: true,
-            hook: Hook { 
+            hook: Hook {
                 position: Vec2 { x: 0.0, y: 0.0 },
                 rotation: 0.0,
                 width: 0.0,
                 height: 0.0,
-                },
+            },
         });
     }
 }
@@ -251,7 +235,6 @@ pub fn player_disconnected(ctx: &ReducerContext) {
     }
 
     reset_bots_if_no_players_online(ctx);
-
 }
 
 #[spacetimedb::reducer(init)]
@@ -260,43 +243,39 @@ pub fn server_startup(ctx: &ReducerContext) {
     generate_bots(ctx);
 }
 
-fn generate_bots(ctx: &ReducerContext){
+fn generate_bots(ctx: &ReducerContext) {
     // Example bot generation logic
-    let bot_spawn_positions = vec![
-        (200.0, 20.0),
-        (-200.0, -20.0),
-        (200.0, -250.0),
-    ];
+    let bot_spawn_positions = vec![(200.0, 20.0), (-200.0, -20.0), (200.0, -250.0)];
 
     // Generate and insert bots into the database
     for (i, (x, y)) in bot_spawn_positions.into_iter().enumerate() {
         let bot_id = i as u64; // Unique ID for each bot
         let bot_transform = BevyTransform {
             coordinates: Vec2 { x, y },
-            rotation: 0.0,  // Initial rotation
+            rotation: 0.0, // Initial rotation
             scale: Vec2 { x: 1.0, y: 1.0 },
         };
-
 
         // Insert bot into the database
         ctx.db.bots().insert(Bot {
             id: bot_id,
             position: bot_transform,
             alive: true, // Bots are alive when generated
-            movement_dir: Vec3{x: 0.5, y: 0.0, z: 0.0},
+            movement_dir: Vec3 {
+                x: 0.5,
+                y: 0.0,
+                z: 0.0,
+            },
             rotation_dir: 0.0,
         });
-
     }
-
 }
-
 
 fn generate_obstacles(ctx: &ReducerContext) {
     let perlin_x = Perlin::new(21);
     let perlin_y = Perlin::new(1345);
     // Generate 1000 obstacles
-    for i in 0..1000 {
+    for i in 0..200 {
         let x = (i as f32) / 10.0; // Control frequency
         let y = ((i + 1) as f32) / 10.0;
 
@@ -319,4 +298,3 @@ fn generate_obstacles(ctx: &ReducerContext) {
         });
     }
 }
-

@@ -1,57 +1,63 @@
+//use noisy_bevy::simplex_noise_2d;
+use crate::common::MAP_CONFIG;
 use bevy::prelude::*;
 use bevy_ecs_tilemap::prelude::*;
-use noisy_bevy::simplex_noise_2d;
-use crate::common::MAP_CONFIG;
+use image::{GenericImageView, ImageReader};
 
 pub fn setup_tilemap(mut commands: Commands, asset_server: Res<AssetServer>) {
-    let texture_handle: Vec<Handle<Image>> = MAP_CONFIG
-        .tile_textures
-        .iter()
-        .map(|path|asset_server.load(*path))
-        .collect();
-
+    // Tile images. ORDER IS IMPORTANT!
+    let texture_handle: Vec<Handle<Image>> = vec![
+        asset_server.load(MAP_CONFIG.tile_textures[0]),
+        asset_server.load(MAP_CONFIG.tile_textures[1]),
+        asset_server.load(MAP_CONFIG.tile_textures[2]),
+        asset_server.load(MAP_CONFIG.tile_textures[3]),
+    ];
     // New map with 64x64 chunks being 32x32 tiles
-    let map_size = MAP_CONFIG.map_size;
-    let tile_size = MAP_CONFIG.tile_size; // tiles are 16x16 pixels
-    let grid_size = tile_size.into(); // Grid size == tile size
+    let grid_size = MAP_CONFIG.tile_size.into(); // Grid size == tile size
     let map_type = TilemapType::default();
 
-    // New tile storage
-    let mut tile_storage = TileStorage::empty(map_size);
-
-    // spawn entity
+    let mut tile_storage = TileStorage::empty(MAP_CONFIG.map_size);
     let tilemap_entity = commands.spawn_empty().id();
+    let image_path = r"assets/tribasicmap64.png";
 
-    let noise_scale = 0.1;
+    // Load the image
+    let img = ImageReader::open(MAP_CONFIG.image_path)
+        .expect("Failed to open image")
+        .decode()
+        .expect("Failed to decode image");
 
-    // Fill the tilemap with some tiles
-    for x in 0..map_size.x {
-        for y in 0..map_size.y {
+    let (width, height) = img.dimensions();
+
+    for y in 0..height {
+        for x in 0..width {
             let tile_pos = TilePos { x, y };
 
-            // Determine tile texture
-            let noise_value = simplex_noise_2d(Vec2::new(
-                x as f32 * MAP_CONFIG.noise_scale, 
-                y as f32 * MAP_CONFIG.noise_scale,
-            ));
+            let pixel = img.get_pixel(x, y);
 
-            let texture_index = if noise_value > 0.5 {
-                2 // grass
-            } else if noise_value > 0.0 {
-                1 // stone
+            // Split pixel colors into RGB
+            let r = pixel[0];
+            let g = pixel[1];
+            let b = pixel[2];
+
+            let texture_index = if g == 255 {
+                0 // Green -> Grass
+            } else if b == 255 {
+                1 // Blue -> Water
+            } else if r == 255 {
+                2 // Red -> Stone
             } else {
-                0 // dirt
+                3 // Default -> Dirt
             };
 
             let tile_entity = commands
                 .spawn(TileBundle {
                     position: tile_pos,
                     tilemap_id: TilemapId(tilemap_entity),
-                    texture_index: TileTextureIndex(texture_index), // first tile in tileset
+                    texture_index: TileTextureIndex(texture_index),
                     ..Default::default()
                 })
                 .id();
-            
+
             tile_storage.set(&tile_pos, tile_entity);
         }
     }
@@ -59,11 +65,11 @@ pub fn setup_tilemap(mut commands: Commands, asset_server: Res<AssetServer>) {
     commands.entity(tilemap_entity).insert(TilemapBundle {
         grid_size,
         map_type,
-        size: map_size,
+        size: MAP_CONFIG.map_size,
         storage: tile_storage,
         texture: TilemapTexture::Vector(texture_handle),
-        tile_size,
-        transform: get_tilemap_center_transform(&map_size, &grid_size, &map_type, 0.0),
+        tile_size: MAP_CONFIG.tile_size,
+        transform: get_tilemap_center_transform(&MAP_CONFIG.map_size, &grid_size, &map_type, 0.0),
         ..Default::default()
     });
 }

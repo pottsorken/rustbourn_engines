@@ -1,4 +1,4 @@
-use crate::common::{Obstacle, Player, MAP_CONFIG, OBSTACLE_CONFIG, PLAYER_CONFIG};
+use crate::common::{Obstacle, MAP_CONFIG, OBSTACLE_CONFIG};
 use crate::db_connection::{load_obstacles, CtxWrapper};
 use bevy::prelude::*;
 use bevy::window::PrimaryWindow;
@@ -19,12 +19,6 @@ pub fn setup_obstacle(
     mut spawned: ResMut<SpawnedObstacles>,
 ) {
     let _window = window_query.get_single().unwrap();
-
-    let world_map_size = Vec2::new(
-        MAP_CONFIG.map_size.x as f32 * MAP_CONFIG.tile_size.x,
-        MAP_CONFIG.map_size.y as f32 * MAP_CONFIG.tile_size.y,
-    );
-
     let obstacles = load_obstacles(&ctx_wrapper);
 
     for obstacle in obstacles {

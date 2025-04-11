@@ -1,9 +1,13 @@
-use crate::common::{Obstacle, Player, MAP_CONFIG, OBSTACLE_CONFIG, PLAYER_CONFIG};
+use crate::common::{
+    AttachedBlock, Block, Obstacle, Opponent, Player, PlayerGrid, BLOCK_CONFIG, MAP_CONFIG,
+    OBSTACLE_CONFIG, PLAYER_CONFIG,
+};
 use crate::db_connection::{update_player_position, CtxWrapper};
 use crate::module_bindings::*;
-use crate::opponent::Opponent;
+use crate::player_attach::*;
 use bevy::prelude::*;
 use bevy::window::PrimaryWindow;
+use std::collections::HashMap;
 
 use rand::Rng;
 
@@ -36,26 +40,39 @@ pub fn setup_player(
         Player {
             movement_speed: PLAYER_CONFIG.movement_speed, // meters per second
             rotation_speed: PLAYER_CONFIG.rotation_speed, // degrees per second
+            block_count: 0,
+        },
+        PlayerGrid {
+            block_position: HashMap::new(),
+            grid_size: (1, 1),
+            cell_size: 84.,
+            next_free_pos: (-1, 0),
+            capacity: 5,
+            load: 0,
         },
     ));
 }
 
 pub fn player_movement(
     keyboard_input: Res<ButtonInput<KeyCode>>,
-    mut param_set: ParamSet<(
-        Query<(&mut Transform, &Player), Without<Obstacle>>,
-        Query<&Transform, With<Opponent>>,
-    )>,
+    mut block_query: Query<(Entity, &Transform), (With<Block>, Without<AttachedBlock>)>,
+    attached_block_query: Query<(Entity, &Transform, &AttachedBlock), With<Block>>,
+    mut player_query: Query<
+        (Entity, &mut Transform, &mut Player, &mut PlayerGrid),
+        (Without<Obstacle>, Without<Block>, Without<Opponent>),
+    >,
+    opponent_query: Query<&Transform, With<Opponent>>,
     obstacle_query: Query<&Transform, With<Obstacle>>,
+    //attachable_blocks: Query<&PlayerAttach>,
+    mut _commands: Commands,
     time: Res<Time>,
     ctx: Res<CtxWrapper>,
 ) {
     //if let Ok((mut transform, _player)) = query.get_single_mut() { // NOTE: merge conflict
     let ctx_wrapper = &ctx.into_inner();
 
-    let opponent_transforms: Vec<Transform> = param_set.p1().iter().cloned().collect();
-
-    for (mut transform, player) in &mut param_set.p0() {
+    let opponent_transforms: Vec<Transform> = opponent_query.iter().cloned().collect();
+    for (player_entity, mut transform, player, grid) in &mut player_query {
         // Handle rotation with A/D keys
         let mut rotation_dir = 0.0;
         if keyboard_input.pressed(KeyCode::KeyA) || keyboard_input.pressed(KeyCode::ArrowLeft) {
@@ -65,11 +82,6 @@ pub fn player_movement(
             rotation_dir -= 1.0;
         }
 
-        // Apply rotation
-        if rotation_dir != 0.0 {
-            transform.rotate_z(rotation_dir * PLAYER_CONFIG.rotation_speed * time.delta_secs());
-        }
-
         // Handle movement with W/S keys (forward/backward relative to rotation)
         let mut move_dir = bevy::prelude::Vec3::ZERO;
         if keyboard_input.pressed(KeyCode::KeyW) || keyboard_input.pressed(KeyCode::ArrowUp) {
@@ -77,19 +89,134 @@ pub fn player_movement(
         }
         if keyboard_input.pressed(KeyCode::KeyS) || keyboard_input.pressed(KeyCode::ArrowDown) {
             move_dir.y -= 1.0;
+            //rotation_dir *= -1.;
         }
 
         // Apply movement relative to player's rotation
         if move_dir != bevy::prelude::Vec3::ZERO {
-            let move_direction = transform.rotation * move_dir.normalize();
-            let new_pos = transform.translation
-                + move_direction * PLAYER_CONFIG.movement_speed * time.delta_secs();
+            //|| rotation_dir != 0. {
+            let mut move_direction = bevy::prelude::Vec3::ZERO.clone();
+            //if move_dir != Vec3::ZERO {
+            move_direction = transform.rotation * move_dir.normalize();
+            //}
+            let new_pos =
+                transform.translation + move_direction * player.movement_speed * time.delta_secs();
 
-            if !will_collide(new_pos.truncate(), &obstacle_query) 
-                && !will_collide_with_opponent(new_pos.truncate(), &opponent_transforms) {
+            let collided_with_obstacle = check_collision(
+                new_pos.truncate(),
+                &obstacle_query,
+                PLAYER_CONFIG.size,
+                OBSTACLE_CONFIG.size,
+            );
+
+            let mut blocks_collided_obstacles = false;
+
+            // copy tanslation ----
+            let mut next_frame_pos = transform.clone();
+            next_frame_pos.translation = new_pos;
+            // Apply rotation
+            if rotation_dir != 0.0 {
+                next_frame_pos
+                    .rotate_z(rotation_dir * PLAYER_CONFIG.rotation_speed * time.delta_secs());
+            }
+
+            // Check collision for all attached blocks
+            for (_attached_block_entity, _attached_block_transform, attached_block_link) in
+                attached_block_query.iter()
+            {
+                if attached_block_link.player_entity == player_entity {
+                    let rotated_offset = next_frame_pos.rotation
+                        * bevy::prelude::Vec3::new(
+                            attached_block_link.grid_offset.0 as f32 * grid.cell_size,
+                            attached_block_link.grid_offset.1 as f32 * grid.cell_size,
+                            5.0,
+                        );
+
+                    let new_block_pos = (next_frame_pos.translation) + (rotated_offset);
+
+                    blocks_collided_obstacles = check_collision(
+                        new_block_pos.truncate(),
+                        &obstacle_query,
+                        PLAYER_CONFIG.size,
+                        OBSTACLE_CONFIG.size,
+                    );
+                    if blocks_collided_obstacles {
+                        break;
+                    }
+                }
+            }
+
+            let mut collided_with_block = false;
+
+            // NOTE: Block collision logic here
+            let block_radius = BLOCK_CONFIG.size.x.min(BLOCK_CONFIG.size.y) / 2.0;
+            let player_radius = PLAYER_CONFIG.size.x.min(PLAYER_CONFIG.size.y) / 2.0;
+            let collision_distance = block_radius + player_radius;
+            for (_block_entity, block_transform) in block_query.iter_mut() {
+                if new_pos
+                    .truncate()
+                    .distance(block_transform.translation.truncate())
+                    < collision_distance
+                {
+                    collided_with_block = true;
+                }
+            }
+
+            'outer: for (_block_entity, block_transform, block_link) in attached_block_query.iter()
+            {
+                if block_link.player_entity != player_entity {
+                    if new_pos
+                        .truncate()
+                        .distance(block_transform.translation.truncate())
+                        < collision_distance
+                    {
+                        collided_with_block = true;
+                    }
+                    for (_attached_block_entity, _attached_block_transform, attached_block_link) in
+                        attached_block_query.iter()
+                    {
+                        if attached_block_link.player_entity == player_entity {
+                            let rotated_offset = next_frame_pos.rotation
+                                * bevy::prelude::Vec3::new(
+                                    attached_block_link.grid_offset.0 as f32 * grid.cell_size,
+                                    attached_block_link.grid_offset.1 as f32 * grid.cell_size,
+                                    5.0,
+                                );
+
+                            let new_block_pos = (next_frame_pos.translation) + (rotated_offset);
+
+                            if new_block_pos
+                                .truncate()
+                                .distance(block_transform.translation.truncate())
+                                < collision_distance
+                            {
+                                collided_with_block = true;
+                            }
+                            if collided_with_block {
+                                break 'outer;
+                            }
+                        }
+                    }
+                }
+            }
+
+            //println!(" ");
+            if !collided_with_obstacle
+                && !collided_with_block
+                && !blocks_collided_obstacles
+                && !will_collide(new_pos.truncate(), &obstacle_query)
+                && !will_collide_with_opponent(new_pos.truncate(), &opponent_transforms)
+            {
+                // Apply tanslation
                 transform.translation = new_pos;
+                // Apply rotation
+                if rotation_dir != 0.0 {
+                    transform
+                        .rotate_z(rotation_dir * PLAYER_CONFIG.rotation_speed * time.delta_secs());
+                }
             }
         }
+
         update_player_position(ctx_wrapper, &transform);
     }
 }
@@ -146,10 +273,7 @@ pub fn will_collide(
         .any(|transform| new_pos.distance(transform.translation.truncate()) < collision_distance)
 }
 
-pub fn will_collide_with_opponent(
-    new_pos: bevy::prelude::Vec2,
-    opponents: &[Transform]
-) -> bool {
+pub fn will_collide_with_opponent(new_pos: bevy::prelude::Vec2, opponents: &[Transform]) -> bool {
     let player_radius = PLAYER_CONFIG.size.x.min(PLAYER_CONFIG.size.y) / 2.0;
     let collision_distance = player_radius * 2.0;
 
@@ -158,13 +282,13 @@ pub fn will_collide_with_opponent(
         .any(|transform| new_pos.distance(transform.translation.truncate()) < collision_distance)
 }
 
-fn generate_random_spawnpoint(ctx_wrapper: &CtxWrapper) -> (f32, f32){
+fn generate_random_spawnpoint(ctx_wrapper: &CtxWrapper) -> (f32, f32) {
     let mut rng = rand::rng();
     let mut too_close = false;
     let mut random_x;
     let mut random_y;
 
-    let online_players: Vec::<BevyTransform> = ctx_wrapper
+    let online_players: Vec<BevyTransform> = ctx_wrapper
         .ctx
         .db
         .player()
@@ -172,20 +296,24 @@ fn generate_random_spawnpoint(ctx_wrapper: &CtxWrapper) -> (f32, f32){
         .map(|player| player.position)
         .collect();
 
-    loop{
-        random_x = rng.random_range(-MAP_CONFIG.safe_zone_size + 50.0..MAP_CONFIG.safe_zone_size - 50.0) as f32;
-        random_y = rng.random_range(-MAP_CONFIG.safe_zone_size + 50.0..MAP_CONFIG.safe_zone_size - 50.0) as f32;
+    loop {
+        random_x = rng
+            .random_range(-MAP_CONFIG.safe_zone_size + 50.0..MAP_CONFIG.safe_zone_size - 50.0)
+            as f32;
+        random_y = rng
+            .random_range(-MAP_CONFIG.safe_zone_size + 50.0..MAP_CONFIG.safe_zone_size - 50.0)
+            as f32;
 
-        for player_position in &online_players{
+        for player_position in &online_players {
             let dx = player_position.coordinates.x - random_x;
             let dy = player_position.coordinates.y - random_y;
 
-            if (dx < PLAYER_CONFIG.size.x && dy < PLAYER_CONFIG.size.y){
+            if (dx < PLAYER_CONFIG.size.x && dy < PLAYER_CONFIG.size.y) {
                 too_close = true;
                 break;
             }
         }
-        if too_close{
+        if too_close {
             continue;
         }
         break;

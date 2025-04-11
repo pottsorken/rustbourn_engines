@@ -1,17 +1,15 @@
 use bevy::prelude::*;
-use bevy::reflect::List;
 
 // Spacetime dependencies
+use crate::common::Opponent;
 use crate::module_bindings::*;
 use crate::opponent::*;
-use spacetimedb_sdk::{
-    credentials, DbContext, Error, Event, Identity, Status, Table, TableWithPrimaryKey,
-};
+use spacetimedb_sdk::{credentials, DbContext, Error, Identity, Table};
 
 use crate::parse::*;
 
-use crate::hook::*;
 use crate::common::OpponentHook;
+use crate::hook::*;
 
 #[derive(Resource)]
 pub struct CtxWrapper {
@@ -39,24 +37,30 @@ pub fn update_player_position(ctx_wrapper: &CtxWrapper, player_transform: &Trans
 }
 
 // db_connection
-pub fn update_bot_position(ctx_wrapper: &CtxWrapper, bot_transform: &Transform, bot_id: u64, new_rotate_dir: f32) {
+pub fn update_bot_position(
+    ctx_wrapper: &CtxWrapper,
+    bot_transform: &Transform,
+    bot_id: u64,
+    new_rotate_dir: f32,
+) {
     ctx_wrapper
         .ctx
         .reducers()
-        .update_bot_position(BevyTransform {
-            coordinates: vec_2_type::Vec2 {
-                x: bot_transform.translation.x,
-                y: bot_transform.translation.y,
+        .update_bot_position(
+            BevyTransform {
+                coordinates: vec_2_type::Vec2 {
+                    x: bot_transform.translation.x,
+                    y: bot_transform.translation.y,
+                },
+                rotation: bot_transform.rotation.to_euler(EulerRot::XYZ).2,
+                scale: vec_2_type::Vec2 { x: 0.0, y: 0.0 },
             },
-            rotation: bot_transform.rotation.to_euler(EulerRot::XYZ).2,
-            scale: vec_2_type::Vec2 { x: 0.0, y: 0.0 },
-        }, bot_id
-        , new_rotate_dir
-    )
+            bot_id,
+            new_rotate_dir,
+        )
         .unwrap();
     //println!("{}", player_transform.rotation.to_euler(EulerRot::XYZ).2);
 }
-
 
 pub fn setup_connection(mut commands: Commands, asset_server: Res<AssetServer>) {
     // Connect to the database
@@ -98,8 +102,7 @@ fn on_sub_applied(ctx: &SubscriptionEventContext) {
     }
     // Forgot why i added this, but it seems to work wihtout
     let bots = ctx.db.bots().iter().collect::<Vec<_>>();
-println!("[DEBUG] Bots in on_sub_applied: {}", bots.len());
-
+    println!("[DEBUG] Bots in on_sub_applied: {}", bots.len());
 }
 
 fn on_sub_error(_ctx: &ErrorContext, err: Error) {
@@ -207,21 +210,32 @@ pub fn load_obstacles(ctx_wrapper: &CtxWrapper) -> Vec<(f32, f32, u64, u32)> {
         .db
         .obstacle()
         .iter()
-        .map(|obstacle| (obstacle.position.x, obstacle.position.y, obstacle.id, obstacle.hp))
+        .map(|obstacle| {
+            (
+                obstacle.position.x,
+                obstacle.position.y,
+                obstacle.id,
+                obstacle.hp,
+            )
+        })
         .collect();
     obstacles
 }
 
 pub fn load_bots(ctx_wrapper: &CtxWrapper) -> Vec<(f32, f32, u64)> {
-    println!(
-        "[DEBUG] object)",
-    );
+    println!("[DEBUG] object)",);
     let bots: Vec<(f32, f32, u64)> = ctx_wrapper
         .ctx
         .db
         .bots()
         .iter()
-        .map(|bot| (bot.position.coordinates.x, bot.position.coordinates.y, bot.id))
+        .map(|bot| {
+            (
+                bot.position.coordinates.x,
+                bot.position.coordinates.y,
+                bot.id,
+            )
+        })
         .collect();
     bots
 }
@@ -233,40 +247,32 @@ pub fn update_opponent_hooks(
     mut query: Query<(&mut Sprite, &mut Transform, &OpponentHook), With<OpponentHook>>,
     existing_hooks_query: Query<&OpponentHook>,
     despawn_query: Query<(Entity, &OpponentHook)>,
-){
+) {
     let players = ctx_wrapper.ctx.db.player().iter().collect::<Vec<_>>();
 
     let local_player_id = ctx_wrapper.ctx.identity(); //Get local player's ID
 
-    for player in players{
+    for player in players {
         let player_id = player.identity;
         spawn_opponent_hook(
             &mut commands,
             &asset_server,
             &existing_hooks_query,
-            &player_id, 
-            &local_player_id, 
-            player.hook.position.x, 
+            &player_id,
+            &local_player_id,
+            player.hook.position.x,
             player.hook.position.y,
         );
 
         update_opponent_hook(
-            &mut query, 
-            &player_id, 
-            player.hook.position.x, 
-            player.hook.position.y, 
+            &mut query,
+            &player_id,
+            player.hook.position.x,
+            player.hook.position.y,
             player.hook.rotation,
             player.hook.width,
             player.hook.height,
         );
     }
-    despawn_opponent_hooks(
-        commands, 
-        ctx_wrapper, 
-        despawn_query,
-    );
-
-
+    despawn_opponent_hooks(commands, ctx_wrapper, despawn_query);
 }
-
-

@@ -1,23 +1,12 @@
-use bevy::{ecs::entity, prelude::*};
+use bevy::prelude::*;
 
-use crate::{db_connection::CtxWrapper, module_bindings::*};
-use spacetimedb_sdk::{Error, Event, Identity, Status, Table, TableWithPrimaryKey};
-
-#[derive(Component)]
-pub struct Opponent {
-    /// linear speed in meters per second
-    pub movement_speed: f32,
-    /// rotation speed in radians per second
-    pub rotation_speed: f32,
-
-    // DB identity
-    pub id: Identity,
-}
+use crate::{common::Opponent, db_connection::CtxWrapper, module_bindings::*};
+use spacetimedb_sdk::{Identity, Table};
 
 pub fn spawn_opponent(
-    mut commands: &mut Commands,
+    commands: &mut Commands,
     asset_server: &Res<AssetServer>,
-    mut query: &Query<(&mut Transform, &Opponent)>,
+    query: &Query<(&mut Transform, &Opponent)>,
     id: &Identity,
     x: f32,
     y: f32,
@@ -29,7 +18,7 @@ pub fn spawn_opponent(
         return;
     }
 
-    for (transf, opp) in &mut query.iter() {
+    for (_transf, opp) in &mut query.iter() {
         if opp.id == *id {
             return;
         }
@@ -80,9 +69,9 @@ pub fn despawn_opponents(
     mut commands: Commands,
     ctx_wrapper: Res<CtxWrapper>,
     query: Query<(Entity, &Opponent)>,
-){
+) {
     // List all online players
-    let online_players: Vec::<Identity> = ctx_wrapper
+    let online_players: Vec<Identity> = ctx_wrapper
         .ctx
         .db
         .player()
@@ -90,9 +79,10 @@ pub fn despawn_opponents(
         .map(|player| player.identity)
         .collect();
 
-    for (entity, opponent) in query.iter(){
-        if !online_players.contains(&opponent.id){
+    for (entity, opponent) in query.iter() {
+        if !online_players.contains(&opponent.id) {
             commands.entity(entity).despawn();
         }
     }
 }
+
