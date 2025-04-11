@@ -82,6 +82,23 @@ impl<'ctx> __sdk::Table for ObstacleTableHandle<'ctx> {
 #[doc(hidden)]
 pub(super) fn register_table(client_cache: &mut __sdk::ClientCache<super::RemoteModule>) {
     let _table = client_cache.get_or_make_table::<Obstacle>("obstacle");
+    _table.add_unique_constraint::<u64>("id", |row| &row.id);
+}
+pub struct ObstacleUpdateCallbackId(__sdk::CallbackId);
+
+impl<'ctx> __sdk::TableWithPrimaryKey for ObstacleTableHandle<'ctx> {
+    type UpdateCallbackId = ObstacleUpdateCallbackId;
+
+    fn on_update(
+        &self,
+        callback: impl FnMut(&Self::EventContext, &Self::Row, &Self::Row) + Send + 'static,
+    ) -> ObstacleUpdateCallbackId {
+        ObstacleUpdateCallbackId(self.imp.on_update(Box::new(callback)))
+    }
+
+    fn remove_on_update(&self, callback: ObstacleUpdateCallbackId) {
+        self.imp.remove_on_update(callback.0)
+    }
 }
 
 #[doc(hidden)]
@@ -93,4 +110,34 @@ pub(super) fn parse_table_update(
             .with_cause(e)
             .into()
     })
+}
+
+/// Access to the `id` unique index on the table `obstacle`,
+/// which allows point queries on the field of the same name
+/// via the [`ObstacleIdUnique::find`] method.
+///
+/// Users are encouraged not to explicitly reference this type,
+/// but to directly chain method calls,
+/// like `ctx.db.obstacle().id().find(...)`.
+pub struct ObstacleIdUnique<'ctx> {
+    imp: __sdk::UniqueConstraintHandle<Obstacle, u64>,
+    phantom: std::marker::PhantomData<&'ctx super::RemoteTables>,
+}
+
+impl<'ctx> ObstacleTableHandle<'ctx> {
+    /// Get a handle on the `id` unique index on the table `obstacle`.
+    pub fn id(&self) -> ObstacleIdUnique<'ctx> {
+        ObstacleIdUnique {
+            imp: self.imp.get_unique_constraint::<u64>("id"),
+            phantom: std::marker::PhantomData,
+        }
+    }
+}
+
+impl<'ctx> ObstacleIdUnique<'ctx> {
+    /// Find the subscribed row whose `id` column value is equal to `col_val`,
+    /// if such a row is present in the client cache.
+    pub fn find(&self, col_val: &u64) -> Option<Obstacle> {
+        self.imp.find(col_val)
+    }
 }

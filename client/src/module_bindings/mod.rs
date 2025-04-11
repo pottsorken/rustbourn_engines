@@ -7,6 +7,7 @@ use spacetimedb_sdk::__codegen::{self as __sdk, __lib, __sats, __ws};
 pub mod bevy_transform_type;
 pub mod bot_type;
 pub mod bots_table;
+pub mod damage_obstacle_reducer;
 pub mod hook_type;
 pub mod obstacle_table;
 pub mod obstacle_type;
@@ -24,6 +25,9 @@ pub mod vec_2_type;
 pub use bevy_transform_type::BevyTransform;
 pub use bot_type::Bot;
 pub use bots_table::*;
+pub use damage_obstacle_reducer::{
+    damage_obstacle, set_flags_for_damage_obstacle, DamageObstacleCallbackId,
+};
 pub use hook_type::Hook;
 pub use obstacle_table::*;
 pub use obstacle_type::Obstacle;
@@ -61,6 +65,10 @@ pub use vec_2_type::Vec2;
 /// to indicate which reducer caused the event.
 
 pub enum Reducer {
+    DamageObstacle {
+        id: u64,
+        damage: u32,
+    },
     PlayerConnected,
     PlayerDisconnected,
     ResetBotsIfNoPlayersOnline,
@@ -90,6 +98,7 @@ impl __sdk::InModule for Reducer {
 impl __sdk::Reducer for Reducer {
     fn reducer_name(&self) -> &'static str {
         match self {
+            Reducer::DamageObstacle { .. } => "damage_obstacle",
             Reducer::PlayerConnected => "player_connected",
             Reducer::PlayerDisconnected => "player_disconnected",
             Reducer::ResetBotsIfNoPlayersOnline => "reset_bots_if_no_players_online",
@@ -104,6 +113,10 @@ impl TryFrom<__ws::ReducerCallInfo<__ws::BsatnFormat>> for Reducer {
     type Error = __sdk::Error;
     fn try_from(value: __ws::ReducerCallInfo<__ws::BsatnFormat>) -> __sdk::Result<Self> {
         match &value.reducer_name[..] {
+            "damage_obstacle" => Ok(__sdk::parse_reducer_args::<
+                damage_obstacle_reducer::DamageObstacleArgs,
+            >("damage_obstacle", &value.args)?
+            .into()),
             "player_connected" => Ok(__sdk::parse_reducer_args::<
                 player_connected_reducer::PlayerConnectedArgs,
             >("player_connected", &value.args)?
@@ -193,7 +206,9 @@ impl __sdk::DbUpdate for DbUpdate {
         diff.bots = cache
             .apply_diff_to_table::<Bot>("bots", &self.bots)
             .with_updates_by_pk(|row| &row.id);
-        diff.obstacle = cache.apply_diff_to_table::<Obstacle>("obstacle", &self.obstacle);
+        diff.obstacle = cache
+            .apply_diff_to_table::<Obstacle>("obstacle", &self.obstacle)
+            .with_updates_by_pk(|row| &row.id);
         diff.player = cache
             .apply_diff_to_table::<Player>("player", &self.player)
             .with_updates_by_pk(|row| &row.identity);

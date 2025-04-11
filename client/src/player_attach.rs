@@ -54,6 +54,7 @@ fn update_slave_pos(
 pub fn attach_items(
     player_query: Query<(&Transform, &PlayerGrid), With<Player>>,
     mut items_query: Query<(&PlayerAttach, &mut Transform), Without<Player>>,
+    ctx_wrapper: Res<CtxWrapper>,
 ) {
     //if let Ok(player_transform) = player_query.get_single() {
     for (player_transform, player_grid) in player_query.iter() {
@@ -84,10 +85,10 @@ pub fn attach_items(
 }
 
 pub fn check_collision<T: Component>(
-    new_pos: Vec2,
+    new_pos: bevy::prelude::Vec2,
     targets: &Query<&Transform, With<T>>,
-    origin_size: Vec2,
-    target_size: Vec2,
+    origin_size: bevy::prelude::Vec2,
+    target_size: bevy::prelude::Vec2,
 ) -> bool {
     let origin_radius = origin_size.x.min(origin_size.y) / 2.0;
     let target_radius = target_size.x.min(target_size.y) / 2.0;

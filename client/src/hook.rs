@@ -2,9 +2,9 @@ use crate::module_bindings::*;
 use crate::{
     common::{
         AttachedBlock, Block, Hook, HookCharge, Obstacle, OpponentHook, Player, PlayerAttach,
-        PlayerGrid, BLOCK_CONFIG, HOOK_CONFIG, PLAYER_CONFIG,
+        PlayerGrid, BLOCK_CONFIG, HOOK_CONFIG, OBSTACLE_CONFIG, PLAYER_CONFIG,
     },
-    db_connection::CtxWrapper,
+    db_connection::{load_obstacles, CtxWrapper},
     grid::increment_grid_pos,
     opponent,
 };
@@ -73,7 +73,10 @@ pub fn hook_controls(
                 .min(charge.target_length);
 
             transform.translation.y += (next_height - current_height) / 2.0;
-            sprite.custom_size = Some(Vec2::new(sprite.custom_size.unwrap().x, next_height));
+            sprite.custom_size = Some(bevy::prelude::Vec2::new(
+                sprite.custom_size.unwrap().x,
+                next_height,
+            ));
 
             if (next_height - charge.target_length).abs() < 0.1 {
                 charge.target_length = 0.0;
@@ -83,13 +86,16 @@ pub fn hook_controls(
                 (current_height - HOOK_CONFIG.retract_speed * time.delta_secs()).max(0.0);
             transform.translation.y -= (current_height - next_height) / 2.0;
 
-            sprite.custom_size = Some(Vec2::new(sprite.custom_size.unwrap().x, next_height));
+            let old_size = sprite.custom_size.unwrap().clone();
 
-            sprite.custom_size = Some(bevy::prelude::Vec2::new(size.x, new_height));
+            sprite.custom_size = Some(bevy::prelude::Vec2::new(
+                sprite.custom_size.unwrap().x,
+                next_height,
+            ));
 
             ctx.ctx
                 .reducers()
-                .update_hook_movement(ctx.ctx.identity(), size.x, new_height)
+                .update_hook_movement(ctx.ctx.identity(), old_size.x, next_height)
                 .unwrap();
         }
     }
@@ -229,6 +235,36 @@ pub fn despawn_opponent_hooks(
     for (entity, hook) in query.iter() {
         if !online_players.contains(&hook.id) {
             commands.entity(entity).despawn();
+        }
+    }
+}
+
+pub fn handle_obstacle_hit(
+    ctx_wrapper: Res<CtxWrapper>,
+    hook_query: Query<(&Transform, &Sprite), With<Hook>>,
+    obstacle_query: Query<(&Obstacle, &Transform)>,
+) {
+    let obstacle_radius = OBSTACLE_CONFIG.size.x.min(OBSTACLE_CONFIG.size.y) / 2.0;
+    let hook_radius = 6.0;
+
+    // Ensure hook_query and obstacle_query contain valid entities
+    if hook_query.is_empty() || obstacle_query.is_empty() {
+        return; // Skip if no hooks or obstacles exist
+    }
+
+    for (hook_transform, hook_sprite) in &hook_query {
+        let hook_tip =
+            hook_transform.translation + hook_transform.up() * (hook_sprite.custom_size.unwrap().y); // tip = base + height
+
+        for (obstacle, obstacle_transform) in &obstacle_query {
+            let obstacle_pos = obstacle_transform.translation.truncate();
+            let obstacle_pos_3d = Vec3::new(obstacle_pos.x, obstacle_pos.y, 0.0);
+            let distance = hook_tip.distance(obstacle_pos_3d);
+
+            if distance < (hook_radius + obstacle_radius) {
+                // Ask SpaceTimeDB to handle the damage
+                let _ = ctx_wrapper.ctx.reducers.damage_obstacle(obstacle.id, 1);
+            }
         }
     }
 }

@@ -1,10 +1,9 @@
 use crate::common::{
-    AttachedBlock, Block, Obstacle, Player, PlayerGrid, BLOCK_CONFIG, MAP_CONFIG, OBSTACLE_CONFIG,
-    PLAYER_CONFIG,
+    AttachedBlock, Block, Obstacle, Opponent, Player, PlayerGrid, BLOCK_CONFIG, MAP_CONFIG,
+    OBSTACLE_CONFIG, PLAYER_CONFIG,
 };
 use crate::db_connection::{update_player_position, CtxWrapper};
 use crate::module_bindings::*;
-use crate::opponent::Opponent;
 use crate::player_attach::*;
 use bevy::prelude::*;
 use bevy::window::PrimaryWindow;
@@ -72,7 +71,7 @@ pub fn player_movement(
     //if let Ok((mut transform, _player)) = query.get_single_mut() { // NOTE: merge conflict
     let ctx_wrapper = &ctx.into_inner();
 
-    let opponent_transforms: Vec<Transform> = opponent_query().iter().cloned().collect();
+    let opponent_transforms: Vec<Transform> = opponent_query.iter().cloned().collect();
     for (player_entity, mut transform, player, grid) in &mut player_query {
         // Handle rotation with A/D keys
         let mut rotation_dir = 0.0;

@@ -32,6 +32,7 @@ use player_attach::*;
 use bots::{spawn_bot_blocks, spawn_bots, update_bots};
 use camera::{camera_follow, setup_camera};
 use db_connection::{print_player_positions, setup_connection, update_opponent_hooks};
+use hook::handle_obstacle_hit;
 use map::setup_tilemap;
 use opponent::despawn_opponents;
 use player::{player_movement, setup_player};
@@ -73,6 +74,7 @@ fn main() {
                 attach_items,
                 update_bots,
                 update_opponent_hooks,
+                handle_obstacle_hit,
             ),
         )
         .add_systems(
@@ -85,5 +87,6 @@ fn main() {
             ),
         )
         .insert_resource(Time::from_seconds(0.5))
+        .insert_resource(SpawnedObstacles::default())
         .run();
 }
