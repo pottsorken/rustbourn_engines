@@ -71,7 +71,6 @@ pub fn attach_items(
             let y = transform.translation.y;
             let rotation = transform.rotation.to_euler(EulerRot::XYZ).2;
 
-            println!("Uploading hook: ({}, {}), rot: {}", x, y, rotation);
             ctx_wrapper
                 .ctx
                 .reducers()
