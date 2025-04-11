@@ -1,5 +1,5 @@
 use crate::common::{
-    AttachedBlock, Block, Bot, Obstacle, PlayerGrid, BLOCK_CONFIG, BOT_CONFIG, OBSTACLE_CONFIG,
+    AttachedBlock, Block, Bot, Obstacle, PlayerGrid, BLOCK_CONFIG, BOT_CONFIG, OBSTACLE_CONFIG, GRID_CONFIG,
 };
 use crate::db_connection::{load_bots, update_bot_position, CtxWrapper};
 use crate::grid::increment_grid_pos;
@@ -37,11 +37,11 @@ pub fn spawn_bots(
                 },
                 PlayerGrid {
                     block_position: HashMap::new(),
-                    grid_size: (1, 1),
-                    cell_size: 84.,
-                    next_free_pos: (-1, 0),
+                    grid_size: GRID_CONFIG.grid_size,
+                    cell_size: GRID_CONFIG.cell_size,
+                    next_free_pos: GRID_CONFIG.next_free_pos,
                     capacity: 5,
-                    load: 0,
+                    load: GRID_CONFIG.load,
                 },
             ));
         }

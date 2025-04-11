@@ -6,19 +6,17 @@ use image::{GenericImageView, ImageReader};
 
 pub fn setup_tilemap(mut commands: Commands, asset_server: Res<AssetServer>) {
     // Tile images. ORDER IS IMPORTANT!
-    let texture_handle: Vec<Handle<Image>> = vec![
-        asset_server.load(MAP_CONFIG.tile_textures[0]),
-        asset_server.load(MAP_CONFIG.tile_textures[1]),
-        asset_server.load(MAP_CONFIG.tile_textures[2]),
-        asset_server.load(MAP_CONFIG.tile_textures[3]),
-    ];
+    let texture_handle: Vec<Handle<Image>> = MAP_CONFIG 
+        .tile_textures
+        .iter()
+        .map(|path| asset_server.load(*path))
+        .collect();
     // New map with 64x64 chunks being 32x32 tiles
     let grid_size = MAP_CONFIG.tile_size.into(); // Grid size == tile size
     let map_type = TilemapType::default();
 
     let mut tile_storage = TileStorage::empty(MAP_CONFIG.map_size);
     let tilemap_entity = commands.spawn_empty().id();
-    let image_path = r"assets/tribasicmap64.png";
 
     // Load the image
     let img = ImageReader::open(MAP_CONFIG.image_path)

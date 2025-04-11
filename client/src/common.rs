@@ -119,8 +119,9 @@ pub const GRID_CONFIG: GridConfig = GridConfig {
 
 
 
+
 //
-// === Grid defined constraints ===
+// === Camera defined constraints ===
 //
 #[derive(Component)]
 pub struct CameraConfig {
@@ -135,8 +136,6 @@ pub const CAMERA_CONFIG: CameraConfig = CameraConfig {
     zoom_after_blocks: 5,
     
 };
-
-
 
 
 
@@ -199,6 +198,7 @@ pub const HOOK_CONFIG: HookConfig = HookConfig {
 
 
 
+
 //
 // === Block defined constraints ===
 //
@@ -244,6 +244,7 @@ pub const OBSTACLE_CONFIG: ObstacleConfig = ObstacleConfig {
     count: 1000,
     path: "sprites/Obstacles/obstacle_rock.png",
 };
+
 
 
 
