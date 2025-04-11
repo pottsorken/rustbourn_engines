@@ -75,8 +75,6 @@ pub fn update_hook_position(
     identity: Identity,
     position: Vec2,
     rotation: f32,
-    width: f32,
-    height: f32,
 ) -> Result<(), String> {
     // Find player by id
     if let Some(mut player) = ctx.db.player().identity().find(identity) {
