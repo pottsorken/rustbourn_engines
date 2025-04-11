@@ -79,9 +79,12 @@ pub fn hook_controls(
 }
 
 pub fn hook_collision_system(
-    hook_query: Query<(&Transform, &Sprite), With<Hook>>,
-    mut block_query: Query<(Entity, &Transform, Option<&mut AttachedBlock>), (With<Block>)>,
-    mut player_query: Query<(Entity, &Transform, &mut Player, &mut PlayerGrid), Without<Hook>>,
+    hook_query: Query<(&Transform, &Sprite), (With<Hook>, Without<Block>)>,
+    mut block_query: Query<(Entity, &mut Transform, Option<&mut AttachedBlock>), (With<Block>)>,
+    mut player_query: Query<
+        (Entity, &Transform, &mut Player, &mut PlayerGrid),
+        (Without<Hook>, Without<Block>),
+    >,
     attachable_blocks: Query<&PlayerAttach>,
     mut commands: Commands,
 ) {
@@ -97,7 +100,7 @@ pub fn hook_collision_system(
     if let Ok((player_entity, _player_transform, mut player, mut grid)) =
         player_query.get_single_mut()
     {
-        for (block_entity, block_transform, mut attach_link_option) in block_query.iter_mut() {
+        for (block_entity, mut block_transform, mut attach_link_option) in block_query.iter_mut() {
             let block_radius = BLOCK_CONFIG.size.x.min(BLOCK_CONFIG.size.y) / 2.0;
             let hook_radius = 5.0; // Hook tip radius
             let collision_distance = block_radius + hook_radius;
@@ -126,6 +129,7 @@ pub fn hook_collision_system(
                         });
                     }
                     grid.block_position.insert(nextpos, block_entity);
+                    block_transform.translation.x += 200_000.;
                     println!(
                         "Attach at gridpos ({}, {})",
                         grid.next_free_pos.0, grid.next_free_pos.1
