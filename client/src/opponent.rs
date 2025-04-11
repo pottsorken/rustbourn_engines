@@ -1,23 +1,20 @@
-use bevy::{ecs::entity, prelude::*};
+use bevy::prelude::*;
 
-use crate::{db_connection::CtxWrapper, module_bindings::*};
-use spacetimedb_sdk::{Error, Event, Identity, Status, Table, TableWithPrimaryKey};
+use crate::{
+    db_connection::CtxWrapper, 
+    module_bindings::*,
+    common::Opponent,
+};
+use spacetimedb_sdk::{
+    Identity,
+    Table,
+};
 
-#[derive(Component)]
-pub struct Opponent {
-    /// linear speed in meters per second
-    pub movement_speed: f32,
-    /// rotation speed in radians per second
-    pub rotation_speed: f32,
-
-    // DB identity
-    pub id: Identity,
-}
 
 pub fn spawn_opponent(
-    mut commands: &mut Commands,
+    commands: &mut Commands,
     asset_server: &Res<AssetServer>,
-    mut query: &Query<(&mut Transform, &Opponent)>,
+    query: &Query<(&mut Transform, &Opponent)>,
     id: &Identity,
     x: f32,
     y: f32,
@@ -29,7 +26,7 @@ pub fn spawn_opponent(
         return;
     }
 
-    for (transf, opp) in &mut query.iter() {
+    for (_transf, opp) in &mut query.iter() {
         if opp.id == *id {
             return;
         }
@@ -56,7 +53,7 @@ pub fn spawn_opponent(
 }
 
 pub fn update_opponent(
-    mut query: &mut Query<(&mut Transform, &Opponent)>,
+    query: &mut Query<(&mut Transform, &Opponent)>,
     id: &Identity,
     x: f32,
     y: f32,

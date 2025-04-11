@@ -65,11 +65,12 @@ pub fn attach_items(
 pub fn check_collision<T: Component>(
     new_pos: Vec2,
     targets: &Query<&Transform, With<T>>,
+    origin_size: Vec2,
     target_size: Vec2,
 ) -> bool {
-    let player_radius = PLAYER_CONFIG.size.x.min(PLAYER_CONFIG.size.y) / 2.0;
+    let origin_radius = origin_size.x.min(origin_size.y) / 2.0;
     let target_radius = target_size.x.min(target_size.y) / 2.0;
-    let collision_distance = player_radius + target_radius;
+    let collision_distance = origin_radius + target_radius;
 
     targets
         .iter()
