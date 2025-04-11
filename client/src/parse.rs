@@ -1,8 +1,7 @@
 // Command line parsing
 use crate::db_connection::DB_NAME;
-use clap::{ArgAction, Parser, Subcommand};
+use clap::Parser;
 use std::env;
-use std::env::*;
 use std::fs;
 
 #[derive(Parser, Debug)]

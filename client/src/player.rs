@@ -1,10 +1,19 @@
-use crate::common::{Obstacle, Block, Player, PlayerAttach, MAP_CONFIG, OBSTACLE_CONFIG, BLOCK_CONFIG, PLAYER_CONFIG};
+use crate::common::{
+    AttachedBlock, 
+    Block, 
+    Obstacle, 
+    Player, 
+    PlayerGrid, 
+    BLOCK_CONFIG,
+    MAP_CONFIG, 
+    OBSTACLE_CONFIG, 
+    PLAYER_CONFIG,
+};
 use crate::db_connection::{update_player_position, CtxWrapper};
-use bevy::math::Vec2 as BevyVec2;
-use crate::module_bindings::Vec2 as DBVec2;
-use bevy::prelude::*;
 use crate::player_attach::*;
+use bevy::prelude::*;
 use bevy::window::PrimaryWindow;
+use std::collections::HashMap;
 
 // server
 use spacetimedb_sdk::{
@@ -33,38 +42,36 @@ pub fn setup_player(
         Player {
             movement_speed: PLAYER_CONFIG.movement_speed, // meters per second
             rotation_speed: PLAYER_CONFIG.rotation_speed, // degrees per second
-            max_block_count: 0,
+            block_count: 0,
+        },
+        PlayerGrid {
+            block_position: HashMap::new(),
+            grid_size: (1, 1),
+            cell_size: 84.,
+            next_free_pos: (-1, 0),
+            capacity: 5,
+            load: 0,
         },
     ));
 }
 
-pub fn player_movement(
+pub fn attach_block(
     keyboard_input: Res<ButtonInput<KeyCode>>,
-    mut player_query: Query<(Entity, &mut Transform, &mut Player), (Without<Obstacle>, Without<Block>)>,
-    obstacle_query: Query<&Transform, With<Obstacle>>,
-    mut block_query: Query<(Entity, &Transform), With<Block>>,
-    attachable_blocks: Query<&PlayerAttach>,
-    mut commands: Commands,
+    mut _block_query: Query<(Entity, &mut Transform), (With<Block>, Without<AttachedBlock>)>,
+    mut player_query: Query<
+        (Entity, &Transform, &mut Player, &mut PlayerGrid),
+        (Without<Obstacle>, Without<Block>),
+    >,
+    mut _commands: Commands,
     time: Res<Time>,
-    ctx: Res<CtxWrapper>,
 ) {
-
-    //if let Ok((mut transform, _player)) = query.get_single_mut() { // NOTE: merge conflict
-    let ctx_wrapper = &ctx.into_inner();
-
-    for (player_entity, mut transform,mut player) in &mut player_query {
-        // Handle rotation with A/D keys
-        let mut rotation_dir = 0.0;
+    for (_player_entity, transform, player, mut _grid) in &mut player_query {
+        let mut _rotation_dir = 0.0;
         if keyboard_input.pressed(KeyCode::KeyA) || keyboard_input.pressed(KeyCode::ArrowLeft) {
-            rotation_dir += 1.0;
+            _rotation_dir += 1.0;
         }
         if keyboard_input.pressed(KeyCode::KeyD) || keyboard_input.pressed(KeyCode::ArrowRight) {
-            rotation_dir -= 1.0;
-        }
-
-        // Apply rotation
-        if rotation_dir != 0.0 {
-            transform.rotate_z(rotation_dir * PLAYER_CONFIG.rotation_speed * time.delta_secs());
+            _rotation_dir -= 1.0;
         }
 
         // Handle movement with W/S keys (forward/backward relative to rotation)
@@ -74,39 +81,134 @@ pub fn player_movement(
         }
         if keyboard_input.pressed(KeyCode::KeyS) || keyboard_input.pressed(KeyCode::ArrowDown) {
             move_dir.y -= 1.0;
+            //rotation_dir *= -1.;
         }
 
         // Apply movement relative to player's rotation
         if move_dir != Vec3::ZERO {
             let move_direction = transform.rotation * move_dir.normalize();
-            let new_pos = transform.translation
-                + move_direction * player.movement_speed * time.delta_secs();
+            let _new_pos =
+                transform.translation + move_direction * player.movement_speed * time.delta_secs();
+        }
+    }
+}
 
-            let collided_with_obstacle = check_collision(new_pos.truncate(), &obstacle_query, OBSTACLE_CONFIG.size);
+pub fn player_movement(
+    keyboard_input: Res<ButtonInput<KeyCode>>,
+    mut block_query: Query<(Entity, &Transform), (With<Block>, Without<AttachedBlock>)>,
+    attached_block_query: Query<(Entity, &Transform, &AttachedBlock), With<Block>>,
+    mut player_query: Query<
+        (Entity, &mut Transform, &mut Player, &mut PlayerGrid),
+        (Without<Obstacle>, Without<Block>),
+    >,
+    obstacle_query: Query<&Transform, With<Obstacle>>,
+    //attachable_blocks: Query<&PlayerAttach>,
+    mut _commands: Commands,
+    time: Res<Time>,
+    ctx: Res<CtxWrapper>,
+) {
+    //if let Ok((mut transform, _player)) = query.get_single_mut() { // NOTE: merge conflict
+    let ctx_wrapper = &ctx.into_inner();
+
+    for (player_entity, mut transform, player, grid) in &mut player_query {
+        // Handle rotation with A/D keys
+        let mut rotation_dir = 0.0;
+        if keyboard_input.pressed(KeyCode::KeyA) || keyboard_input.pressed(KeyCode::ArrowLeft) {
+            rotation_dir += 1.0;
+        }
+        if keyboard_input.pressed(KeyCode::KeyD) || keyboard_input.pressed(KeyCode::ArrowRight) {
+            rotation_dir -= 1.0;
+        }
+
+        // Handle movement with W/S keys (forward/backward relative to rotation)
+        let mut move_dir = Vec3::ZERO;
+        if keyboard_input.pressed(KeyCode::KeyW) || keyboard_input.pressed(KeyCode::ArrowUp) {
+            move_dir.y += 1.0;
+        }
+        if keyboard_input.pressed(KeyCode::KeyS) || keyboard_input.pressed(KeyCode::ArrowDown) {
+            move_dir.y -= 1.0;
+            //rotation_dir *= -1.;
+        }
+
+        // Apply movement relative to player's rotation
+        if move_dir != Vec3::ZERO {
+            //|| rotation_dir != 0. {
+            let mut move_direction = Vec3::ZERO.clone();
+            //if move_dir != Vec3::ZERO {
+            move_direction = transform.rotation * move_dir.normalize();
+            //}
+            let new_pos =
+                transform.translation + move_direction * player.movement_speed * time.delta_secs();
+
+            let collided_with_obstacle =
+                check_collision(new_pos.truncate(), &obstacle_query, PLAYER_CONFIG.size, OBSTACLE_CONFIG.size);
+
+            let mut blocks_collided_obstacles = false;
+
+            // copy tanslation ----
+            let mut next_frame_pos = transform.clone();
+            next_frame_pos.translation = new_pos;
+            // Apply rotation
+            if rotation_dir != 0.0 {
+                next_frame_pos
+                    .rotate_z(rotation_dir * PLAYER_CONFIG.rotation_speed * time.delta_secs());
+            }
+
+            // Check collision for all attached blocks
+            for (_attached_block_entity, _attached_block_transform, attached_block_link) in
+                attached_block_query.iter()
+            {
+                if attached_block_link.player_entity == player_entity {
+                    let rotated_offset = next_frame_pos.rotation
+                        * Vec3::new(
+                            attached_block_link.grid_offset.0 as f32 * grid.cell_size,
+                            attached_block_link.grid_offset.1 as f32 * grid.cell_size,
+                            5.0,
+                        );
+
+                    let new_block_pos = (next_frame_pos.translation) + (rotated_offset);
+
+                    blocks_collided_obstacles = check_collision(
+                        new_block_pos.truncate(),
+                        &obstacle_query,
+                        PLAYER_CONFIG.size,
+                        OBSTACLE_CONFIG.size,
+                    );
+                    if blocks_collided_obstacles {
+                        break;
+                    }
+                }
+            }
 
             let mut collided_with_block = false;
-            for (block_entity, block_transform) in block_query.iter_mut() {
+
+            // NOTE: Block collision logic here
+            for (_block_entity, block_transform) in block_query.iter_mut() {
                 let block_radius = BLOCK_CONFIG.size.x.min(BLOCK_CONFIG.size.y) / 2.0;
                 let player_radius = PLAYER_CONFIG.size.x.min(PLAYER_CONFIG.size.y) / 2.0;
                 let collision_distance = block_radius + player_radius;
 
-                if new_pos.truncate().distance(block_transform.translation.truncate()) < collision_distance {
+                if new_pos
+                    .truncate()
+                    .distance(block_transform.translation.truncate())
+                    < collision_distance
+                {
                     collided_with_block = true;
-
-                    // Check if already attached
-                    if attachable_blocks.get(block_entity).is_err() && player.max_block_count < 2{
-                        //let offset = block_transform.translation - transform.translation;
-                        commands.entity(block_entity).insert(PlayerAttach {
-                            offset: Vec2::new(80.0, 80.0),
-                        });
-                        player.max_block_count += 1;
-                    }
                 }
             }
-            if !collided_with_obstacle && !collided_with_block {
+
+            //println!(" ");
+            if !collided_with_obstacle && !collided_with_block && !blocks_collided_obstacles {
+                // Apply tanslation
                 transform.translation = new_pos;
+                // Apply rotation
+                if rotation_dir != 0.0 {
+                    transform
+                        .rotate_z(rotation_dir * PLAYER_CONFIG.rotation_speed * time.delta_secs());
+                }
             }
         }
+
         update_player_position(ctx_wrapper, &transform);
     }
 }
@@ -148,18 +250,4 @@ pub fn confine_player_movement(
 
         player_transform.translation = translation;
     }
-}
-
-pub fn check_collision<T: Component>(
-    new_pos: Vec2,
-    targets: &Query<&Transform, With<T>>,
-    target_size: Vec2,
-) -> bool {
-    let player_radius = PLAYER_CONFIG.size.x.min(PLAYER_CONFIG.size.y) / 2.0;
-    let target_radius = target_size.x.min(target_size.y) / 2.0;
-    let collision_distance = player_radius + target_radius;
-
-    targets
-        .iter()
-        .any(|transform| new_pos.distance(transform.translation.truncate()) < collision_distance)
 }

@@ -1,16 +1,11 @@
 use bevy::prelude::*;
 
+use crate::common::Player;
 use crate::player::*;
-use crate::common::{Player};
-
 
 pub fn setup_camera(mut commands: Commands) {
-    commands.spawn((
-        Camera2d,
-        Transform::from_xyz(0.0, 0.0, 999.9),
-    ));
+    commands.spawn((Camera2d, Transform::from_xyz(0.0, 0.0, 999.9)));
 }
-
 
 pub fn camera_follow(
     player_query: Query<&Transform, With<Player>>,

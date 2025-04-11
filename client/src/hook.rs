@@ -1,72 +1,141 @@
+use crate::common::{
+    AttachedBlock, Block, Hook, HookCharge, Obstacle, Player, PlayerAttach, PlayerGrid,
+    BLOCK_CONFIG, HOOK_CONFIG, PLAYER_CONFIG,
+};
+use crate::grid::increment_grid_pos;
 use bevy::prelude::*;
-use crate::common::{Hook, PlayerAttach};
 
 pub fn setup_hook(mut commands: Commands, asset_server: Res<AssetServer>) {
-    // Spawn a player sprite at position (0, 0) at a higher z-index than map
     commands.spawn((
         Sprite {
-            custom_size: Some(Vec2::new(25.0, 26.0)), // Square size 100x100 pixels
-            image: asset_server.load("sprites/GrapplingHook.png"),
-            //color:Color::srgb(0.8, 0.4, 0.2),
+            custom_size: Some(HOOK_CONFIG.hook_size),
+            image: asset_server.load(HOOK_CONFIG.hook_path),
             anchor: bevy::sprite::Anchor::BottomCenter,
             ..default()
         },
-        Transform::from_xyz(0.0, 0.0, 5.0),
+        Transform::from_xyz(0.0, 0.0, 8.0),
         Hook {
-            hook_speed: 500.0,
-            hook_max_range: 100.0,
+            hook_speed: HOOK_CONFIG.hook_speed,
+            hook_max_range: HOOK_CONFIG.hook_max_range,
+        },
+        HookCharge {
+            time_held: 0.0,
+            target_length: 0.0,
         },
         PlayerAttach {
-            offset: Vec2::new(0.0, 20.0), // Offset from player's center
+            offset: HOOK_CONFIG.player_attach_offset,
         },
     ));
 }
 
-pub fn hook_controls_short(
+pub fn hook_controls(
     keyboard_input: Res<ButtonInput<KeyCode>>,
-    mut query: Query<(&mut Sprite, &mut Transform), With<Hook>>,
+    mut hook_query: Query<
+        (&mut Sprite, &mut Transform, &Hook, &mut HookCharge),
+        (With<Hook>, Without<Obstacle>, Without<Block>),
+    >,
+    mut block_query: Query<
+        (Entity, &Transform, Option<&mut AttachedBlock>),
+        (With<Block>, Without<Player>),
+    >,
+    mut player_query: Query<
+        (Entity, &Transform, &mut Player, &mut PlayerGrid),
+        (Without<Obstacle>, Without<Block>, Without<Hook>),
+    >,
+    attachable_blocks: Query<&PlayerAttach>,
+    mut commands: Commands,
     time: Res<Time>,
 ) {
-    if keyboard_input.just_pressed(KeyCode::Space) {
-        
+    for (mut sprite, mut transform, hook, mut charge) in hook_query.iter_mut() {
+        if keyboard_input.pressed(KeyCode::Space) && charge.target_length == 0.0 {
+            charge.time_held += time.delta_secs();
+        }
+
+        if keyboard_input.just_released(KeyCode::Space) {
+            charge.target_length =
+                (charge.time_held / 2.0 * hook.hook_speed).min(hook.hook_max_range);
+            charge.time_held = 0.0;
+        }
+
+        let current_height = sprite.custom_size.unwrap().y;
+
+        if charge.target_length > 0.0 {
+            let next_height = (current_height + HOOK_CONFIG.extend_speed * time.delta_secs())
+                .min(charge.target_length);
+
+            transform.translation.y += (next_height - current_height) / 2.0;
+            sprite.custom_size = Some(Vec2::new(sprite.custom_size.unwrap().x, next_height));
+
+            if (next_height - charge.target_length).abs() < 0.1 {
+                charge.target_length = 0.0;
+            }
+        } else if current_height > 0.0 && !keyboard_input.pressed(KeyCode::Space) {
+            let next_height =
+                (current_height - HOOK_CONFIG.retract_speed * time.delta_secs()).max(0.0);
+            transform.translation.y -= (current_height - next_height) / 2.0;
+            sprite.custom_size = Some(Vec2::new(sprite.custom_size.unwrap().x, next_height));
+        }
     }
 }
 
-// fn extend_rope(mut query: Query<&mut Transform, With<Hook>>) {
-//     for mut transform in query.iter_mut() {
-//         transform.scale.y += 5.0;
-//     }
-// }
-
-pub fn hook_controls(
-    keyboard_input: Res<ButtonInput<KeyCode>>,
-    mut query: Query<(&mut Sprite, &mut Transform, &Hook)>,
-    time: Res<Time>,
+pub fn hook_collision_system(
+    hook_query: Query<(&Transform, &Sprite), With<Hook>>,
+    mut block_query: Query<(Entity, &Transform, Option<&mut AttachedBlock>), (With<Block>)>,
+    mut player_query: Query<(Entity, &Transform, &mut Player, &mut PlayerGrid), Without<Hook>>,
+    attachable_blocks: Query<&PlayerAttach>,
+    mut commands: Commands,
 ) {
-    for (mut sprite, mut transform, hook) in query.iter_mut() {
-        let growth_rate = hook.hook_speed;
-        let growth_amount = growth_rate * time.delta_secs();
+    let (hook_transform, sprite) = if let Ok(val) = hook_query.get_single() {
+        val
+    } else {
+        return;
+    };
 
-        if let Some(size) = sprite.custom_size {
-            let mut new_height = size.y;
-            let mut y_offset = 0.0;
+    let hook_tip = hook_transform.translation
+        + hook_transform.rotation * Vec3::new(0.0, sprite.custom_size.unwrap().y, 0.0);
 
-            if keyboard_input.pressed(KeyCode::Space) {
-                // Extend
-                if size.y < hook.hook_max_range {
-                    new_height = (size.y + growth_amount).min(hook.hook_max_range);
-                    y_offset = (new_height - size.y) / 2.0;
-                }
-            } else {
-                // Retract
-                if size.y > 0.0 {
-                    new_height = (size.y - growth_amount).max(0.0);
-                    y_offset = -(size.y - new_height) / 2.0;
+    if let Ok((player_entity, _player_transform, mut player, mut grid)) =
+        player_query.get_single_mut()
+    {
+        for (block_entity, block_transform, mut attach_link_option) in block_query.iter_mut() {
+            let block_radius = BLOCK_CONFIG.size.x.min(BLOCK_CONFIG.size.y) / 2.0;
+            let hook_radius = 5.0; // Hook tip radius
+            let collision_distance = block_radius + hook_radius;
+
+            if hook_tip
+                .truncate()
+                .distance(block_transform.translation.truncate())
+                < collision_distance
+            {
+                // Check if block already attached
+                if grid.load < grid.capacity
+                    && attachable_blocks.get(block_entity).is_err()
+                    && player.block_count < PLAYER_CONFIG.max_block_count
+                {
+                    let nextpos = grid.next_free_pos.clone();
+
+                    // NOTE: If block is attached or not. (Option<AttachedBlock>)
+                    if let Some(mut attach_link) = attach_link_option {
+                        // TODO: Remove entity from previous owner hashmap
+                        attach_link.player_entity = player_entity;
+                        attach_link.grid_offset = nextpos;
+                    } else {
+                        commands.entity(block_entity).insert(AttachedBlock {
+                            grid_offset: nextpos,
+                            player_entity: player_entity,
+                        });
+                    }
+                    grid.block_position.insert(nextpos, block_entity);
+                    println!(
+                        "Attach at gridpos ({}, {})",
+                        grid.next_free_pos.0, grid.next_free_pos.1
+                    );
+                    // increment grid pos
+                    increment_grid_pos(&mut grid);
+
+                    player.block_count += 1;
                 }
             }
-
-            sprite.custom_size = Some(Vec2::new(size.x, new_height));
-            
         }
     }
 }

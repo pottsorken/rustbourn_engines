@@ -1,4 +1,9 @@
-use crate::common::{Block, Player, MAP_CONFIG, BLOCK_CONFIG, PLAYER_CONFIG};
+use crate::common::{
+    AttachedBlock, 
+    Block, 
+    BLOCK_CONFIG, 
+    MAP_CONFIG, 
+};
 use bevy::prelude::*;
 use bevy::window::PrimaryWindow;
 use rand::random;
@@ -37,9 +42,9 @@ pub fn setup_block(
 }
 
 pub fn update_block(
-    mut commands: Commands,
-    window_query: Query<&Window, With<PrimaryWindow>>,
-    mut block_query: Query<(&mut Transform, &Block)>,
+    mut _commands: Commands,
+    _window_query: Query<&Window, With<PrimaryWindow>>,
+    mut block_query: Query<(&mut Transform, &Block), Without<AttachedBlock>>,
     time: Res<Time>,
 ) {
     let mut rotation_dir = 0.0;
@@ -48,6 +53,5 @@ pub fn update_block(
         rotation_dir += 0.1;
 
         transform.rotate_z(rotation_dir * BLOCK_CONFIG.rotation_speed * time.delta_secs());
-
     }
 }
