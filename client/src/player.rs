@@ -118,6 +118,9 @@ pub fn player_movement(
             // copy tanslation ----
             let mut next_frame_pos = transform.clone();
             next_frame_pos.translation = new_pos;
+            if rotation_dir != 0.0 {
+                next_frame_pos.rotate_z(rotation_dir * rot_speed * time.delta_secs());
+            }
 
             // Check collision for all attached blocks
             for (_attached_block_entity, _attached_block_transform, attached_block_link) in
@@ -205,14 +208,14 @@ pub fn player_movement(
                 && !will_collide(new_pos.truncate(), &obstacle_query)
                 && !will_collide_with_opponent(new_pos.truncate(), &opponent_transforms)
             {
-                println!(
-                    "{} {} {} {} {}",
-                    collided_with_obstacle,
-                    collided_with_block,
-                    blocks_collided_obstacles,
-                    will_collide(new_pos.truncate(), &obstacle_query),
-                    will_collide_with_opponent(new_pos.truncate(), &opponent_transforms),
-                );
+                //println!(
+                //    "{} {} {} {} {}",
+                //    collided_with_obstacle,
+                //    collided_with_block,
+                //    blocks_collided_obstacles,
+                //    will_collide(new_pos.truncate(), &obstacle_query),
+                //    will_collide_with_opponent(new_pos.truncate(), &opponent_transforms),
+                //);
                 // Apply tanslation
                 transform.translation = new_pos;
                 // Apply rotation
