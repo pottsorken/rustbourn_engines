@@ -142,17 +142,54 @@ pub fn player_movement(
             let mut collided_with_block = false;
 
             // NOTE: Block collision logic here
+            let block_radius = BLOCK_CONFIG.size.x.min(BLOCK_CONFIG.size.y) / 2.0;
+            let player_radius = PLAYER_CONFIG.size.x.min(PLAYER_CONFIG.size.y) / 2.0;
+            let collision_distance = block_radius + player_radius;
             for (_block_entity, block_transform) in block_query.iter_mut() {
-                let block_radius = BLOCK_CONFIG.size.x.min(BLOCK_CONFIG.size.y) / 2.0;
-                let player_radius = PLAYER_CONFIG.size.x.min(PLAYER_CONFIG.size.y) / 2.0;
-                let collision_distance = block_radius + player_radius;
-
                 if new_pos
                     .truncate()
                     .distance(block_transform.translation.truncate())
                     < collision_distance
                 {
                     collided_with_block = true;
+                }
+            }
+
+            'outer: for (_block_entity, block_transform, block_link) in attached_block_query.iter()
+            {
+                if block_link.player_entity != player_entity {
+                    if new_pos
+                        .truncate()
+                        .distance(block_transform.translation.truncate())
+                        < collision_distance
+                    {
+                        collided_with_block = true;
+                    }
+                    for (_attached_block_entity, _attached_block_transform, attached_block_link) in
+                        attached_block_query.iter()
+                    {
+                        if attached_block_link.player_entity == player_entity {
+                            let rotated_offset = next_frame_pos.rotation
+                                * Vec3::new(
+                                    attached_block_link.grid_offset.0 as f32 * grid.cell_size,
+                                    attached_block_link.grid_offset.1 as f32 * grid.cell_size,
+                                    5.0,
+                                );
+
+                            let new_block_pos = (next_frame_pos.translation) + (rotated_offset);
+
+                            if new_block_pos
+                                .truncate()
+                                .distance(block_transform.translation.truncate())
+                                < collision_distance
+                            {
+                                collided_with_block = true;
+                            }
+                            if collided_with_block {
+                                break 'outer;
+                            }
+                        }
+                    }
                 }
             }
 
