@@ -165,6 +165,9 @@ pub struct HookCharge {
 }
 
 #[derive(Component)]
+pub struct HookRange;
+
+#[derive(Component)]
 pub struct HookConfig {
     pub hook_size: Vec2,
     pub hook_path: &'static str,
@@ -339,4 +342,3 @@ pub enum MenuButtonAction {
 
 #[derive(Component)]
 pub struct OnEditScreen;
-
