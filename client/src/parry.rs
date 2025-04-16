@@ -6,8 +6,8 @@ pub fn setup_parry(mut commands: Commands, asset_server: Res<AssetServer>) {
     // Spawn a player sprite at position (0, 0) at a higher z-index than map
     commands.spawn((
         Sprite {
-            custom_size: Some(Vec2::new(25.0, 26.0)), // Square size 100x100 pixels
-            image: asset_server.load("sprites/parry/circle1.png"),
+            custom_size: Some(Vec2::new(0.0, 0.0)), // Square size 100x100 pixels
+            image: asset_server.load("sprites/parry/circle5.png"),
             anchor: bevy::sprite::Anchor::Center,
             ..default()
         },
@@ -19,18 +19,18 @@ pub fn setup_parry(mut commands: Commands, asset_server: Res<AssetServer>) {
             timer: Timer::from_seconds(0.5, TimerMode::Once),
         },
         PlayerAttach {
-            offset: Vec2::new(0.0, 20.0), // Offset from player's center
+            offset: Vec2::new(0.0, 0.0), // Offset from player's center
         },
     ));
 }
 
 pub fn parry_controls(
     keyboard_input: Res<ButtonInput<KeyCode>>,
-    mut query: Query<(&mut Sprite, &mut Transform), With<Parry>>,
+    mut query: Query<(&mut Sprite, &mut Transform, &mut Parry)>, 
     time: Res<Time>,
 ) 
 {
-    for (mut sprite, mut parry) in query.iter_mut() {
+    for (mut sprite, mut transform, mut parry) in query.iter_mut() {
 
          if keyboard_input.just_pressed(KeyCode::KeyF) {
               parry.active = true;
@@ -39,17 +39,25 @@ pub fn parry_controls(
         
         if parry.active{
         if let Some(size) = sprite.custom_size {
-                sprite.custom_size = Some(Vec2::new(size.x, size.y * 1.2));
-            if parry.timer.finished()
+                sprite.custom_size = Some(Vec2::new(150.0 ,150.0));
+            /*if parry.timer.finished()
             {
                 parry.active =false;
                 sprite.custom_size = Some(Vec2::new(25.0, 26.0));
 
 
-            }
+            }*/
+             if keyboard_input.just_pressed(KeyCode::KeyG) {
+              parry.active = false;}
+        }
+
+        if !(parry.active){
+
+            if let Some(size) = sprite.custom_size {
+                sprite.custom_size = Some(Vec2::new(0.0 ,0.0));
         }
 
 
 
     }
-}}
+}}}
