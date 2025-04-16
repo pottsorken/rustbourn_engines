@@ -141,7 +141,7 @@ pub fn spawn_bot_blocks(
                 if let OwnerType::Bot(owner) = block.owner {
                     if owner == i {
                         println!("Spawning for bot: {}, blockid: {}", bot_entity, i);
-                        commands.spawn((
+                        let block_entity = commands.spawn((
                             Sprite {
                                 custom_size: Some(BLOCK_CONFIG.size),
                                 image: asset_server.load(BLOCK_CONFIG.path[1]),
@@ -156,6 +156,7 @@ pub fn spawn_bot_blocks(
                         ));
                         increment_grid_pos(&mut bot_grid);
                         spawned_blocks.ids.insert(block.id);
+                        spawned_blocks.entities.insert(block_entity.id(), block.id);
                     }
                 }
             }

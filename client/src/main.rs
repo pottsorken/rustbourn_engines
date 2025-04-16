@@ -23,8 +23,8 @@ mod edit_menu; use edit_menu::*;
 mod track_spawner;
 
 use track_spawner::*;
-use camera::*;
 use block::*;
+use camera::*;
 use hook::*;
 use obstacle::*;
 use player::*;
@@ -42,9 +42,9 @@ use db_connection::{update_opponent_positions, setup_connection, update_opponent
 use hook::handle_obstacle_hit;
 use map::setup_tilemap;
 use opponent::{despawn_opponents, spawn_opponent_tracks_system};
-use player::{player_movement, setup_player};
 use common::*;
 use track_spawner::{spawn_tracks_system, track_lifetime_system};
+use player::{player_movement, setup_blocks_player, setup_player};
 
 fn main() {
     App::new()
@@ -109,6 +109,7 @@ fn main() {
                 setup_obstacle,
                 despawn_opponents,
                 spawn_bots,
+                setup_blocks_player,
                 spawn_bot_blocks,
             )
             .run_if(in_game_or_edit),

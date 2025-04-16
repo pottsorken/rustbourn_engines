@@ -1,5 +1,6 @@
 use crate::module_bindings::*;
 use crate::{
+    block::SpawnedBlocks,
     common::{
         AttachedBlock, Block, CtxWrapper, Hook, HookCharge, HookRange, Obstacle, OpponentHook,
         Player, PlayerAttach, PlayerGrid, BLOCK_CONFIG, HOOK_CONFIG, OBSTACLE_CONFIG,HookAttach,
@@ -182,6 +183,8 @@ pub fn hook_collision_system(
     >,
     attachable_blocks: Query<&PlayerAttach>,
     mut commands: Commands,
+    ctx_wrapper: Res<CtxWrapper>,
+    mut spawned_blocks: ResMut<SpawnedBlocks>,
 ) {
     let (hook_transform, sprite) = if let Ok(val) = hook_query.get_single() {
         val
@@ -216,8 +219,22 @@ pub fn hook_collision_system(
                     // NOTE: If block is attached or not. (Option<AttachedBlock>)
                     if let Some(mut attach_link) = attach_link_option {
                         // TODO: Remove entity from previous owner hashmap
+
+                        // Update block ownership locally
                         attach_link.player_entity = player_entity;
                         attach_link.grid_offset = nextpos;
+
+                        // Update block ownership on server
+                        let id_block_db = spawned_blocks
+                            .entities
+                            .get(&block_entity)
+                            .expect("Failed lookup for block Entity->ServerID");
+                        ctx_wrapper.ctx.reducers().update_block_owner(
+                            id_block_db.clone(),
+                            OwnerType::Player(ctx_wrapper.ctx.identity()),
+                            nextpos.0,
+                            nextpos.1,
+                        );
                     } else {
                         commands.entity(block_entity).insert(AttachedBlock {
                             grid_offset: nextpos,
