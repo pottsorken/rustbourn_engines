@@ -1,7 +1,8 @@
 // Game engine
 use bevy::prelude::*;
 use bevy_ecs_tilemap::prelude::*;
-//use noisy_bevy::simplex_noise_2d; // For map generation. May be temporary
+use noisy_bevy::simplex_noise_2d; // For map generation. May be temporary
+use bevy::{app::AppExit, color::palettes::css::CRIMSON, prelude::*};
 
 mod block;
 mod bots;
@@ -17,6 +18,8 @@ mod opponent;
 mod parse;
 mod player;
 mod player_attach;
+mod start_menu;
+mod edit_menu; use edit_menu::*;
 
 use camera::*;
 use block::*;
@@ -24,6 +27,7 @@ use hook::*;
 use obstacle::*;
 use player::*;
 use player_attach::*;
+use start_menu::*;
 
 //#[cfg(windows)]
 //#[global_allocator]
@@ -37,6 +41,8 @@ use hook::handle_obstacle_hit;
 use map::setup_tilemap;
 use opponent::despawn_opponents;
 use player::{player_movement, setup_player};
+use common::*;
+
 
 fn main() {
     App::new()
@@ -49,17 +55,27 @@ fn main() {
             ..Default::default()
         }))
         .add_plugins(TilemapPlugin)
+        .init_state::<GameState>()
+        .insert_resource(DisplayQuality::Medium)
+        .insert_resource(Volume(7))
+        .add_plugins((splash_plugin, menu_plugin, game_plugin, edit_plugin))
         .add_systems(
             Startup,
             (
-                setup_connection,
                 setup_camera,
+            )
+            .chain(),
+        )
+        .add_systems(
+            OnEnter(GameState::Game),
+            (
+                setup_connection,
                 setup_player,
                 setup_tilemap,
                 setup_block,
                 setup_hook,
             )
-                .chain(),
+                .chain()
         )
         .add_systems(
             Update,
@@ -77,7 +93,7 @@ fn main() {
                 attach_items,
                 update_opponent_hooks,
                 handle_obstacle_hit,
-            ),
+            ) .run_if(in_game_or_edit),
         )
         .add_systems(
             FixedUpdate,
@@ -86,7 +102,14 @@ fn main() {
                 despawn_opponents,
                 spawn_bots,
                 spawn_bot_blocks,
-            ),
+                // update_bots,
+            )
+            .run_if(in_game_or_edit),
+        )
+        .add_systems(
+            FixedUpdate,
+            (setup_obstacle, despawn_opponents, spawn_bots)
+                .run_if(in_game_or_edit)
         )
         .insert_resource(Time::from_seconds(0.5))
         .insert_resource(SpawnedObstacles::default())
