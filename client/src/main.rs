@@ -17,7 +17,9 @@ mod opponent;
 mod parse;
 mod player;
 mod player_attach;
+mod track_spawner;
 
+use track_spawner::*;
 use camera::*;
 use block::*;
 use hook::*;
@@ -77,6 +79,8 @@ fn main() {
                 attach_items,
                 update_opponent_hooks,
                 handle_obstacle_hit,
+                spawn_tracks_system,
+                track_lifetime_system,
             ),
         )
         .add_systems(

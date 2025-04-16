@@ -90,6 +90,24 @@ pub const PLAYER_CONFIG: PlayerConfig = PlayerConfig {
     path: "sprites/top-view/robot_3Dblue.png",
     max_block_count: 100,
 };
+#[derive(Component)]
+pub struct TRACK_CONFIG {
+    pub path: &'static str,
+    pub size: Vec2,
+    pub spawn_distance: f32,
+    pub fade_time: f32,
+}
+
+pub const TRACK_CONFIG: TRACK_CONFIG = TRACK_CONFIG {
+    path: "sprites/td_tanks/track8.png",
+    size: Vec2::new(8.0, 8.0),
+    spawn_distance: 0.0,
+    fade_time: 10.0, // seconds until despawn
+};
+
+#[derive(Component)]
+pub struct LastTrackPos(pub Vec2);
+
 
 //
 // === Grid defined constraints ===
