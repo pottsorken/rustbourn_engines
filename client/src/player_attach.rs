@@ -1,7 +1,7 @@
 use bevy::prelude::*;
 
 use crate::module_bindings::*;
-use crate::common::{AttachedBlock, Bot, Hook, Player, PlayerAttach, PlayerGrid, PLAYER_CONFIG, CtxWrapper};
+use crate::common::{AttachedBlock, Bot, Hook, Player, PlayerAttach, PlayerGrid, PLAYER_CONFIG, CtxWrapper, Opponent};
 use spacetimedb_sdk::{
     credentials, DbContext, Error, Event, Identity, Status, Table, TableWithPrimaryKey,
 };
@@ -14,7 +14,13 @@ pub fn attach_objects(
         (Entity, &Transform, &PlayerGrid),
         (With<Bot>, (Without<Player>, Without<AttachedBlock>)),
     >,
-    mut param_set: ParamSet<(Query<(&AttachedBlock, &mut Transform), Without<Player>>,)>,
+    opponent_query: Query<
+        (Entity, &Transform, &PlayerGrid),
+        (With<Opponent>, Without<Player>, Without<Bot>),
+    >,
+    mut param_set: ParamSet<(
+        Query<(&AttachedBlock, &mut Transform), (Without<Player>, Without<Bot>, Without<Opponent>)>,
+    )>,
 ) {
     let mut block_query = param_set.p0();
     for (attach, mut transform) in block_query.iter_mut() {
@@ -26,6 +32,11 @@ pub fn attach_objects(
         for (bot_entity, bot_transform, bot_grid) in bot_query.iter() {
             if attach.player_entity == bot_entity {
                 update_slave_pos(&bot_transform, &bot_grid, &mut transform, &attach);
+            }
+        }
+        for (opp_entity, opp_transform, opp_grid) in opponent_query.iter() {
+            if attach.player_entity == opp_entity {
+                update_slave_pos(&opp_transform, &opp_grid, &mut transform, &attach);
             }
         }
     }
