@@ -77,11 +77,23 @@ pub struct PlayerConfig {
     pub path: &'static str,
     pub max_block_count: i32,
 }
-// Global constant config for the player
+
 #[derive(Component)]
 pub struct OpponentHook {
     pub id: Identity, // Match with the opponent's identity
 }
+
+// Global constant config for the player
+#[derive(Component)]
+pub struct Hook {
+    pub hook_speed: f32,
+    pub hook_max_range: f32,
+}
+#[derive(Component)]
+pub struct PlayerAttach {
+    pub offset: Vec2,
+}
+
 /// Global constant config for the player
 pub const PLAYER_CONFIG: PlayerConfig = PlayerConfig {
     size: Vec2::new(80.0, 80.0),
@@ -90,6 +102,15 @@ pub const PLAYER_CONFIG: PlayerConfig = PlayerConfig {
     path: "sprites/top-view/robot_3Dblue.png",
     max_block_count: 100,
 };
+
+#[derive(Component)]
+pub struct Parry{
+    pub active : bool,
+    pub parry_duration: f32,
+    pub timer: Timer,
+
+}
+
 
 //
 // === Grid defined constraints ===

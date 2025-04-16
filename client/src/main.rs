@@ -11,6 +11,7 @@ mod common;
 mod db_connection;
 mod grid;
 mod hook;
+mod parry;
 mod map;
 mod module_bindings;
 mod obstacle;
@@ -24,6 +25,8 @@ mod edit_menu; use edit_menu::*;
 use camera::*;
 use block::*;
 use hook::*;
+use parry::*;
+use map::*;
 use obstacle::*;
 use player::*;
 use player_attach::*;
@@ -74,6 +77,7 @@ fn main() {
                 setup_tilemap,
                 setup_block,
                 setup_hook,
+                setup_parry,
             )
                 .chain()
         )
@@ -89,6 +93,7 @@ fn main() {
                 hook_collision_system,
                 hook_controls,
                 render_bots_from_db,
+                parry_controls,
                 attach_objects,
                 attach_items,
                 update_opponent_hooks,
