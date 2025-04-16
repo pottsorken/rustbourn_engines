@@ -63,7 +63,7 @@ pub fn update_bots(
             transform.translation = new_pos;
 
         } else {
-            println!("Hello");
+            // println!("Hello");
             //println!("[BOT] {} collided at ({}, {})", _bot.id, transform.translation.x, transform.translation.y);
             println!(" ");
 
@@ -97,7 +97,7 @@ pub fn update_bots(
             
         }
         update_bot_position(&ctx_wrapper, &transform, _bot.id);
-        println!("[BOT] {} collided at ({}, {})", _bot.id, transform.translation.x, transform.translation.y);
+        // println!("[BOT] {} collided at ({}, {})", _bot.id, transform.translation.x, transform.translation.y);
 
 
     }

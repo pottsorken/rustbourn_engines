@@ -18,6 +18,7 @@ mod parse;
 mod player;
 mod player_attach;
 mod start_menu;
+mod edit_menu; use edit_menu::*;
 
 use block::*;
 use bots::*;
@@ -58,7 +59,7 @@ fn main() {
         .init_state::<GameState>()
         .insert_resource(DisplayQuality::Medium)
         .insert_resource(Volume(7))
-        .add_plugins((splash_plugin, menu_plugin, game_plugin))
+        .add_plugins((splash_plugin, menu_plugin, game_plugin, edit_plugin))
         .add_systems(
             Startup,
             (
@@ -89,12 +90,12 @@ fn main() {
                 attach_objects,
                 update_bots,
             )
-                .run_if(in_state(GameState::Game))
+                .run_if(in_game_or_edit)
         )
         .add_systems(
             FixedUpdate,
             (setup_obstacle, despawn_opponents, spawn_bots)
-                .run_if(in_state(GameState::Game))
+                .run_if(in_game_or_edit)
         )
         .insert_resource(Time::from_seconds(0.5))
         .run();

@@ -133,3 +133,75 @@ pub const MAP_CONFIG: MapConfig = MapConfig {
     ],
     safe_zone_size: 300.0,
 };
+
+
+
+/////////////////////////////////////////////////////////
+#[derive(Clone, Copy, Default, Eq, PartialEq, Debug, Hash, States)]
+pub enum GameState {
+    #[default]
+    Splash,
+    Menu,
+    Game,
+    Edit,
+}
+
+#[derive(Resource, Debug, Component, PartialEq, Eq, Clone, Copy)]
+pub enum DisplayQuality {
+    Low,
+    Medium,
+    High,
+}
+
+#[derive(Resource, Debug, Component, PartialEq, Eq, Clone, Copy)] // Volume setting
+pub struct Volume(pub u32);
+
+#[derive(Component)]
+pub struct OnSplashScreen;
+
+#[derive(Resource, Deref, DerefMut)]
+pub struct SplashTimer(pub Timer);
+
+#[derive(Component)]
+pub struct OnGameScreen;
+
+#[derive(Clone, Copy, Default, Eq, PartialEq, Debug, Hash, States)] // Menu states
+pub enum MenuState {
+    Main,
+    Settings,
+    SettingsDisplay,
+    SettingsSound,
+    #[default]
+    Disabled,
+}
+
+// Tag components used to tag entities added on different menu screen
+#[derive(Component)]
+pub struct OnMainMenuScreen;
+
+#[derive(Component)]
+pub struct OnSettingsMenuScreen;
+
+#[derive(Component)]
+pub struct OnDisplaySettingsMenuScreen;
+
+#[derive(Component)]
+pub struct OnSoundSettingsMenuScreen;
+
+#[derive(Component)] // Which is the currently selected setting
+pub struct SelectedOption;
+
+// All actions that can be triggered from a button click
+#[derive(Component)]
+pub enum MenuButtonAction {
+    Play,
+    Settings,
+    SettingsDisplay,
+    SettingsSound,
+    BackToMainMenu,
+    BackToSettings,
+    Quit,
+}
+
+#[derive(Component)]
+pub struct OnEditScreen;
