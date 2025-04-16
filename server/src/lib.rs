@@ -12,7 +12,7 @@ use noise::{NoiseFn, Perlin};
 use std::f32::consts::PI;
 
 /// Player component data
-use glam::{Vec3, Quat};
+//use glam::{Vec3, Quat};
 
 const FIXED_DELTA: f32 = 1.0 / 30.0; // Fixed delta for 3cd ..0 FPS simulation
 const BOT_SIZE: f32 = 80.0; // Size of bot
@@ -314,9 +314,11 @@ pub fn update_bot_position(
         bevy_transform
     );
 
-    let obstacles = ctx.db.obstacle().iter().collect::<Vec<_>>();
-    let players = ctx.db.player().iter().collect::<Vec<_>>();
-    let rotation_speed = f32::to_radians(1.0);
+    //let obstacles = ctx.db.obstacle().iter().collect::<Vec<_>>();
+    //let players = ctx.db.player().iter().collect::<Vec<_>>();
+
+    //let max_check_distance = BOT_SIZE * 2.5;
+
 
     if let Some(mut _bot) = ctx.db.bots().iter().find(|b| b.id == bot_id) {
         _bot.position = bevy_transform;
@@ -343,12 +345,28 @@ pub fn update_bot_position(
         let left_pos = transform_translation + left_dir * BOT_SIZE; // Adjust distance
         let right_pos = transform_translation + right_dir * BOT_SIZE; // Adjust distance
 
+        let check_points = vec![front_pos, left_pos, right_pos];
+
+        // Single pass through all entities
+        let collision_results = check_collisions_at_points(
+            &check_points,
+            ctx.db.obstacle().iter(),
+            ctx.db.player().iter(),
+            ctx.db.bots().iter(),
+            BOT_SIZE * 1.5
+        );
+
+        let front_clear = collision_results[0];
+        let left_clear = collision_results[1];
+        let right_clear = collision_results[2];
+
         let mut new_pos = transform_translation + movement_dir * BOT_MOVE * FIXED_DELTA;
 
+        /* 
         let left_clear = will_collide(left_pos, &obstacles, &players);
         let right_clear = will_collide(right_pos, &obstacles, &players);
         let front_clear = will_collide(front_pos, &obstacles, &players);
-
+        */
 
         /* 
         if !will_collide(front_pos, &obstacles, &players) { // Front vector
