@@ -72,7 +72,7 @@ pub fn update_block_owner(
     ctx_wrapper: Res<CtxWrapper>,
     mut spawned_blocks: ResMut<SpawnedBlocks>,
 ) {
-    for (block_entity, attach_link) in block_query.iter_mut() {
+    for (block_entity, mut attach_link) in block_query.iter_mut() {
         let server_block_id = spawned_blocks
             .entities
             .get(&block_entity)
@@ -99,9 +99,16 @@ pub fn update_block_owner(
                 for (opp_entity, opponent) in opponent_query.iter() {
                     if opponent.id == owner_identity {
                         owner_entity = opp_entity;
+                        println!(
+                            "updating for block: {} player: {}, entity: {}",
+                            server_block_id, owner_identity, owner_entity,
+                        );
                     }
                 }
             }
+
+            attach_link.player_entity = owner_entity;
+
             // TODO: Add if bots can take blocks from players
         }
     }
