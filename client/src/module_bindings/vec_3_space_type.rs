@@ -6,12 +6,12 @@ use spacetimedb_sdk::__codegen::{self as __sdk, __lib, __sats, __ws};
 
 #[derive(__lib::ser::Serialize, __lib::de::Deserialize, Clone, PartialEq, Debug)]
 #[sats(crate = __lib)]
-pub struct Vec3 {
+pub struct Vec3Space {
     pub x: f32,
     pub y: f32,
     pub z: f32,
 }
 
-impl __sdk::InModule for Vec3 {
+impl __sdk::InModule for Vec3Space {
     type Module = super::RemoteModule;
 }

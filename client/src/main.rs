@@ -43,7 +43,7 @@ use track_spawner::*;
 //static GLOBAL: mimalloc::MiMalloc = mimalloc::MiMalloc;
 // Spacedime dependencies
 
-use bots::{render_bots_from_db, spawn_bot_blocks, spawn_bots};
+use bots::{render_bots_from_db, spawn_bot_blocks, spawn_bots, send_bots_to_db};
 use camera::{camera_follow, setup_camera};
 use common::*;
 use db_connection::{
@@ -101,7 +101,8 @@ fn main() {
                 hook_controls,
                 handle_obstacle_hit,
                 track_lifetime_system,
-                render_bots_from_db,
+                send_bots_to_db,
+                //render_bots_from_db,
                 attach_objects,
                 attach_items,
                 update_opponent_hooks,
