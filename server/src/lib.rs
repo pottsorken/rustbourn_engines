@@ -19,6 +19,14 @@ pub struct Player {
     online: bool,
     hook: Hook,
     track: Track,
+    grid: Grid,
+}
+
+#[derive(Debug, SpacetimeType)]
+pub struct Grid {
+    load: i32,
+    next_free_x: i32,
+    next_free_y: i32,
 }
 
 /// Obstacle component data
@@ -212,6 +220,28 @@ pub fn update_player_position(
     }
 }
 
+#[spacetimedb::reducer]
+pub fn update_owner_grid(
+    ctx: &ReducerContext,
+    load: i32,
+    next_free_x: i32,
+    next_free_y: i32,
+) -> Result<(), String> {
+    if let Some(_player) = ctx.db.player().identity().find(ctx.sender) {
+        ctx.db.player().identity().update(Player {
+            grid: Grid {
+                load,
+                next_free_x,
+                next_free_y,
+            },
+            .._player
+        });
+        Ok(())
+    } else {
+        Err("Player not found".to_string())
+    }
+}
+
 /// Reducer for updating a ("bot_id") specific bot position by sending the entity data contained in a transform. All data is sent in a custom "BevyTransform" struct, except "new_rotate_dir".
 /// Client invokes this reducer in "render_bots_from_db" function when updating the position of the bot sprite.
 #[spacetimedb::reducer]
@@ -309,6 +339,11 @@ pub fn player_connected(ctx: &ReducerContext) {
                 height: 0.0,
                 rotation: 0.0,
                 id: 0, 
+            },
+            grid: Grid {
+                load: 0,
+                next_free_x: -1,
+                next_free_y: 0,
             },
         });
     }

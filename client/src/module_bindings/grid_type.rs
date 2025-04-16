@@ -4,22 +4,14 @@
 #![allow(unused, clippy::all)]
 use spacetimedb_sdk::__codegen::{self as __sdk, __lib, __sats, __ws};
 
-use super::bevy_transform_type::BevyTransform;
-use super::grid_type::Grid;
-use super::hook_type::Hook;
-use super::track_type::Track;
-
 #[derive(__lib::ser::Serialize, __lib::de::Deserialize, Clone, PartialEq, Debug)]
 #[sats(crate = __lib)]
-pub struct Player {
-    pub identity: __sdk::Identity,
-    pub position: BevyTransform,
-    pub online: bool,
-    pub hook: Hook,
-    pub track: Track,
-    pub grid: Grid,
+pub struct Grid {
+    pub load: i32,
+    pub next_free_x: i32,
+    pub next_free_y: i32,
 }
 
-impl __sdk::InModule for Player {
+impl __sdk::InModule for Grid {
     type Module = super::RemoteModule;
 }

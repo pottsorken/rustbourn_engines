@@ -14,3 +14,9 @@ pub fn increment_grid_pos(grid: &mut PlayerGrid) {
     grid.load += 1;
     //player.block_count += 1;
 }
+
+pub fn balance_owner_grid(
+    query
+) {
+
+}

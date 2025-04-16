@@ -10,6 +10,7 @@ pub mod block_type;
 pub mod bot_type;
 pub mod bots_table;
 pub mod damage_obstacle_reducer;
+pub mod grid_type;
 pub mod hook_type;
 pub mod obstacle_table;
 pub mod obstacle_type;
@@ -24,6 +25,7 @@ pub mod update_block_owner_reducer;
 pub mod update_bot_position_reducer;
 pub mod update_hook_movement_reducer;
 pub mod update_hook_position_reducer;
+pub mod update_owner_grid_reducer;
 pub mod update_player_position_reducer;
 pub mod update_tracks_system_reducer;
 pub mod vec_2_type;
@@ -37,6 +39,7 @@ pub use bots_table::*;
 pub use damage_obstacle_reducer::{
     damage_obstacle, set_flags_for_damage_obstacle, DamageObstacleCallbackId,
 };
+pub use grid_type::Grid;
 pub use hook_type::Hook;
 pub use obstacle_table::*;
 pub use obstacle_type::Obstacle;
@@ -62,6 +65,9 @@ pub use update_hook_movement_reducer::{
 };
 pub use update_hook_position_reducer::{
     set_flags_for_update_hook_position, update_hook_position, UpdateHookPositionCallbackId,
+};
+pub use update_owner_grid_reducer::{
+    set_flags_for_update_owner_grid, update_owner_grid, UpdateOwnerGridCallbackId,
 };
 pub use update_player_position_reducer::{
     set_flags_for_update_player_position, update_player_position, UpdatePlayerPositionCallbackId,
@@ -107,6 +113,11 @@ pub enum Reducer {
         position: Vec2,
         rotation: f32,
     },
+    UpdateOwnerGrid {
+        load: i32,
+        next_free_x: i32,
+        next_free_y: i32,
+    },
     UpdatePlayerPosition {
         bevy_transform: BevyTransform,
     },
@@ -134,6 +145,7 @@ impl __sdk::Reducer for Reducer {
             Reducer::UpdateBotPosition { .. } => "update_bot_position",
             Reducer::UpdateHookMovement { .. } => "update_hook_movement",
             Reducer::UpdateHookPosition { .. } => "update_hook_position",
+            Reducer::UpdateOwnerGrid { .. } => "update_owner_grid",
             Reducer::UpdatePlayerPosition { .. } => "update_player_position",
             Reducer::UpdateTracksSystem { .. } => "update_tracks_system",
         }
@@ -170,6 +182,10 @@ impl TryFrom<__ws::ReducerCallInfo<__ws::BsatnFormat>> for Reducer {
             "update_hook_position" => Ok(__sdk::parse_reducer_args::<
                 update_hook_position_reducer::UpdateHookPositionArgs,
             >("update_hook_position", &value.args)?
+            .into()),
+            "update_owner_grid" => Ok(__sdk::parse_reducer_args::<
+                update_owner_grid_reducer::UpdateOwnerGridArgs,
+            >("update_owner_grid", &value.args)?
             .into()),
             "update_player_position" => Ok(__sdk::parse_reducer_args::<
                 update_player_position_reducer::UpdatePlayerPositionArgs,
