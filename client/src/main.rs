@@ -20,7 +20,9 @@ mod player;
 mod player_attach;
 mod start_menu;
 mod edit_menu; use edit_menu::*;
+mod track_spawner;
 
+use track_spawner::*;
 use camera::*;
 use block::*;
 use hook::*;
@@ -93,6 +95,8 @@ fn main() {
                 attach_items,
                 update_opponent_hooks,
                 handle_obstacle_hit,
+                spawn_tracks_system,
+                track_lifetime_system,
             ) .run_if(in_game_or_edit),
         )
         .add_systems(

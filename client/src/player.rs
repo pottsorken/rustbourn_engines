@@ -1,11 +1,11 @@
 use crate::common::{
-    AttachedBlock, Block, CtxWrapper, Obstacle, Opponent, Player, PlayerGrid, BLOCK_CONFIG,
-    GRID_CONFIG, MAP_CONFIG, OBSTACLE_CONFIG, PLAYER_CONFIG,
+    AttachedBlock, Block, Obstacle, Opponent, Player, PlayerGrid, BLOCK_CONFIG, GRID_CONFIG,
+    MAP_CONFIG, OBSTACLE_CONFIG, PLAYER_CONFIG, CtxWrapper, LastTrackPos,
 };
 use crate::db_connection::update_player_position;
 use crate::module_bindings::*;
 use crate::player_attach::*;
-use bevy::prelude::*;
+use bevy::prelude::{*, Vec2};
 use bevy::window::PrimaryWindow;
 use std::collections::HashMap;
 
@@ -50,6 +50,7 @@ pub fn setup_player(
             capacity: GRID_CONFIG.capacity,
             load: GRID_CONFIG.load,
         },
+        LastTrackPos(Vec2::ZERO),
     ));
 }
 
