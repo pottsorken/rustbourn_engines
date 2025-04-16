@@ -42,7 +42,7 @@ pub fn spawn_tracks_system(
                     Timer::from_seconds(
                         TRACK_CONFIG.fade_time, 
                         TimerMode::Once
-                    ),
+                    )
                 },
             ));
 
