@@ -29,12 +29,14 @@ pub fn setup_player(
 ) {
     let _window = window_query.get_single().unwrap();
     let random_position = generate_random_spawnpoint(ctx.into_inner());
+    let anchor_point = bevy::prelude::Vec2::new(0.0, -0.25);
 
     // Spawn a player sprite at position (0, 0) at a higher z-index than map
     commands.spawn((
         Sprite {
             custom_size: Some(PLAYER_CONFIG.size), // Square size 100x100 pixels
             image: asset_server.load(PLAYER_CONFIG.path),
+            anchor: bevy::sprite::Anchor::Custom(anchor_point),
             ..default()
         },
         //TextureAtlas {

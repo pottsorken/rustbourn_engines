@@ -100,6 +100,7 @@ fn main() {
                 track_lifetime_system,
                 spawn_opponent_tracks_system,
                 update_opponent_tracks, 
+                handle_obstacle_hit,
             ) .run_if(in_game_or_edit),
         )
         .add_systems(
@@ -109,7 +110,6 @@ fn main() {
                 despawn_opponents,
                 spawn_bots,
                 spawn_bot_blocks,
-                // update_bots,
             )
             .run_if(in_game_or_edit),
         )
