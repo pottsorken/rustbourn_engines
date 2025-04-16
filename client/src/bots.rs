@@ -63,9 +63,9 @@ pub fn update_bots(
             transform.translation = new_pos;
 
         } else {
-            println!("Hello");
+            //println!("Hello");
             //println!("[BOT] {} collided at ({}, {})", _bot.id, transform.translation.x, transform.translation.y);
-            println!(" ");
+            //println!(" ");
 
              // Try to look left and right
             let left_direction = transform.rotation * Quat::from_rotation_z(0.7).mul_vec3(Vec3::X);
@@ -97,7 +97,7 @@ pub fn update_bots(
             
         }
         update_bot_position(&ctx_wrapper, &transform, _bot.id);
-        println!("[BOT] {} collided at ({}, {})", _bot.id, transform.translation.x, transform.translation.y);
+        //println!("[BOT] {} collided at ({}, {})", _bot.id, transform.translation.x, transform.translation.y);
 
 
     }

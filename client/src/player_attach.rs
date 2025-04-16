@@ -3,6 +3,8 @@ use bevy::prelude::*;
 use crate::common::{PlayerAttach, Player,Hook};
 
 
+
+
 pub fn attach_objects(
     player_query: Query<&Transform, With<Player>>,
     mut objects_query: Query<(&PlayerAttach, &mut Transform), Without<Player>>,
