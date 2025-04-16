@@ -121,9 +121,7 @@ pub enum Reducer {
         offset_y: i32,
     },
     UpdateBotPosition {
-        bevy_transform: BevyTransform,
         bot_id: u64,
-        new_rotate_dir: f32,
     },
     UpdateHookMovement {
         identity: __sdk::Identity,

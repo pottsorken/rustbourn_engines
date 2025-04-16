@@ -69,16 +69,8 @@ pub fn send_bots_to_db(
      lava_tiles: Res<LavaTiles>,
 ) {
 
-    let opponent_transforms: Vec<Transform> = param_set.p2().iter().cloned().collect();
-    let local_player_transforms: Vec<Transform> = param_set.p3().iter().cloned().collect();
-    let obstacle_query: Vec<Transform> = param_set.p1().iter().cloned().collect();
-
-
     for (mut transform, bot) in param_set.p0().iter_mut() {
         if let Some(server_bot) = ctx_wrapper.ctx.db.bots().id().find(&bot.id){
-            let server_dir = server_bot.movement_dir;
-            let bevy_dir = Vec3::new(server_dir.x, server_dir.y, server_dir.z);
-
             let server_rotation = server_bot.position.rotation;
 
             transform.rotation = Quat::from_rotation_z(server_rotation);
@@ -95,15 +87,7 @@ pub fn send_bots_to_db(
                 server_bot.position.coordinates.y,
                 server_bot.position.rotation
             );
-
-             
-            let mut movement_dir = transform.rotation * bevy_dir;
-            let mut new_pos = transform.translation
-                + movement_dir * BOT_CONFIG.movement_speed * time.delta_secs();
                 
-
-            let mut rotation_dir = server_bot.rotation_dir;
-
             /*
 
             let front_direction = transform.rotation * Vec3::new(1.0, 0.0, 0.0);
@@ -153,7 +137,9 @@ pub fn send_bots_to_db(
                 }
                 transform.rotate_z(rotation_dir);
             }*/
-            update_bot_position(&ctx_wrapper, &transform, bot.id, rotation_dir);
+            //update_bot_position(&ctx_wrapper, &transform, bot.id, rotation_dir);
+            update_bot_position(&ctx_wrapper, bot.id);
+
         }
     }
 }
@@ -251,7 +237,9 @@ pub fn render_bots_from_db(
                 }
                 transform.rotate_z(rotation_dir);
             }
-            update_bot_position(&ctx_wrapper, &transform, bot.id, rotation_dir);
+            update_bot_position(&ctx_wrapper, bot.id);
+
+           // update_bot_position(&ctx_wrapper, &transform, bot.id, rotation_dir);
 
             
         }
