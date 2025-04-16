@@ -93,7 +93,7 @@ fn main() {
                 attach_items,
                 update_opponent_hooks,
                 handle_obstacle_hit,
-            ),
+            ) .run_if(in_game_or_edit),
         )
         .add_systems(
             FixedUpdate,

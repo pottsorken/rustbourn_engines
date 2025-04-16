@@ -26,13 +26,15 @@ pub fn splash_plugin(app: &mut App) {
 }
 
 pub fn splash_setup(mut commands: Commands, asset_server: Res<AssetServer>) {
-    let icon = asset_server.load(r"C:\Users\Denise\Desktop\Studier\CINTE\II1305 Projektkurs\rustbourn_engines\client\assets\basicmap.png");
+    let icon = asset_server.load("screens/splashscreen.png");
     // Display the logo on splash screen
     commands
     .spawn((
         Node {
             width: Val::Percent(100.0),
             height: Val::Percent(100.0),
+            // width: Val::Px(100.0),
+            // height: Val::Px(100.0),
             align_items: AlignItems::Center,
             justify_content: JustifyContent::Center,
             ..default()
@@ -222,7 +224,7 @@ pub fn main_menu_setup(mut commands: Commands, asset_server: Res<AssetServer>) {
                 .with_children(|parent| {
                     // Display title screen
                     parent.spawn((
-                        ImageNode::new(asset_server.load(r"C:\Users\Denise\Desktop\Studier\CINTE\II1305 Projektkurs\rustbourn_engines\client\assets\rbepaint.png")),
+                        ImageNode::new(asset_server.load("screens/rbepaint.png")),
                         Node {
                             width: Val::Px(600.0),
                             margin: UiRect::all(Val::Px(50.0)),
@@ -274,7 +276,7 @@ pub fn main_menu_setup(mut commands: Commands, asset_server: Res<AssetServer>) {
                             MenuButtonAction::Quit,
                         ))
                         .with_children(|parent| {
-                            let icon = asset_server.load(r"C:\Users\Denise\Desktop\Studier\CINTE\II1305 Projektkurs\rustbourn_engines\client\assets\basicmap.png");
+                            let icon = asset_server.load("textures/Game Icons/wrench.png");
                             parent.spawn((ImageNode::new(icon), button_icon_node));
                             parent.spawn((
                                 Text::new("Quit"),
