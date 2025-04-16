@@ -41,7 +41,7 @@ use camera::{camera_follow, setup_camera};
 use db_connection::{update_opponent_positions, setup_connection, update_opponent_hooks, update_opponent_tracks};
 use hook::handle_obstacle_hit;
 use map::setup_tilemap;
-use opponent::{despawn_opponents, spawn_opponent_tracks_system};
+use opponent::{despawn_opponents, spawn_opponent_tracks_system, setup_blocks_opponent};
 use common::*;
 use track_spawner::{spawn_tracks_system, track_lifetime_system};
 use player::{player_movement, setup_blocks_player, setup_player};
@@ -111,6 +111,7 @@ fn main() {
                 spawn_bots,
                 setup_blocks_player,
                 spawn_bot_blocks,
+                setup_blocks_opponent,
             )
             .run_if(in_game_or_edit),
         )

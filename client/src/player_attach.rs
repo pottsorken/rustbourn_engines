@@ -1,7 +1,8 @@
 use bevy::prelude::*;
 
+use crate::block::SpawnedBlocks;
 use crate::module_bindings::*;
-use crate::common::{AttachedBlock, Bot, Hook, Player, PlayerAttach, PlayerGrid, PLAYER_CONFIG, CtxWrapper, Opponent};
+use crate::common::{AttachedBlock, Bot, Hook, Player, PlayerAttach, PlayerGrid, PLAYER_CONFIG, CtxWrapper, Opponent, Block};
 use spacetimedb_sdk::{
     credentials, DbContext, Error, Event, Identity, Status, Table, TableWithPrimaryKey,
 };
@@ -61,6 +62,49 @@ fn update_slave_pos(
     // Update position and rotation
     slave_transform.translation = owner_transform.translation + rotated_offset;
     slave_transform.rotation = owner_transform.rotation;
+}
+
+pub fn update_block_owner(
+    mut block_query: Query<(Entity, &mut AttachedBlock)>,
+    opponent_query: Query<(Entity, &Opponent), Without<AttachedBlock>>,
+    player_query: Query<Entity, (With<Player>, Without<AttachedBlock>)>,
+
+    ctx_wrapper: Res<CtxWrapper>,
+    mut spawned_blocks: ResMut<SpawnedBlocks>,
+) {
+    for (block_entity, attach_link) in block_query.iter_mut() {
+        let server_block_id = spawned_blocks
+            .entities
+            .get(&block_entity)
+            .expect("Failed to find block_id");
+
+        let players = ctx_wrapper.ctx.db.player().iter().collect::<Vec<_>>();
+        let owner_identity_type = ctx_wrapper
+            .ctx
+            .db
+            .block()
+            .id()
+            .find(server_block_id)
+            .expect("Failed to find db tuple from blockid")
+            .owner;
+
+        if let OwnerType::Player(owner_identity) = owner_identity_type {
+            let mut owner_entity: Entity;
+
+            if owner_identity == ctx_wrapper.ctx.identity() {
+                owner_entity = player_query
+                    .get_single()
+                    .expect("Failed to get player entity");
+            } else {
+                for (opp_entity, opponent) in opponent_query.iter() {
+                    if opponent.id == owner_identity {
+                        owner_entity = opp_entity;
+                    }
+                }
+            }
+            // TODO: Add if bots can take blocks from players
+        }
+    }
 }
 
 pub fn attach_items(

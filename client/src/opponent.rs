@@ -243,6 +243,7 @@ pub fn setup_blocks_opponent(
             if !spawned_blocks.ids.contains(&block.id) {
                 if let OwnerType::Player(owner) = block.owner {
                     if owner == opponent.id {
+                        println!("Spawning block for opponent: {}", &opponent.id);
                         //println!("Spawning for Player: {}", player_entity,);
                         let block_entity = commands.spawn((
                             Sprite {
