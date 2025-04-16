@@ -82,6 +82,14 @@ pub struct PlayerConfig {
 pub struct OpponentHook {
     pub id: Identity, // Match with the opponent's identity
 }
+
+
+#[derive(Component)]
+pub struct OpponentTrack {
+    pub owner_id: Identity,
+    pub track_id: u64,
+}
+
 /// Global constant config for the player
 pub const PLAYER_CONFIG: PlayerConfig = PlayerConfig {
     size: Vec2::new(80.0, 80.0),
