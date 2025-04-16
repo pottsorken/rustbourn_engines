@@ -102,10 +102,9 @@ fn main() {
                 despawn_opponents,
                 spawn_bots,
                 spawn_bot_blocks,
-            ),
-                update_bots,
+                // update_bots,
             )
-                .run_if(in_game_or_edit)
+            .run_if(in_game_or_edit),
         )
         .add_systems(
             FixedUpdate,
