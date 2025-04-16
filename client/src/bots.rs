@@ -4,11 +4,13 @@ use crate::common::{
 };
 use crate::db_connection::{load_bots, update_bot_position, CtxWrapper};
 use crate::grid::increment_grid_pos;
-use crate::module_bindings::BotsTableAccess;
+//use crate::module_bindings::Block as BlockDB;
+use crate::block::SpawnedBlocks;
+use crate::module_bindings::{BlockTableAccess, BotsTableAccess, OwnerType};
 use crate::player_attach::check_collision;
 use bevy::prelude::*;
-use spacetimedb_sdk::Identity;
-use std::collections::HashMap;
+use spacetimedb_sdk::{Identity, Table};
+use std::collections::{HashMap, HashSet};
 
 pub fn spawn_bots(
     mut commands: Commands,
@@ -127,28 +129,37 @@ pub fn render_bots_from_db(
 pub fn spawn_bot_blocks(
     mut bots_query: Query<(Entity, &mut PlayerGrid), With<Bot>>,
     mut commands: Commands,
+    ctx_wrapper: Res<CtxWrapper>,
     asset_server: Res<AssetServer>,
+    mut spawned_blocks: ResMut<SpawnedBlocks>,
 ) {
-    //println!("spawn_bot_blocks run here --------------");
-    for (bot_entity, mut bot_grid) in bots_query.iter_mut() {
-        //println!("Spawning for bot: {}", bot_entity);
-        for x in 0..3 {
-            if bot_grid.load < bot_grid.capacity {
-                commands.spawn((
-                    Sprite {
-                        custom_size: Some(BLOCK_CONFIG.size),
-                        image: asset_server.load(BLOCK_CONFIG.path),
-                        ..default()
-                    },
-                    Transform::from_xyz(0., 0., 1.0),
-                    Block {},
-                    AttachedBlock {
-                        grid_offset: bot_grid.next_free_pos,
-                        player_entity: bot_entity,
-                    },
-                ));
-                increment_grid_pos(&mut bot_grid);
+    //println§!("spawn_bot_blocks run here --------------");
+    for block in ctx_wrapper.ctx.db.block().iter() {
+        let mut i = 0;
+        for (bot_entity, mut bot_grid) in bots_query.iter_mut() {
+            if !spawned_blocks.ids.contains(&block.id) {
+                if let OwnerType::Bot(owner) = block.owner {
+                    if owner == i {
+                        println!("Spawning for bot: {}, blockid: {}", bot_entity, i);
+                        commands.spawn((
+                            Sprite {
+                                custom_size: Some(BLOCK_CONFIG.size),
+                                image: asset_server.load(BLOCK_CONFIG.path),
+                                ..default()
+                            },
+                            Transform::from_xyz(0., 0., 1.0),
+                            Block {},
+                            AttachedBlock {
+                                grid_offset: (block.offset_x, block.offset_y), //bot_grid.next_free_pos,
+                                player_entity: bot_entity,
+                            },
+                        ));
+                        increment_grid_pos(&mut bot_grid);
+                        spawned_blocks.ids.insert(block.id);
+                    }
+                }
             }
+            i += 1;
         }
     }
 }
