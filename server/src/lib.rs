@@ -17,6 +17,22 @@ pub struct Player {
     position: BevyTransform,
     online: bool,
     hook: Hook,
+    grid: Grid,
+}
+
+#[derive(Debug, SpacetimeType)]
+pub struct Grid {
+    load: i32,
+    next_free_x: i32,
+    next_free_y: i32,
+}
+
+#[derive(Debug, SpacetimeType)]
+pub struct Hook {
+    position: Vec2,
+    rotation: f32,
+    width: f32,
+    height: f32,
 }
 
 #[spacetimedb::table(name = obstacle, public)]
@@ -154,6 +170,23 @@ pub fn update_player_position(
     }
 }
 
+#[spacetimedb::reducer]
+pub fn update_owner_grid(ctx: &ReducerContext, load: i32, next_free_x: i32, next_free_y: i32) {
+    if let Some(_player) = ctx.db.player().identity().find(ctx.sender) {
+        ctx.db.player().identity().update(Player {
+            grid: Grid {
+                load,
+                next_free_x,
+                next_free_y,
+            },
+            .._player
+        });
+        Ok(())
+    } else {
+        Err("Player not found".to_string())
+    }
+}
+
 // Reducer for updating player position
 #[spacetimedb::reducer]
 pub fn update_bot_position(
@@ -229,6 +262,11 @@ pub fn player_connected(ctx: &ReducerContext) {
                 rotation: 0.0,
                 width: 0.0,
                 height: 0.0,
+            },
+            grid: Grid {
+                load: 0,
+                next_free_x: -1,
+                next_free_y: 0,
             },
         });
     }
