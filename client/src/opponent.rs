@@ -1,7 +1,12 @@
 use bevy::prelude::*;
 
-use crate::{common::Opponent, db_connection::CtxWrapper, module_bindings::*};
+use crate::{
+    block::SpawnedBlocks, common::AttachedBlock, common::Block as BevyBlock, common::Opponent,
+    common::PlayerGrid, common::BLOCK_CONFIG, common::GRID_CONFIG, db_connection::CtxWrapper,
+    grid::increment_grid_pos, module_bindings::*,
+};
 use spacetimedb_sdk::{Identity, Table};
+use std::collections::HashMap;
 
 pub fn spawn_opponent(
     commands: &mut Commands,
@@ -40,6 +45,14 @@ pub fn spawn_opponent(
             movement_speed: 300.0,                  // meters per second
             rotation_speed: f32::to_radians(180.0), // degrees per second
             id: *id,
+        },
+        PlayerGrid {
+            block_position: HashMap::new(),
+            grid_size: GRID_CONFIG.grid_size,
+            cell_size: GRID_CONFIG.cell_size,
+            next_free_pos: GRID_CONFIG.next_free_pos,
+            capacity: GRID_CONFIG.capacity,
+            load: GRID_CONFIG.load,
         },
     ));
 }
@@ -86,3 +99,40 @@ pub fn despawn_opponents(
     }
 }
 
+pub fn setup_blocks_opponent(
+    mut commands: Commands,
+    mut opponent_query: Query<(Entity, &mut PlayerGrid, &Opponent)>, // Will yield empty since
+    // opps do not have playergrid
+    asset_server: Res<AssetServer>,
+    ctx: Res<CtxWrapper>,
+    mut spawned_blocks: ResMut<SpawnedBlocks>,
+) {
+    for (opponent_entity, mut grid, opponent) in opponent_query.iter_mut() {
+        for block in ctx.ctx.db.block().iter() {
+            if !spawned_blocks.ids.contains(&block.id) {
+                if let OwnerType::Player(owner) = block.owner {
+                    if owner == opponent.id {
+                        //println!("Spawning for Player: {}", player_entity,);
+                        let block_entity = commands.spawn((
+                            Sprite {
+                                custom_size: Some(BLOCK_CONFIG.size),
+                                image: asset_server.load(BLOCK_CONFIG.path),
+                                ..default()
+                            },
+                            Transform::from_xyz(0., 0., 1.0),
+                            BevyBlock {},
+                            AttachedBlock {
+                                grid_offset: (block.offset_x, block.offset_y), //bot_grid.next_free_pos,
+                                player_entity: opponent_entity,
+                            },
+                        ));
+                        // Increase next free position when loading from server
+                        increment_grid_pos(&mut grid);
+                        spawned_blocks.ids.insert(block.id);
+                        spawned_blocks.entities.insert(block_entity.id(), block.id);
+                    }
+                }
+            }
+        }
+    }
+}
