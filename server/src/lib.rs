@@ -7,9 +7,9 @@ use spacetimedb::{
 use glam::{Vec3, Quat};
 use noise::{NoiseFn, Perlin};
 
-const FIXED_DELTA: f32 = 1.0 / 60.0; // Fixed delta for 120 FPS simulation
+const FIXED_DELTA: f32 = 1.0 / 30.0; // Fixed delta for 3cd ..0 FPS simulation
 const BOT_SIZE: f32 = 80.0; // Size of bot
-const BOT_MOVE: f32 = 100.0;
+const BOT_MOVE: f32 = 110.0;
 
 /// Player component data
 #[spacetimedb::table(name = player, public)]
@@ -204,13 +204,12 @@ pub fn update_player_position(
 #[spacetimedb::reducer]
 pub fn update_bot_position(
     ctx: &ReducerContext,
-    bevy_transform: BevyTransform,
+    //bevy_transform: BevyTransform,
     bot_id: u64,
-    new_rotate_dir: f32,
+    //new_rotate_dir: f32,
 ) -> Result<(), String> {
     log::info!(
-        "Code reaches this point! --------{:?}------",
-        bevy_transform
+        "Code reaches this point! --------------",
     );
 
     //let obstacles = ctx.db.obstacle().iter().collect::<Vec<_>>();
@@ -220,8 +219,8 @@ pub fn update_bot_position(
 
 
     if let Some(mut _bot) = ctx.db.bots().iter().find(|b| b.id == bot_id) {
-        _bot.position = bevy_transform;
-        _bot.rotation_dir = new_rotate_dir;
+        //_bot.position = bevy_transform;
+       // _bot.rotation_dir = new_rotate_dir;
 
         let bevy_dir = Vec3::new(_bot.movement_dir.x, _bot.movement_dir.y, _bot.movement_dir.z);
         
@@ -231,17 +230,17 @@ pub fn update_bot_position(
         let rotation_quat = Quat::from_rotation_z(_bot.position.rotation);
 
         let mut movement_dir = rotation_quat * bevy_dir;
-        let front_dir = rotation_quat * Vec3::new(1.5, 0.0, 0.0);
+        let front_dir = rotation_quat * Vec3::new(1.8, 0.0, 0.0);
         //let left_dir = rotation_quat * Quat::from_rotation_z(f32::to_radians(45.0)) * Vec3::X;
         //let right_dir = rotation_quat * Quat::from_rotation_z(f32::to_radians(-45.0)) * Vec3::X;
         
         let left_dir = rotation_quat * Vec3::new(2.0, 1.0, 0.0);
-        let left_dir2: Vec3 = rotation_quat * Vec3::new(1.2, 1.5, 0.0);
+        let left_dir2: Vec3 = rotation_quat * Vec3::new(1.0, 1.5, 0.0);
 
 
 
         let right_dir = rotation_quat * Vec3::new(2.0, -1.0, 0.0);
-        let right_dir2: Vec3 = rotation_quat * Vec3::new(1.2, -1.5, 0.0);
+        let right_dir2: Vec3 = rotation_quat * Vec3::new(1.0, -1.5, 0.0);
 
         let mut rotation_dir = _bot.rotation_dir;
 
