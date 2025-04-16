@@ -158,9 +158,11 @@ pub fn update_bot_position(
         bevy_transform
     );
 
-    let obstacles = ctx.db.obstacle().iter().collect::<Vec<_>>();
-    let players = ctx.db.player().iter().collect::<Vec<_>>();
-    let rotation_speed = f32::to_radians(1.0);
+    //let obstacles = ctx.db.obstacle().iter().collect::<Vec<_>>();
+    //let players = ctx.db.player().iter().collect::<Vec<_>>();
+
+    //let max_check_distance = BOT_SIZE * 2.5;
+
 
     if let Some(mut _bot) = ctx.db.bots().iter().find(|b| b.id == bot_id) {
         _bot.position = bevy_transform;
@@ -187,12 +189,27 @@ pub fn update_bot_position(
         let left_pos = transform_translation + left_dir * BOT_SIZE; // Adjust distance
         let right_pos = transform_translation + right_dir * BOT_SIZE; // Adjust distance
 
+        let check_points = vec![front_pos, left_pos, right_pos];
+
+        // Single pass through all entities
+        let collision_results = check_collisions_at_points(
+            &check_points,
+            ctx.db.obstacle().iter(),
+            ctx.db.player().iter(),
+            BOT_SIZE * 1.5
+        );
+
+        let front_clear = collision_results[0];
+        let left_clear = collision_results[1];
+        let right_clear = collision_results[2];
+
         let mut new_pos = transform_translation + movement_dir * BOT_MOVE * FIXED_DELTA;
 
+        /* 
         let left_clear = will_collide(left_pos, &obstacles, &players);
         let right_clear = will_collide(right_pos, &obstacles, &players);
         let front_clear = will_collide(front_pos, &obstacles, &players);
-
+        */
 
         /* 
         if !will_collide(front_pos, &obstacles, &players) { // Front vector
@@ -256,6 +273,39 @@ pub fn update_bot_position(
     }
 }
 
+pub fn check_collisions_at_points(
+    points: &[Vec3],
+    obstacles: impl Iterator<Item = Obstacle>,
+    players: impl Iterator<Item = Player>,
+    check_radius: f32,
+) -> Vec<(bool, bool)> {
+    let radius_sq = check_radius * check_radius;
+    let mut results = vec![(false, false); points.len()];
+    
+    // Check obstacles
+    for obstacle in obstacles {
+        let o_pos = Vec3::new(obstacle.position.x, obstacle.position.y, 0.0);
+        
+        for (i, point) in points.iter().enumerate() {
+            if point.distance_squared(o_pos) < radius_sq {
+                results[i].1 = true; // Obstacle hit
+            }
+        }
+    }
+    
+    // Check players
+    for player in players {
+        let p_pos = Vec3::new(player.position.coordinates.x, player.position.coordinates.y, 0.0);
+        
+        for (i, point) in points.iter().enumerate() {
+            if point.distance_squared(p_pos) < radius_sq {
+                results[i].0 = true; // Player hit
+            }
+        }
+    }
+    
+    results
+}
 
 pub fn will_collide(
     new_pos: Vec3,
