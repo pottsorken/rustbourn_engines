@@ -88,6 +88,7 @@ fn main() {
                 setup_blocks_player,
                 spawn_bot_blocks,
                 setup_blocks_opponent,
+                update_block_owner,
             ),
         )
         .insert_resource(Time::from_seconds(0.5))
