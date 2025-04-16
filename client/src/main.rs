@@ -35,7 +35,7 @@ use camera::{camera_follow, setup_camera};
 use db_connection::{print_player_positions, setup_connection, update_opponent_hooks};
 use hook::handle_obstacle_hit;
 use map::setup_tilemap;
-use opponent::despawn_opponents;
+use opponent::{despawn_opponents, setup_blocks_opponent};
 use player::{player_movement, setup_blocks_player, setup_player};
 
 fn main() {
@@ -87,6 +87,7 @@ fn main() {
                 spawn_bots,
                 setup_blocks_player,
                 spawn_bot_blocks,
+                setup_blocks_opponent,
             ),
         )
         .insert_resource(Time::from_seconds(0.5))
