@@ -227,12 +227,17 @@ pub fn update_bots(
         }
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
         update_bot_position(&ctx_wrapper, &transform, _bot.id, );
         println!("[BOT] {} collided at ({}, {})", _bot.id, transform.translation.x, transform.translation.y);
 =======
         update_bot_position(&ctx_wrapper, &transform, _bot.id);
         // println!("[BOT] {} collided at ({}, {})", _bot.id, transform.translation.x, transform.translation.y);
 >>>>>>> d016088 (Functioning title screen and somewhat functioning edit mode)
+=======
+        update_bot_position(&ctx_wrapper, &transform, _bot.id);
+        // println!("[BOT] {} collided at ({}, {})", _bot.id, transform.translation.x, transform.translation.y);
+>>>>>>> 9c97630ad3e76b8ea67c27e80562b77f0e8f88c7
 
 
     }
