@@ -39,14 +39,15 @@ pub fn update_player_position(ctx_wrapper: &CtxWrapper, player_transform: &Trans
 // db_connection
 pub fn update_bot_position(
     ctx_wrapper: &CtxWrapper,
-    bot_transform: &Transform,
+    //bot_transform: &Transform,
     bot_id: u64,
-    new_rotate_dir: f32,
+    //new_rotate_dir: f32,
 ) {
     ctx_wrapper
         .ctx
         .reducers()
         .update_bot_position(
+            /* 
             BevyTransform {
                 coordinates: vec_2_type::Vec2 {
                     x: bot_transform.translation.x,
@@ -55,8 +56,9 @@ pub fn update_bot_position(
                 rotation: bot_transform.rotation.to_euler(EulerRot::XYZ).2,
                 scale: vec_2_type::Vec2 { x: 0.0, y: 0.0 },
             },
-            bot_id,
-            new_rotate_dir,
+            */
+            bot_id
+           // new_rotate_dir,
         )
         .unwrap();
     //println!("{}", player_transform.rotation.to_euler(EulerRot::XYZ).2);
