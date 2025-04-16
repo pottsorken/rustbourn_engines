@@ -12,10 +12,9 @@ use noise::{NoiseFn, Perlin};
 /// Player component data
 use glam::{Vec3, Quat};
 
-const FIXED_DELTA: f32 = 1.0 / 120.0; // Fixed delta for 120 FPS simulation
+const FIXED_DELTA: f32 = 1.0 / 60.0; // Fixed delta for 120 FPS simulation
 const BOT_SIZE: f32 = 80.0; // Size of bot
 const BOT_MOVE: f32 = 100.0;
-use std::f32::consts::PI;
 
 // Player data
 #[spacetimedb::table(name = player, public)]
@@ -333,16 +332,23 @@ pub fn update_bot_position(
         //let left_dir = rotation_quat * Quat::from_rotation_z(f32::to_radians(45.0)) * Vec3::X;
         //let right_dir = rotation_quat * Quat::from_rotation_z(f32::to_radians(-45.0)) * Vec3::X;
         
-        let left_dir = rotation_quat * Vec3::new(2.0, 1.5, 0.0);
-        let right_dir = rotation_quat * Vec3::new(2.0, -1.5, 0.0);
+        let left_dir = rotation_quat * Vec3::new(2.0, 1.0, 0.0);
+        let left_dir2: Vec3 = rotation_quat * Vec3::new(1.2, 1.5, 0.0);
+
+
+
+        let right_dir = rotation_quat * Vec3::new(2.0, -1.0, 0.0);
+        let right_dir2: Vec3 = rotation_quat * Vec3::new(1.2, -1.5, 0.0);
 
         let mut rotation_dir = _bot.rotation_dir;
 
         let front_pos = transform_translation + front_dir * BOT_SIZE; // Adjust distance
         let left_pos = transform_translation + left_dir * BOT_SIZE; // Adjust distance
+        let left_pos2 = transform_translation + left_dir2 * BOT_SIZE; // Adjust distance
         let right_pos = transform_translation + right_dir * BOT_SIZE; // Adjust distance
+        let right_pos2 = transform_translation + right_dir2 * BOT_SIZE; // Adjust distance
 
-        let check_points = vec![front_pos, left_pos, right_pos];
+        let check_points = vec![front_pos, left_pos, right_pos ,left_pos2, right_pos2];
 
         // Single pass through all entities
         let collision_results = check_collisions_at_points(
@@ -355,6 +361,8 @@ pub fn update_bot_position(
         let front_clear = collision_results[0];
         let left_clear = collision_results[1];
         let right_clear = collision_results[2];
+        let left_clear2 = collision_results[3];
+        let right_clear2 = collision_results[4];
 
         let mut new_pos = transform_translation + movement_dir * BOT_MOVE * FIXED_DELTA;
 
@@ -372,7 +380,8 @@ pub fn update_bot_position(
         */
 
 
-        if !left_clear.0 && !right_clear.0 && !front_clear.0 && !left_clear.1 && !right_clear.1 && !front_clear.1 {
+        if !left_clear.0 && !right_clear.0 && !front_clear.0 && 
+           !left_clear.1 && !right_clear.1 && !front_clear.1 {
             _bot.position.coordinates.x = new_pos.x;
             _bot.position.coordinates.y = new_pos.y;
         }
@@ -381,21 +390,28 @@ pub fn update_bot_position(
             let rotation_speed = f32::to_radians(90.0);
             // Player is on the left and NOT on the right → rotate right to chas
             // Check left and right vision
-            if left_clear.0 && !right_clear.0 {
+
+            if left_clear.0 && !right_clear.0 || left_clear2.0 && !right_clear2.0{
                 // If left is clear but right is blocked, rotate right
                 //_bot.position.rotation += rotation_speed * FIXED_DELTA; // Rotate left (positive direction)
                 _bot.position.rotation += rotation_speed * FIXED_DELTA; // Tracking to right
 
             } 
             // Player is on the right and NOT on the left → rotate left to chase
-            else if right_clear.0 && !left_clear.0 {
+            else if right_clear.0 && !left_clear.0 || right_clear2.0 && !left_clear2.0{
                 // If right is clear but left is blocked, rotate left
                 //_bot.position.rotation -= rotation_speed * FIXED_DELTA; // Rotate right (negative direction)
                 _bot.position.rotation -= rotation_speed * FIXED_DELTA; // tracking to left
 
             } 
             
-            else if (right_clear.1 && left_clear.1 && !front_clear.0) || (front_clear.1 && !front_clear.0) {
+            else if (right_clear.1 && left_clear.1 && !front_clear.0) || 
+                    (front_clear.1 && !front_clear.0) ||
+                    (right_clear2.1 && left_clear2.1 && !front_clear.0) ||
+                    (right_clear2.1 && left_clear.1 && !front_clear.0) ||
+                    (right_clear.1 && left_clear2.1 && !front_clear.0) ||
+                    (right_clear.1 && right_clear2.1 && left_clear.1) ||
+                    (left_clear.1 && left_clear2.1 && right_clear.1) {
                 // Move backward slightly
                 _bot.position.coordinates.x -= movement_dir.x * (BOT_MOVE * 0.5) * FIXED_DELTA; 
 
@@ -404,17 +420,15 @@ pub fn update_bot_position(
                 
             }
             
-            else if left_clear.1 && !right_clear.1 {
+            else if left_clear.1 && !right_clear.1 || left_clear2.1 && !right_clear2.1{
                 _bot.position.rotation -= rotation_speed * FIXED_DELTA; // Rotate left (positive direction)
             } 
             
-            else if right_clear.1 && !left_clear.1 {
+            else if right_clear.1 && !left_clear.1 || right_clear2.1 && !left_clear2.1{
                 _bot.position.rotation += rotation_speed * FIXED_DELTA; // Rotate right to avoid collision (positive direction)
             }
             
-        
 
-            _bot.position.rotation = _bot.position.rotation % std::f32::consts::TAU;
         }
 
         ctx.db.bots().id().update(_bot);
