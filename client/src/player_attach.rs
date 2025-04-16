@@ -9,6 +9,8 @@ use spacetimedb_sdk::{
     credentials, DbContext, Error, Event, Identity, Status, Table, TableWithPrimaryKey,
 };
 
+
+
 pub fn attach_objects(
     player_query: Query<(Entity, &Transform, &PlayerGrid), (With<Player>, Without<AttachedBlock>)>,
     bot_query: Query<

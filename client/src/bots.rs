@@ -225,23 +225,13 @@ pub fn update_bots(
             let smooth_angle = rotation_dir * BOT_CONFIG.rotation_speed * time.delta_secs();
             transform.rotate_z(smooth_angle);
         }
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
-        update_bot_position(&ctx_wrapper, &transform, _bot.id, );
+        update_bot_position(&ctx_wrapper, &transform, _bot.id);
         println!("[BOT] {} collided at ({}, {})", _bot.id, transform.translation.x, transform.translation.y);
-=======
-        update_bot_position(&ctx_wrapper, &transform, _bot.id);
-        // println!("[BOT] {} collided at ({}, {})", _bot.id, transform.translation.x, transform.translation.y);
->>>>>>> d016088 (Functioning title screen and somewhat functioning edit mode)
-=======
-        update_bot_position(&ctx_wrapper, &transform, _bot.id);
-        // println!("[BOT] {} collided at ({}, {})", _bot.id, transform.translation.x, transform.translation.y);
->>>>>>> 9c97630ad3e76b8ea67c27e80562b77f0e8f88c7
 
 
     }
-}*/
+}
+
 
 pub fn will_collide(
     new_pos: bevy::prelude::Vec2,
