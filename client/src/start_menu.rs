@@ -3,86 +3,17 @@
 
 use bevy::prelude::*;
 use bevy::{app::AppExit, color::palettes::css::CRIMSON, prelude::*};
+use crate::common::*;
 
-const TEXT_COLOR: Color = Color::srgb(0.9, 0.9, 0.9);
-const BACKGROUND_COLOR: Color = Color::srgb(0.498, 0.498, 0.498);
-const SPLASH_COLOR: Color = Color::srgb(0.0, 0.0, 0.0);
+pub const TEXT_COLOR: Color = Color::srgb(0.9, 0.9, 0.9);
+pub const BACKGROUND_COLOR: Color = Color::srgb(0.498, 0.498, 0.498);
+pub const SPLASH_COLOR: Color = Color::srgb(0.0, 0.0, 0.0);
 
-const NORMAL_BUTTON: Color = Color::srgb(0.15, 0.15, 0.15);
-const HOVERED_BUTTON: Color = Color::srgb(0.25, 0.25, 0.25);
-const HOVERED_PRESSED_BUTTON: Color = Color::srgb(0.25, 0.65, 0.25);
-const PRESSED_BUTTON: Color = Color::srgb(0.35, 0.75, 0.35);
+pub const NORMAL_BUTTON: Color = Color::srgb(0.15, 0.15, 0.15);
+pub const HOVERED_BUTTON: Color = Color::srgb(0.25, 0.25, 0.25);
+pub const HOVERED_PRESSED_BUTTON: Color = Color::srgb(0.25, 0.65, 0.25);
+pub const PRESSED_BUTTON: Color = Color::srgb(0.35, 0.75, 0.35);
 
-#[derive(Clone, Copy, Default, Eq, PartialEq, Debug, Hash, States)]
-pub enum GameState {
-    #[default]
-    Splash,
-    Menu,
-    Game,
-}
-
-#[derive(Resource, Debug, Component, PartialEq, Eq, Clone, Copy)]
-pub enum DisplayQuality {
-    Low,
-    Medium,
-    High,
-}
-
-#[derive(Resource, Debug, Component, PartialEq, Eq, Clone, Copy)]
-pub struct Volume(pub u32);
-
-#[derive(Component)]
-pub struct OnSplashScreen;
-
-#[derive(Resource, Deref, DerefMut)]
-pub struct SplashTimer(Timer);
-
-
-#[derive(Component)]
-pub struct OnGameScreen;
-
-// State used for the current menu screen
-#[derive(Clone, Copy, Default, Eq, PartialEq, Debug, Hash, States)]
-pub enum MenuState {
-    Main,
-    Settings,
-    SettingsDisplay,
-    SettingsSound,
-    #[default]
-    Disabled,
-}
-
-// Tag component used to tag entities added on the main menu screen
-#[derive(Component)]
-pub struct OnMainMenuScreen;
-
-// Tag component used to tag entities added on the settings menu screen
-#[derive(Component)]
-pub struct OnSettingsMenuScreen;
-
-// Tag component used to tag entities added on the display settings menu screen
-#[derive(Component)]
-pub struct OnDisplaySettingsMenuScreen;
-
-// Tag component used to tag entities added on the sound settings menu screen
-#[derive(Component)]
-pub struct OnSoundSettingsMenuScreen;
-
-// Tag component used to mark which setting is currently selected
-#[derive(Component)]
-pub struct SelectedOption;
-
-// All actions that can be triggered from a button click
-#[derive(Component)]
-pub enum MenuButtonAction {
-    Play,
-    Settings,
-    SettingsDisplay,
-    SettingsSound,
-    BackToMainMenu,
-    BackToSettings,
-    Quit,
-}
 
 
 // ###################################### SPLASH ##########################################
@@ -166,6 +97,8 @@ pub fn game_setup(mut commands: Commands) {
         ));
 }
 
+// ###################################### MENU ##########################################
+
 pub fn menu_plugin(app: &mut App) {
     app.init_state::<MenuState>()
         .add_systems(OnEnter(GameState::Menu), menu_setup)
@@ -239,8 +172,6 @@ pub fn setting_button<T: Resource + Component + PartialEq + Copy>(
         }
     }
 }
-
-// ###################################### MENU ##########################################
 
 pub fn menu_setup(mut menu_state: ResMut<NextState<MenuState>>) {
     menu_state.set(MenuState::Main);

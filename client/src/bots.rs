@@ -183,7 +183,7 @@ pub fn update_bots(
             // If no collision, update the bot's position
             transform.translation = new_pos;
         } else {
-            //println!("Hello");
+            // println!("Hello");
             //println!("[BOT] {} collided at ({}, {})", _bot.id, transform.translation.x, transform.translation.y);
             //println!(" ");
 
@@ -226,8 +226,13 @@ pub fn update_bots(
             transform.rotate_z(smooth_angle);
         }
 <<<<<<< HEAD
+<<<<<<< HEAD
         update_bot_position(&ctx_wrapper, &transform, _bot.id, );
         println!("[BOT] {} collided at ({}, {})", _bot.id, transform.translation.x, transform.translation.y);
+=======
+        update_bot_position(&ctx_wrapper, &transform, _bot.id);
+        // println!("[BOT] {} collided at ({}, {})", _bot.id, transform.translation.x, transform.translation.y);
+>>>>>>> d016088 (Functioning title screen and somewhat functioning edit mode)
 
 
     }
