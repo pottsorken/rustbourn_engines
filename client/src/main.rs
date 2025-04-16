@@ -101,6 +101,7 @@ fn main() {
                 spawn_opponent_tracks_system,
                 update_opponent_tracks, 
                 handle_obstacle_hit,
+                update_block_owner,
             ) .run_if(in_game_or_edit),
         )
         .add_systems(
@@ -114,11 +115,6 @@ fn main() {
                 setup_blocks_opponent,
             )
             .run_if(in_game_or_edit),
-        )
-        .add_systems(
-            FixedUpdate,
-            (setup_obstacle, despawn_opponents, spawn_bots)
-                .run_if(in_game_or_edit)
         )
         .insert_resource(Time::from_seconds(0.5))
         .insert_resource(SpawnedObstacles::default())
