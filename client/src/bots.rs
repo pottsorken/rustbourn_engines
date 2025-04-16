@@ -52,7 +52,7 @@ pub fn spawn_bots(
 }
 
 // bots.rs
-pub fn send_bots_to_db(
+pub fn render_bots_from_db(
 
     mut param_set: ParamSet<(
         Query<(&mut Transform, &Bot), Without<Obstacle>>,          // Param 0
@@ -84,67 +84,16 @@ pub fn send_bots_to_db(
                 server_bot.position.coordinates.y,
                 server_bot.position.rotation
             );
-                
-            /*
 
-            let front_direction = transform.rotation * Vec3::new(1.0, 0.0, 0.0);
-            let front_pos = transform.translation + front_direction * BOT_CONFIG.size.x; // Adjust distance
-
-            */
-
-
-            /*
-            if !will_collide(front_pos.truncate(), &obstacle_query) && !will_collide_with_local_player(front_pos.truncate(), &local_player_transforms) && !will_collide_with_opponent(front_pos.truncate(), &opponent_transforms){
-
-                // If no collision, update the bot's position
-                transform.translation = new_pos;
-                println!(
-                    "[BOT] {} at ({}, {}) and rotation: {}",
-                    bot.id,
-                    server_bot.position.coordinates.x,
-                    server_bot.position.coordinates.y,
-                    server_bot.position.rotation
-                );
-            } else {
-                // Try to look left and right
-                let left_direction =
-                    transform.rotation * Quat::from_rotation_z(0.7).mul_vec3(Vec3::X);
-                let right_direction =
-                    transform.rotation * Quat::from_rotation_z(-0.7).mul_vec3(Vec3::X);
-
-                let left_pos = transform.translation + left_direction * BOT_CONFIG.size.x;
-                let right_pos = transform.translation + right_direction * BOT_CONFIG.size.x;
-
-                let left_clear = !will_collide(left_pos.truncate(), &obstacle_query) && !will_collide_with_local_player(front_pos.truncate(), &local_player_transforms) && !will_collide_with_opponent(front_pos.truncate(), &opponent_transforms);
-                let right_clear = !will_collide(right_pos.truncate(), &obstacle_query) && !will_collide_with_local_player(front_pos.truncate(), &local_player_transforms) && !will_collide_with_opponent(front_pos.truncate(), &opponent_transforms);
-
-                // Decide which direction to go
-                if left_clear && !right_clear {
-                    rotation_dir = 1.0;
-                    rotation_dir = rotation_dir * BOT_CONFIG.rotation_speed * time.delta_secs();
-                } else if right_clear && !left_clear {
-                    rotation_dir = -1.0;
-                    rotation_dir = rotation_dir * BOT_CONFIG.rotation_speed * time.delta_secs();
-                } else if left_clear && right_clear {
-                    rotation_dir = if rand::random::<bool>() { 1.0 } else { -1.0 };
-                    rotation_dir = rotation_dir * BOT_CONFIG.rotation_speed * time.delta_secs();
-                } else {
-                    // Nowhere to go: turn around
-                    rotation_dir = std::f32::consts::PI; // 180°
-                }
-                transform.rotate_z(rotation_dir);
-            }*/
-            //update_bot_position(&ctx_wrapper, &transform, bot.id, rotation_dir);
             update_bot_position(&ctx_wrapper, bot.id);
 
         }
     }
 }
 
-
+/*
 // bots.rs
 pub fn render_bots_from_db(
-
     mut param_set: ParamSet<(
         Query<(&mut Transform, &Bot), Without<Obstacle>>,          // Param 0
         Query<&Transform, With<Obstacle>>,                         // Param 1
@@ -234,115 +183,12 @@ pub fn render_bots_from_db(
                 transform.rotate_z(rotation_dir);
             }
             update_bot_position(&ctx_wrapper, bot.id);
-
-           // update_bot_position(&ctx_wrapper, &transform, bot.id, rotation_dir);
-
-            
-        }
-    }
-}
-
-
-/*
-
-// bots.rs
-pub fn render_bots_from_db(
-
-    mut param_set: ParamSet<(
-        Query<(&mut Transform, &Bot), Without<Obstacle>>,          // Param 0
-        Query<&Transform, With<Obstacle>>,                         // Param 1
-        Query<&Transform, With<Opponent>>,                         // Param 2
-        Query<&Transform, With<Player>>,
-        
-    )>,
-
-    ctx_wrapper: Res<CtxWrapper>,
-    time: Res<Time>, // Time resource for movement speed calculation
-) {
-
-    let opponent_transforms: Vec<Transform> = param_set.p2().iter().cloned().collect();
-    let local_player_transforms: Vec<Transform> = param_set.p3().iter().cloned().collect();
-    let obstacle_query: Vec<Transform> = param_set.p1().iter().cloned().collect();
-
-
-    for (mut transform, bot) in param_set.p0().iter_mut() {
-        if let Some(server_bot) = ctx_wrapper.ctx.db.bots().id().find(&bot.id){
-            let server_dir = server_bot.movement_dir;
-            let bevy_dir = Vec3::new(server_dir.x, server_dir.y, server_dir.z);
-
-            let server_rotation = server_bot.position.rotation;
-
-            transform.rotation = Quat::from_rotation_z(server_rotation);
-            transform.translation = Vec3::new(
-                server_bot.position.coordinates.x,
-                server_bot.position.coordinates.y,
-                transform.translation.z,
-            );
-
-            println!(
-                "[BOT] {} at ({}, {}) and rotation: {}",
-                bot.id,
-                server_bot.position.coordinates.x,
-                server_bot.position.coordinates.y,
-                server_bot.position.rotation
-            );
-
-            let mut movement_dir = transform.rotation * bevy_dir;
-            let mut new_pos = transform.translation
-                + movement_dir * BOT_CONFIG.movement_speed * time.delta_secs();
-
-            let mut rotation_dir = server_bot.rotation_dir;
-
-            let front_direction = transform.rotation * Vec3::new(1.0, 0.0, 0.0);
-            let front_pos = transform.translation + front_direction * BOT_CONFIG.size.x; // Adjust distance
-
-            if !will_collide(front_pos.truncate(), &obstacle_query) && !will_collide_with_local_player(front_pos.truncate(), &local_player_transforms) && !will_collide_with_opponent(front_pos.truncate(), &opponent_transforms){
-
-                // If no collision, update the bot's position
-                transform.translation = new_pos;
-                println!(
-                    "[BOT] {} at ({}, {}) and rotation: {}",
-                    bot.id,
-                    server_bot.position.coordinates.x,
-                    server_bot.position.coordinates.y,
-                    server_bot.position.rotation
-                );
-            } else {
-                // Try to look left and right
-                let left_direction =
-                    transform.rotation * Quat::from_rotation_z(0.7).mul_vec3(Vec3::X);
-                let right_direction =
-                    transform.rotation * Quat::from_rotation_z(-0.7).mul_vec3(Vec3::X);
-
-                let left_pos = transform.translation + left_direction * BOT_CONFIG.size.x;
-                let right_pos = transform.translation + right_direction * BOT_CONFIG.size.x;
-
-                let left_clear = !will_collide(left_pos.truncate(), &obstacle_query) && !will_collide_with_local_player(front_pos.truncate(), &local_player_transforms) && !will_collide_with_opponent(front_pos.truncate(), &opponent_transforms);
-                let right_clear = !will_collide(right_pos.truncate(), &obstacle_query) && !will_collide_with_local_player(front_pos.truncate(), &local_player_transforms) && !will_collide_with_opponent(front_pos.truncate(), &opponent_transforms);
-
-                // Decide which direction to go
-                if left_clear && !right_clear {
-                    rotation_dir = 1.0;
-                    rotation_dir = rotation_dir * BOT_CONFIG.rotation_speed * time.delta_secs();
-                } else if right_clear && !left_clear {
-                    rotation_dir = -1.0;
-                    rotation_dir = rotation_dir * BOT_CONFIG.rotation_speed * time.delta_secs();
-                } else if left_clear && right_clear {
-                    rotation_dir = if rand::random::<bool>() { 1.0 } else { -1.0 };
-                    rotation_dir = rotation_dir * BOT_CONFIG.rotation_speed * time.delta_secs();
-                } else {
-                    // Nowhere to go: turn around
-                    rotation_dir = std::f32::consts::PI; // 180°
-                }
-                transform.rotate_z(rotation_dir);
-            }
-            update_bot_position(&ctx_wrapper, &transform, bot.id, rotation_dir);
-
             
         }
     }
 }
 */
+
 
 pub fn spawn_bot_blocks(
     mut bots_query: Query<(Entity, &mut PlayerGrid), With<Bot>>,
@@ -372,44 +218,6 @@ pub fn spawn_bot_blocks(
         }
     }
 }
-
-pub fn will_collide(
-    new_pos: bevy::prelude::Vec2,
-    obstacles: &[Transform],
-) -> bool {
-    let player_radius = BOT_CONFIG.size.x.min(BOT_CONFIG.size.y) / 2.0;
-    let obstacle_radius = OBSTACLE_CONFIG.size.x.min(OBSTACLE_CONFIG.size.y) / 2.0;
-    let collision_distance = player_radius + obstacle_radius;
-
-    obstacles
-        .iter()
-        .any(|transform| new_pos.distance(transform.translation.truncate()) < collision_distance)
-}
-
-pub fn will_collide_with_local_player(
-    new_pos: bevy::prelude::Vec2,
-    opponents: &[Transform]
-) -> bool {
-    let player_radius = PLAYER_CONFIG.size.x.min(PLAYER_CONFIG.size.y) / 2.0;
-    let collision_distance = player_radius * 2.0;
-
-    opponents
-        .iter()
-        .any(|transform| new_pos.distance(transform.translation.truncate()) < collision_distance)
-}
-
-pub fn will_collide_with_opponent(
-    new_pos: bevy::prelude::Vec2,
-    players: &[Transform]
-) -> bool {
-    let player_radius = PLAYER_CONFIG.size.x.min(PLAYER_CONFIG.size.y) / 2.0;
-    let collision_distance = player_radius * 2.0;
-
-    players
-        .iter()
-        .any(|transform| new_pos.distance(transform.translation.truncate()) < collision_distance)
-}
-
 
 
 

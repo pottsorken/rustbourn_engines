@@ -212,20 +212,6 @@ pub fn update_bot_position(
 
         let mut new_pos = transform_translation + movement_dir * BOT_MOVE * FIXED_DELTA;
 
-        /* 
-        let left_clear = will_collide(left_pos, &obstacles, &players);
-        let right_clear = will_collide(right_pos, &obstacles, &players);
-        let front_clear = will_collide(front_pos, &obstacles, &players);
-        */
-
-        /* 
-        if !will_collide(front_pos, &obstacles, &players) { // Front vector
-            _bot.position.coordinates.x = new_pos.x;
-            _bot.position.coordinates.y = new_pos.y;
-        } 
-        */
-
-
         if !left_clear.0 && !right_clear.0 && !front_clear.0 && 
            !left_clear.1 && !right_clear.1 && !front_clear.1 {
             _bot.position.coordinates.x = new_pos.x;
@@ -343,89 +329,6 @@ pub fn will_collide(
     (player_hit, obstacle_hit)
 }
 
-
-
-/*
-// Reducer for updating bot position
-#[spacetimedb::reducer]
-pub fn update_bot_position(
-    ctx: &ReducerContext,
-    bevy_transform: BevyTransform,
-    bot_id: u64,
-    new_rotate_dir: f32,
-) -> Result<(), String> {
-    log::info!(
-        "Code reaches this point! --------{:?}------",
-        bevy_transform
-    );
-    if let Some(mut _bot) = ctx.db.bots().iter().find(|b| b.id == bot_id) {
-        _bot.position = bevy_transform;
-        _bot.rotation_dir = new_rotate_dir;
-
-        ctx.db.bots().id().update(_bot);
-
-        Ok(())
-    } else {
-        Err("Bot not found".to_string())
-    }
-}*/
-
-
-/* 
-// Reducer for updating bot position
-#[spacetimedb::reducer]
-pub fn update_bot_position(
-    ctx: &ReducerContext,
-    bot_id: u64,
-) -> Result<(), String> {
-    log::info!(
-        "Code reaches this point! --------------",
-
-    );
-    let obstacles = ctx.db.obstacle().iter().collect::<Vec<_>>();
-    let players = ctx.db.player().iter().collect::<Vec<_>>();
-
-
-    if let Some(mut _bot) = ctx.db.bots().iter().find(|b| b.id == bot_id) {
-        let server_dir= &_bot.movement_dir;
-        let bevy_dir = Vec3::new(server_dir.x, server_dir.y, server_dir.z);
-
-        let server_rotation = _bot.position.rotation;
-
-        let mut transform_rotation = Quat::from_rotation_z(server_rotation);
-        let mut transform_translation = Vec3::new(
-            _bot.position.coordinates.x,
-            _bot.position.coordinates.y,
-            0.0,
-        );
-
-        let mut movement_dir = transform_rotation * bevy_dir;
-        
-        let mut new_pos = transform_translation + movement_dir * BOT_MOVE * FIXED_DELTA;
-
-        let mut rotation_dir = _bot.rotation_dir;
-
-        let front_direction = transform_rotation * Vec3::new(1.0, 0.0, 0.0);
-        let front_pos = transform_translation + front_direction * BOT_SIZE; // Adjust distance
-
-
-        //if !will_collide(front_pos, &obstacles, &players){
-            transform_translation = new_pos;
-            _bot.position.coordinates.x = transform_translation.x;
-            _bot.position.coordinates.y = transform_translation.y;
-            _bot.position.rotation = transform_rotation.to_euler(glam::EulerRot::XYZ).2;
-            _bot.rotation_dir = rotation_dir;
-            ctx.db.bots().id().update(_bot);
-        
-
-        //ctx.db.bots().id().update(_bot);
-
-        Ok(())
-    } else {
-        Err("Bot not found".to_string())
-    }
-}
-*/
 
 #[spacetimedb::reducer]
 pub fn reset_bots_if_no_players_online(ctx: &ReducerContext) -> Result<(), String> {
