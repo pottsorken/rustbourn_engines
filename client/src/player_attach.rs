@@ -89,25 +89,28 @@ pub fn update_block_owner(
             .owner;
 
         if let OwnerType::Player(owner_identity) = owner_identity_type {
-            let mut owner_entity: Entity;
+            let mut owner_entity: Option<Entity> = None;
 
             if owner_identity == ctx_wrapper.ctx.identity() {
-                owner_entity = player_query
-                    .get_single()
-                    .expect("Failed to get player entity");
+                owner_entity = Some(
+                    player_query
+                        .get_single()
+                        .expect("Failed to get player entity"),
+                );
             } else {
                 for (opp_entity, opponent) in opponent_query.iter() {
                     if opponent.id == owner_identity {
-                        owner_entity = opp_entity;
-                        println!(
-                            "updating for block: {} player: {}, entity: {}",
-                            server_block_id, owner_identity, owner_entity,
-                        );
+                        owner_entity = Some(opp_entity);
+                        //println!(
+                        //    "updating for block: {} player: {}, entity: {}",
+                        //    server_block_id, owner_identity, owner_entity,
+                        //);
                     }
                 }
             }
 
-            attach_link.player_entity = owner_entity;
+            attach_link.player_entity =
+                owner_entity.expect("New owner entity not found in player or opps");
 
             // TODO: Add if bots can take blocks from players
         }
