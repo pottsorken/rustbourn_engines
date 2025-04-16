@@ -239,15 +239,15 @@ pub struct MapConfig {
 
 /// Global constant config for the tilemap
 pub const MAP_CONFIG: MapConfig = MapConfig {
-    map_size: TilemapSize { x: 64, y: 64 },
-    tile_size: TilemapTileSize { x: 128.0, y: 128.0 }, // tiles are 16x16 pixels
+    map_size: TilemapSize { x: 512, y: 512 },
+    tile_size: TilemapTileSize { x: 8.0, y: 8.0 }, // tiles are 16x16 pixels
     noise_scale: 0.1,
     tile_textures: [
-        "sprites/td_tanks/grass.png",
-        "sprites/td_tanks/water.png",
-        "sprites/td_tanks/stone.png",
-        "sprites/td_tanks/dirt.png",
+        "sprites/td_tanks/grass8.png",
+        "sprites/td_tanks/water8.png",
+        "sprites/td_tanks/stone8.png",
+        "sprites/td_tanks/dirt8.png",
     ],
-    image_path: r"assets/tribasicmap64.png",
+    image_path: r"assets/tribasicmap512.png",
     safe_zone_size: 300.0,
 };

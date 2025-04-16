@@ -4,13 +4,21 @@ use bevy::prelude::*;
 use bevy_ecs_tilemap::prelude::*;
 use image::{GenericImageView, ImageReader};
 
-pub fn setup_tilemap(mut commands: Commands, asset_server: Res<AssetServer>) {
+pub fn setup_tilemap(
+    mut commands: Commands, 
+    asset_server: Res<AssetServer>,
+    mut image: ResMut<Assets<Image>>,
+) {
     // Tile images. ORDER IS IMPORTANT!
     let texture_handle: Vec<Handle<Image>> = MAP_CONFIG 
         .tile_textures
         .iter()
-        .map(|path| asset_server.load(*path))
+        .map(|path| {
+            let handle = asset_server.load(*path);
+            handle
+    })
         .collect();
+    
     // New map with 64x64 chunks being 32x32 tiles
     let grid_size = MAP_CONFIG.tile_size.into(); // Grid size == tile size
     let map_type = TilemapType::default();
