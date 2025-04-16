@@ -86,6 +86,7 @@ fn subscribe_to_tables(ctx: &DbConnection) {
             "SELECT * FROM player WHERE online=true",
             "SELECT * FROM obstacle",
             "SELECT * FROM bots",
+            "SELECT * FROM block",
         ]);
 }
 

@@ -5,18 +5,22 @@
 use spacetimedb_sdk::__codegen::{self as __sdk, __lib, __sats, __ws};
 
 pub mod bevy_transform_type;
+pub mod block_table;
+pub mod block_type;
 pub mod bot_type;
 pub mod bots_table;
 pub mod damage_obstacle_reducer;
 pub mod hook_type;
 pub mod obstacle_table;
 pub mod obstacle_type;
+pub mod owner_type_type;
 pub mod player_connected_reducer;
 pub mod player_disconnected_reducer;
 pub mod player_table;
 pub mod player_type;
 pub mod track_table;
 pub mod track_type;
+pub mod update_block_owner_reducer;
 pub mod update_bot_position_reducer;
 pub mod update_hook_movement_reducer;
 pub mod update_hook_position_reducer;
@@ -26,6 +30,8 @@ pub mod vec_2_type;
 pub mod vec_3_type;
 
 pub use bevy_transform_type::BevyTransform;
+pub use block_table::*;
+pub use block_type::Block;
 pub use bot_type::Bot;
 pub use bots_table::*;
 pub use damage_obstacle_reducer::{
@@ -34,6 +40,7 @@ pub use damage_obstacle_reducer::{
 pub use hook_type::Hook;
 pub use obstacle_table::*;
 pub use obstacle_type::Obstacle;
+pub use owner_type_type::OwnerType;
 pub use player_connected_reducer::{
     player_connected, set_flags_for_player_connected, PlayerConnectedCallbackId,
 };
@@ -44,6 +51,9 @@ pub use player_table::*;
 pub use player_type::Player;
 pub use track_table::*;
 pub use track_type::Track;
+pub use update_block_owner_reducer::{
+    set_flags_for_update_block_owner, update_block_owner, UpdateBlockOwnerCallbackId,
+};
 pub use update_bot_position_reducer::{
     set_flags_for_update_bot_position, update_bot_position, UpdateBotPositionCallbackId,
 };
@@ -76,6 +86,12 @@ pub enum Reducer {
     },
     PlayerConnected,
     PlayerDisconnected,
+    UpdateBlockOwner {
+        block_id: u64,
+        new_owner: OwnerType,
+        offset_x: i32,
+        offset_y: i32,
+    },
     UpdateBotPosition {
         bevy_transform: BevyTransform,
         bot_id: u64,
@@ -114,6 +130,7 @@ impl __sdk::Reducer for Reducer {
             Reducer::DamageObstacle { .. } => "damage_obstacle",
             Reducer::PlayerConnected => "player_connected",
             Reducer::PlayerDisconnected => "player_disconnected",
+            Reducer::UpdateBlockOwner { .. } => "update_block_owner",
             Reducer::UpdateBotPosition { .. } => "update_bot_position",
             Reducer::UpdateHookMovement { .. } => "update_hook_movement",
             Reducer::UpdateHookPosition { .. } => "update_hook_position",
@@ -137,6 +154,10 @@ impl TryFrom<__ws::ReducerCallInfo<__ws::BsatnFormat>> for Reducer {
             "player_disconnected" => Ok(__sdk::parse_reducer_args::<
                 player_disconnected_reducer::PlayerDisconnectedArgs,
             >("player_disconnected", &value.args)?
+            .into()),
+            "update_block_owner" => Ok(__sdk::parse_reducer_args::<
+                update_block_owner_reducer::UpdateBlockOwnerArgs,
+            >("update_block_owner", &value.args)?
             .into()),
             "update_bot_position" => Ok(__sdk::parse_reducer_args::<
                 update_bot_position_reducer::UpdateBotPositionArgs,
@@ -172,6 +193,7 @@ impl TryFrom<__ws::ReducerCallInfo<__ws::BsatnFormat>> for Reducer {
 #[allow(non_snake_case)]
 #[doc(hidden)]
 pub struct DbUpdate {
+    block: __sdk::TableUpdate<Block>,
     bots: __sdk::TableUpdate<Bot>,
     obstacle: __sdk::TableUpdate<Obstacle>,
     player: __sdk::TableUpdate<Player>,
@@ -184,6 +206,7 @@ impl TryFrom<__ws::DatabaseUpdate<__ws::BsatnFormat>> for DbUpdate {
         let mut db_update = DbUpdate::default();
         for table_update in raw.tables {
             match &table_update.table_name[..] {
+                "block" => db_update.block = block_table::parse_table_update(table_update)?,
                 "bots" => db_update.bots = bots_table::parse_table_update(table_update)?,
                 "obstacle" => {
                     db_update.obstacle = obstacle_table::parse_table_update(table_update)?
@@ -216,6 +239,9 @@ impl __sdk::DbUpdate for DbUpdate {
     ) -> AppliedDiff<'_> {
         let mut diff = AppliedDiff::default();
 
+        diff.block = cache
+            .apply_diff_to_table::<Block>("block", &self.block)
+            .with_updates_by_pk(|row| &row.id);
         diff.bots = cache
             .apply_diff_to_table::<Bot>("bots", &self.bots)
             .with_updates_by_pk(|row| &row.id);
@@ -237,6 +263,7 @@ impl __sdk::DbUpdate for DbUpdate {
 #[allow(non_snake_case)]
 #[doc(hidden)]
 pub struct AppliedDiff<'r> {
+    block: __sdk::TableAppliedDiff<'r, Block>,
     bots: __sdk::TableAppliedDiff<'r, Bot>,
     obstacle: __sdk::TableAppliedDiff<'r, Obstacle>,
     player: __sdk::TableAppliedDiff<'r, Player>,
@@ -253,6 +280,7 @@ impl<'r> __sdk::AppliedDiff<'r> for AppliedDiff<'r> {
         event: &EventContext,
         callbacks: &mut __sdk::DbCallbacks<RemoteModule>,
     ) {
+        callbacks.invoke_table_row_callbacks::<Block>("block", &self.block, event);
         callbacks.invoke_table_row_callbacks::<Bot>("bots", &self.bots, event);
         callbacks.invoke_table_row_callbacks::<Obstacle>("obstacle", &self.obstacle, event);
         callbacks.invoke_table_row_callbacks::<Player>("player", &self.player, event);
@@ -832,6 +860,7 @@ impl __sdk::SpacetimeModule for RemoteModule {
     type SubscriptionHandle = SubscriptionHandle;
 
     fn register_tables(client_cache: &mut __sdk::ClientCache<Self>) {
+        block_table::register_table(client_cache);
         bots_table::register_table(client_cache);
         obstacle_table::register_table(client_cache);
         player_table::register_table(client_cache);
