@@ -1,10 +1,16 @@
 use spacetimedb::{
-    reducer,
+    reducer, rand,
     spacetimedb_lib::{db, identity},
     table, DbContext, Identity, ReducerContext, SpacetimeType, Table, Timestamp,
 };
 
+use glam::{Vec3, Quat};
 use noise::{NoiseFn, Perlin};
+
+const FIXED_DELTA: f32 = 1.0 / 120.0; // Fixed delta for 120 FPS simulation
+const BOT_SIZE: f32 = 80.0; // Size of bot
+const BOT_MOVE: f32 = 100.0;
+use std::f32::consts::PI;
 
 // Player data
 #[spacetimedb::table(name = player, public)]
@@ -30,7 +36,7 @@ pub struct Bot {
     id: u64,
     position: BevyTransform,
     alive: bool, // instead of online we have alive that checks if that specific bot is alive
-    movement_dir: Vec3,
+    movement_dir: Vec3_space,
     rotation_dir: f32,
 }
 
@@ -60,12 +66,14 @@ pub struct Vec2 {
 
 // New
 // Vector with x, y coordinates
+
 #[derive(Debug, SpacetimeType)]
-pub struct Vec3 {
+pub struct Vec3_space {
     x: f32,
     y: f32,
     z: f32,
 }
+
 
 //Reducer for damaging obstacle
 #[spacetimedb::reducer]
@@ -137,7 +145,145 @@ pub fn update_player_position(
     }
 }
 
-// Reducer for updating player position
+// Reducer for updating bot position
+#[spacetimedb::reducer]
+pub fn update_bot_position(
+    ctx: &ReducerContext,
+    bevy_transform: BevyTransform,
+    bot_id: u64,
+    new_rotate_dir: f32,
+) -> Result<(), String> {
+    log::info!(
+        "Code reaches this point! --------{:?}------",
+        bevy_transform
+    );
+
+    let obstacles = ctx.db.obstacle().iter().collect::<Vec<_>>();
+    let players = ctx.db.player().iter().collect::<Vec<_>>();
+    let rotation_speed = f32::to_radians(1.0);
+
+    if let Some(mut _bot) = ctx.db.bots().iter().find(|b| b.id == bot_id) {
+        _bot.position = bevy_transform;
+        _bot.rotation_dir = new_rotate_dir;
+
+        let bevy_dir = Vec3::new(_bot.movement_dir.x, _bot.movement_dir.y, _bot.movement_dir.z);
+        
+
+        let mut transform_translation = Vec3::new(_bot.position.coordinates.x, _bot.position.coordinates.y, 0.0);
+
+        let rotation_quat = Quat::from_rotation_z(_bot.position.rotation);
+
+        let mut movement_dir = rotation_quat * bevy_dir;
+        let front_dir = rotation_quat * Vec3::new(1.5, 0.0, 0.0);
+        //let left_dir = rotation_quat * Quat::from_rotation_z(f32::to_radians(45.0)) * Vec3::X;
+        //let right_dir = rotation_quat * Quat::from_rotation_z(f32::to_radians(-45.0)) * Vec3::X;
+        
+        let left_dir = rotation_quat * Vec3::new(2.0, 1.5, 0.0);
+        let right_dir = rotation_quat * Vec3::new(2.0, -1.5, 0.0);
+
+        let mut rotation_dir = _bot.rotation_dir;
+
+        let front_pos = transform_translation + front_dir * BOT_SIZE; // Adjust distance
+        let left_pos = transform_translation + left_dir * BOT_SIZE; // Adjust distance
+        let right_pos = transform_translation + right_dir * BOT_SIZE; // Adjust distance
+
+        let mut new_pos = transform_translation + movement_dir * BOT_MOVE * FIXED_DELTA;
+
+        let left_clear = will_collide(left_pos, &obstacles, &players);
+        let right_clear = will_collide(right_pos, &obstacles, &players);
+        let front_clear = will_collide(front_pos, &obstacles, &players);
+
+
+        /* 
+        if !will_collide(front_pos, &obstacles, &players) { // Front vector
+            _bot.position.coordinates.x = new_pos.x;
+            _bot.position.coordinates.y = new_pos.y;
+        } 
+        */
+
+
+        if !left_clear.0 && !right_clear.0 && !front_clear.0 && !left_clear.1 && !right_clear.1 && !front_clear.1 {
+            _bot.position.coordinates.x = new_pos.x;
+            _bot.position.coordinates.y = new_pos.y;
+        }
+        else {
+
+            let rotation_speed = f32::to_radians(90.0);
+            // Player is on the left and NOT on the right → rotate right to chas
+            // Check left and right vision
+            if left_clear.0 && !right_clear.0 {
+                // If left is clear but right is blocked, rotate right
+                //_bot.position.rotation += rotation_speed * FIXED_DELTA; // Rotate left (positive direction)
+                _bot.position.rotation += rotation_speed * FIXED_DELTA; // Tracking to right
+
+            } 
+            // Player is on the right and NOT on the left → rotate left to chase
+            else if right_clear.0 && !left_clear.0 {
+                // If right is clear but left is blocked, rotate left
+                //_bot.position.rotation -= rotation_speed * FIXED_DELTA; // Rotate right (negative direction)
+                _bot.position.rotation -= rotation_speed * FIXED_DELTA; // tracking to left
+
+            } 
+            
+            else if (right_clear.1 && left_clear.1 && !front_clear.0) || (front_clear.1 && !front_clear.0) {
+                // Move backward slightly
+                _bot.position.coordinates.x -= movement_dir.x * (BOT_MOVE * 0.5) * FIXED_DELTA; 
+
+                // Both left and right are blocked, so rotate 180° (turn around)
+                _bot.position.rotation += std::f32::consts::PI ; // Turn around (180 degrees) // turns around but for now we have this commentd so that it looks at player.
+                
+            }
+            
+            else if left_clear.1 && !right_clear.1 {
+                _bot.position.rotation -= rotation_speed * FIXED_DELTA; // Rotate left (positive direction)
+            } 
+            
+            else if right_clear.1 && !left_clear.1 {
+                _bot.position.rotation += rotation_speed * FIXED_DELTA; // Rotate right to avoid collision (positive direction)
+            }
+            
+        
+
+            _bot.position.rotation = _bot.position.rotation % std::f32::consts::TAU;
+        }
+
+        ctx.db.bots().id().update(_bot);
+
+        Ok(())
+
+    } else {
+        Err("Bot not found".to_string())
+    }
+}
+
+
+pub fn will_collide(
+    new_pos: Vec3,
+    obstacles: &[Obstacle],
+    players: &[Player],
+) -> (bool, bool) {
+    let player_radius = BOT_SIZE.min(BOT_SIZE) / 2.0;
+    let obstacle_radius = BOT_SIZE.min(BOT_SIZE) / 2.0;
+    let collision_distance = player_radius + obstacle_radius;
+
+    let obstacle_hit = obstacles.iter().any(|obstacle| {
+        let obstacle_pos = Vec3::new(obstacle.position.x, obstacle.position.y, 0.0);
+        new_pos.distance(obstacle_pos) < collision_distance
+    });
+
+    let player_hit = players.iter().any(|player| {
+        let obstacle_pos = Vec3::new(player.position.coordinates.x, player.position.coordinates.y, 0.0);
+        new_pos.distance(obstacle_pos) < collision_distance
+    });
+
+    //obstacle_hit || player_hit
+    (player_hit, obstacle_hit)
+}
+
+
+
+/*
+// Reducer for updating bot position
 #[spacetimedb::reducer]
 pub fn update_bot_position(
     ctx: &ReducerContext,
@@ -159,7 +305,64 @@ pub fn update_bot_position(
     } else {
         Err("Bot not found".to_string())
     }
+}*/
+
+
+/* 
+// Reducer for updating bot position
+#[spacetimedb::reducer]
+pub fn update_bot_position(
+    ctx: &ReducerContext,
+    bot_id: u64,
+) -> Result<(), String> {
+    log::info!(
+        "Code reaches this point! --------------",
+
+    );
+    let obstacles = ctx.db.obstacle().iter().collect::<Vec<_>>();
+    let players = ctx.db.player().iter().collect::<Vec<_>>();
+
+
+    if let Some(mut _bot) = ctx.db.bots().iter().find(|b| b.id == bot_id) {
+        let server_dir= &_bot.movement_dir;
+        let bevy_dir = Vec3::new(server_dir.x, server_dir.y, server_dir.z);
+
+        let server_rotation = _bot.position.rotation;
+
+        let mut transform_rotation = Quat::from_rotation_z(server_rotation);
+        let mut transform_translation = Vec3::new(
+            _bot.position.coordinates.x,
+            _bot.position.coordinates.y,
+            0.0,
+        );
+
+        let mut movement_dir = transform_rotation * bevy_dir;
+        
+        let mut new_pos = transform_translation + movement_dir * BOT_MOVE * FIXED_DELTA;
+
+        let mut rotation_dir = _bot.rotation_dir;
+
+        let front_direction = transform_rotation * Vec3::new(1.0, 0.0, 0.0);
+        let front_pos = transform_translation + front_direction * BOT_SIZE; // Adjust distance
+
+
+        //if !will_collide(front_pos, &obstacles, &players){
+            transform_translation = new_pos;
+            _bot.position.coordinates.x = transform_translation.x;
+            _bot.position.coordinates.y = transform_translation.y;
+            _bot.position.rotation = transform_rotation.to_euler(glam::EulerRot::XYZ).2;
+            _bot.rotation_dir = rotation_dir;
+            ctx.db.bots().id().update(_bot);
+        
+
+        //ctx.db.bots().id().update(_bot);
+
+        Ok(())
+    } else {
+        Err("Bot not found".to_string())
+    }
 }
+*/
 
 #[spacetimedb::reducer]
 pub fn reset_bots_if_no_players_online(ctx: &ReducerContext) -> Result<(), String> {
@@ -243,6 +446,7 @@ pub fn server_startup(ctx: &ReducerContext) {
     generate_bots(ctx);
 }
 
+
 fn generate_bots(ctx: &ReducerContext) {
     // Example bot generation logic
     let bot_spawn_positions = vec![(200.0, 20.0), (-200.0, -20.0), (200.0, -250.0)];
@@ -261,7 +465,7 @@ fn generate_bots(ctx: &ReducerContext) {
             id: bot_id,
             position: bot_transform,
             alive: true, // Bots are alive when generated
-            movement_dir: Vec3 {
+            movement_dir: Vec3_space {
                 x: 0.5,
                 y: 0.0,
                 z: 0.0,
@@ -272,9 +476,10 @@ fn generate_bots(ctx: &ReducerContext) {
 }
 
 fn generate_obstacles(ctx: &ReducerContext) {
+    let mut rng = ctx.rng();
     let perlin_x = Perlin::new(21);
     let perlin_y = Perlin::new(1345);
-    // Generate 1000 obstacles
+    // Generate 200 obstacles
     for i in 0..200 {
         let x = (i as f32) / 10.0; // Control frequency
         let y = ((i + 1) as f32) / 10.0;

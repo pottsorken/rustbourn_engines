@@ -29,7 +29,7 @@ use player_attach::*;
 //static GLOBAL: mimalloc::MiMalloc = mimalloc::MiMalloc;
 // Spacedime dependencies
 
-use bots::{render_bots_from_db, spawn_bot_blocks, spawn_bots};
+use bots::{render_bots_from_db, spawn_bot_blocks, spawn_bots, send_bots_to_db};
 use camera::{camera_follow, setup_camera};
 use db_connection::{print_player_positions, setup_connection, update_opponent_hooks};
 use hook::handle_obstacle_hit;
@@ -70,7 +70,8 @@ fn main() {
                 print_player_positions,
                 hook_collision_system,
                 hook_controls,
-                render_bots_from_db,
+                send_bots_to_db,
+                //render_bots_from_db,
                 attach_objects,
                 attach_items,
                 update_opponent_hooks,

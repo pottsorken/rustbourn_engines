@@ -4,7 +4,7 @@
 #![allow(unused, clippy::all)]
 use super::bevy_transform_type::BevyTransform;
 use super::bot_type::Bot;
-use super::vec_3_type::Vec3;
+use super::vec_3_space_type::Vec3Space;
 use spacetimedb_sdk::__codegen::{self as __sdk, __lib, __sats, __ws};
 
 /// Table handle for the table `bots`.

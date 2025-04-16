@@ -2,7 +2,6 @@ use crate::common::{Obstacle, MAP_CONFIG, OBSTACLE_CONFIG};
 use crate::db_connection::{load_obstacles, CtxWrapper};
 use bevy::prelude::*;
 use bevy::window::PrimaryWindow;
-use rand::random;
 use std::collections::HashSet;
 
 #[derive(Resource, Default)]
