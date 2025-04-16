@@ -365,20 +365,6 @@ pub fn update_bot_position(
 
         let mut new_pos = transform_translation + movement_dir * BOT_MOVE * FIXED_DELTA;
 
-        /* 
-        let left_clear = will_collide(left_pos, &obstacles, &players);
-        let right_clear = will_collide(right_pos, &obstacles, &players);
-        let front_clear = will_collide(front_pos, &obstacles, &players);
-        */
-
-        /* 
-        if !will_collide(front_pos, &obstacles, &players) { // Front vector
-            _bot.position.coordinates.x = new_pos.x;
-            _bot.position.coordinates.y = new_pos.y;
-        } 
-        */
-
-
         if !left_clear.0 && !right_clear.0 && !front_clear.0 && 
            !left_clear.1 && !right_clear.1 && !front_clear.1 {
             _bot.position.coordinates.x = new_pos.x;

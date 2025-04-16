@@ -46,21 +46,9 @@ pub fn update_bot_position(
         .ctx
         .reducers()
         .update_bot_position(
-            /* 
-            BevyTransform {
-                coordinates: vec_2_type::Vec2 {
-                    x: bot_transform.translation.x,
-                    y: bot_transform.translation.y,
-                },
-                rotation: bot_transform.rotation.to_euler(EulerRot::XYZ).2,
-                scale: vec_2_type::Vec2 { x: 0.0, y: 0.0 },
-            },
-            */
             bot_id
-           // new_rotate_dir,
         )
         .unwrap();
-    //println!("{}", player_transform.rotation.to_euler(EulerRot::XYZ).2);
 }
 
 pub fn db_setup() -> DbConnection {
