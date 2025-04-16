@@ -14,6 +14,12 @@ pub fn spawn_tracks_system(
     //let track_texture = asset_server.load(TRACK_CONFIG.path);
 
     for (transform, mut last_track_pos) in query.iter_mut() {
+        let forward = transform.rotation * Vec3::Y;
+        let right = transform.rotation * Vec3::X;
+
+        let left_offset = transform.translation - right * (TRACK_CONFIG.track_spacing / 2.0);
+        let right_offset = transform.translation + right * (TRACK_CONFIG.track_spacing / 2.0);
+
         let current_pos = transform.translation.truncate();
 
         if current_pos.distance(last_track_pos.0) >= TRACK_CONFIG.spawn_distance {
@@ -24,7 +30,31 @@ pub fn spawn_tracks_system(
                     image: asset_server.load(TRACK_CONFIG.path),
                     ..default()
                 },
-                Transform::from_xyz(current_pos.x, current_pos.y, 1.0),
+                Transform {
+                    translation: Vec3::new(left_offset.x, left_offset.y, 1.0),
+                    rotation: transform.rotation,
+                    scale: Vec3::splat(1.0),
+                },
+                Track { 
+                    timer: 
+                    Timer::from_seconds(
+                        TRACK_CONFIG.fade_time, 
+                        TimerMode::Once
+                    )
+                },
+            ));
+
+            commands.spawn((
+                Sprite {
+                    custom_size: Some(TRACK_CONFIG.size),
+                    image: asset_server.load(TRACK_CONFIG.path),
+                    ..default()
+                },
+                Transform {
+                    translation: Vec3::new(right_offset.x, right_offset.y, 1.0),
+                    rotation: transform.rotation,
+                    scale: Vec3::splat(1.0),
+                },
                 Track { 
                     timer: 
                     Timer::from_seconds(
