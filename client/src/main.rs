@@ -9,6 +9,7 @@ mod camera;
 mod common;
 mod db_connection;
 mod hook;
+mod parry;
 mod map;
 mod module_bindings;
 mod obstacle;
@@ -21,6 +22,7 @@ use block::*;
 use bots::*;
 use camera::*;
 use hook::*;
+use parry::*;
 use map::*;
 use obstacle::*;
 use player::*;
@@ -59,6 +61,7 @@ fn main() {
                 setup_tilemap,
                 setup_block,
                 setup_hook,
+                setup_parry,
             )
                 .chain(),
         )
@@ -71,6 +74,7 @@ fn main() {
                 camera_follow,
                 print_player_positions,
                 hook_controls,
+                parry_controls,
                 attach_objects,
                 update_bots,
             ),

@@ -55,6 +55,15 @@ pub struct Hook {
     pub hook_speed: f32,
     pub hook_max_range: f32,
 }
+
+#[derive(Component)]
+pub struct Parry{
+    pub active : bool,
+    pub parry_duration: f32,
+    pub timer: Timer,
+
+}
+
 #[derive(Component)]
 pub struct PlayerAttach {
     pub offset: Vec2,
