@@ -3,11 +3,12 @@ use bevy::prelude::*;
 use bevy::window::PrimaryWindow;
 use rand::random;
 
-use std::collections::HashSet;
+use std::collections::{HashMap, HashSet};
 
 #[derive(Resource, Default)]
 pub struct SpawnedBlocks {
     pub ids: HashSet<u64>,
+    pub entities: HashMap<Entity, u64>,
 }
 
 pub fn setup_block(
@@ -17,6 +18,7 @@ pub fn setup_block(
 ) {
     commands.insert_resource(SpawnedBlocks {
         ids: HashSet::new(),
+        entities: HashMap::new(),
     });
 
     //let _window = window_query.get_single().unwrap();

@@ -18,8 +18,8 @@ mod parse;
 mod player;
 mod player_attach;
 
-use camera::*;
 use block::*;
+use camera::*;
 use hook::*;
 use obstacle::*;
 use player::*;
@@ -36,7 +36,7 @@ use db_connection::{print_player_positions, setup_connection, update_opponent_ho
 use hook::handle_obstacle_hit;
 use map::setup_tilemap;
 use opponent::despawn_opponents;
-use player::{player_movement, setup_player};
+use player::{player_movement, setup_blocks_player, setup_player};
 
 fn main() {
     App::new()
@@ -85,6 +85,7 @@ fn main() {
                 setup_obstacle,
                 despawn_opponents,
                 spawn_bots,
+                setup_blocks_player,
                 spawn_bot_blocks,
             ),
         )
