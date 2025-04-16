@@ -109,8 +109,10 @@ pub fn update_block_owner(
                 }
             }
 
-            attach_link.player_entity =
-                owner_entity.expect("New owner entity not found in player or opps");
+            match owner_entity {
+                Some(new_owner_entity) => attach_link.player_entity = new_owner_entity,
+                None => (),
+            }
 
             // TODO: Add if bots can take blocks from players
         }
