@@ -49,6 +49,15 @@ pub struct Player {
 }
 
 #[derive(Component)]
+pub struct Parry{
+    pub active : bool,
+    pub parry_duration: f32,
+    pub timer: Timer,
+
+}
+
+
+#[derive(Component)]
 pub struct PlayerAttach {
     pub offset: Vec2,
 }
@@ -79,9 +88,24 @@ pub struct PlayerConfig {
 }
 
 #[derive(Component)]
-pub struct OpponentHook {
-    pub id: Identity, // Match with the opponent's identity
+pub struct Hook {
+    pub hook_speed: f32,
+    pub hook_max_range: f32,
 }
+
+#[derive(Component)]
+pub struct Parry{
+    pub active : bool,
+    pub parry_duration: f32,
+    pub timer: Timer,
+
+}
+
+#[derive(Component)]
+pub struct PlayerAttach {
+    pub offset: Vec2,
+}
+
 
 // Global constant config for the player
 #[derive(Component)]
@@ -112,6 +136,18 @@ pub struct Parry{
 }
 
 
+#[derive(Component)]
+pub struct Parry{
+    pub active : bool,
+    pub parry_duration: f32,
+    pub timer: Timer,
+
+}
+
+
+pub struct OpponentHook {
+    pub id: Identity, // Match with the opponent's identity
+}
 //
 // === Grid defined constraints ===
 //

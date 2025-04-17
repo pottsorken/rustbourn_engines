@@ -183,7 +183,7 @@ pub fn update_bots(
             // If no collision, update the bot's position
             transform.translation = new_pos;
         } else {
-            // println!("Hello");
+            println!("Hello");
             //println!("[BOT] {} collided at ({}, {})", _bot.id, transform.translation.x, transform.translation.y);
             //println!(" ");
 

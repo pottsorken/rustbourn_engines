@@ -92,7 +92,6 @@ fn main() {
                 print_player_positions,
                 hook_collision_system,
                 hook_controls,
-                render_bots_from_db,
                 parry_controls,
                 attach_objects,
                 attach_items,
