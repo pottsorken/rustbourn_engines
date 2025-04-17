@@ -73,39 +73,30 @@ pub fn player_movement(
 
     let opponent_transforms: Vec<Transform> = opponent_query.iter().cloned().collect();
     for (player_entity, mut transform, player, grid) in &mut player_query {
+        // Scale player speed and rotation depending on n blocks
         let speed_scale = 1.0 / (1.0 + player.block_count as f32 * 0.1);
         let rotation_scale = 1.0 / (1.0 + player.block_count as f32 * 0.1);
-
         let move_speed = PLAYER_CONFIG.movement_speed * speed_scale;
         let rot_speed = PLAYER_CONFIG.rotation_speed * rotation_scale;
-        // Handle rotation with A/D keys
+
+        // Set move and rotation direction to 0
         let mut rotation_dir = 0.0;
-        if keyboard_input.pressed(KeyCode::KeyA) || keyboard_input.pressed(KeyCode::ArrowLeft) {
-            rotation_dir += 1.0;
-        }
-        if keyboard_input.pressed(KeyCode::KeyD) || keyboard_input.pressed(KeyCode::ArrowRight) {
-            rotation_dir -= 1.0;
-        }
-
-        // Handle movement with W/S keys (forward/backward relative to rotation)
         let mut move_dir = bevy::prelude::Vec3::ZERO;
-        if keyboard_input.pressed(KeyCode::KeyW) || keyboard_input.pressed(KeyCode::ArrowUp) {
-            move_dir.y += 1.0;
-        }
-        if keyboard_input.pressed(KeyCode::KeyS) || keyboard_input.pressed(KeyCode::ArrowDown) {
-            move_dir.y -= 1.0;
-            //rotation_dir *= -1.;
-        }
 
-        // Apply movement relative to player's rotation
+        // Change move and rotation direction depending on input
+        set_movement(&keyboard_input, &mut rotation_dir, &mut move_dir);
+
+        // Apply movement if some button has been pressed
         if move_dir != bevy::prelude::Vec3::ZERO {
-            //|| rotation_dir != 0. {
-            let mut move_direction = bevy::prelude::Vec3::ZERO.clone();
-            move_direction = transform.rotation * move_dir.normalize();
-            //if move_dir != Vec3::ZERO {
-            //}
+            //let mut move_direction = bevy::prelude::Vec3::ZERO.clone();
+
+            // Set new move direction according to new rotation (if any)
+            let move_direction = transform.rotation * move_dir.normalize();
+
+            // Calculate new position for next frame (only translation, not rotation!)
             let new_pos = transform.translation + move_direction * move_speed * time.delta_secs();
 
+            // Check if player will collide with any obstacles next frame
             let collided_with_obstacle = check_collision(
                 new_pos.truncate(),
                 &obstacle_query,
@@ -113,47 +104,26 @@ pub fn player_movement(
                 OBSTACLE_CONFIG.size,
             );
 
+            // Prepare for block collision, if no collision then var will not be changed
             let mut blocks_collided_obstacles = false;
 
-            // copy tanslation ----
+            // Copy current transform
             let mut next_frame_pos = transform.clone();
+            // Set translation to new position
             next_frame_pos.translation = new_pos;
+            // Rotate transform if A/D has been pressed
             if rotation_dir != 0.0 {
                 next_frame_pos.rotate_z(rotation_dir * rot_speed * time.delta_secs());
             }
 
-            // Check collision for all attached blocks
-            for (_attached_block_entity, _attached_block_transform, attached_block_link) in
-                attached_block_query.iter()
-            {
-                if attached_block_link.player_entity == player_entity {
-                    let rotated_offset = next_frame_pos.rotation
-                        * bevy::prelude::Vec3::new(
-                            attached_block_link.grid_offset.0 as f32 * grid.cell_size,
-                            attached_block_link.grid_offset.1 as f32 * grid.cell_size,
-                            5.0,
-                        );
-
-                    let new_block_pos = (next_frame_pos.translation) + (rotated_offset);
-
-                    blocks_collided_obstacles = check_collision(
-                        new_block_pos.truncate(),
-                        &obstacle_query,
-                        PLAYER_CONFIG.size,
-                        OBSTACLE_CONFIG.size,
-                    );
-                    if blocks_collided_obstacles {
-                        break;
-                    }
-                }
-            }
-
+            // Prepare block collision
             let mut collided_with_block = false;
 
-            // NOTE: Block collision logic here
             let block_radius = BLOCK_CONFIG.size.x.min(BLOCK_CONFIG.size.y) / 2.0;
             let player_radius = PLAYER_CONFIG.size.x.min(PLAYER_CONFIG.size.y) / 2.0;
             let collision_distance = block_radius + player_radius;
+
+            // Check if player has collided with any other blocks that are not attached
             for (_block_entity, block_transform) in block_query.iter_mut() {
                 if new_pos
                     .truncate()
@@ -166,27 +136,44 @@ pub fn player_movement(
 
             'outer: for (_block_entity, block_transform, block_link) in attached_block_query.iter()
             {
+                // check blocks collision with obstacles
+                if block_link.player_entity == player_entity {
+                    // Find block pos for next frame
+                    let new_block_pos = get_rotated_offset_pos(&block_link, &next_frame_pos, &grid);
+
+                    blocks_collided_obstacles = check_collision(
+                        new_block_pos.truncate(),
+                        &obstacle_query,
+                        PLAYER_CONFIG.size,
+                        OBSTACLE_CONFIG.size,
+                    );
+                    if blocks_collided_obstacles {
+                        break 'outer;
+                    }
+                }
+
+                // check player or blocks collision with other players/bots blocks
                 if block_link.player_entity != player_entity {
+                    // player collision with other players/bots blocks
                     if new_pos
                         .truncate()
                         .distance(block_transform.translation.truncate())
                         < collision_distance
                     {
                         collided_with_block = true;
+                        break 'outer;
                     }
-                    for (_attached_block_entity, _attached_block_transform, attached_block_link) in
+
+                    // players own blocks collision with other players/bots blocks
+                    for (_attached_block_entity, _attached_block_transform, attached_link) in
                         attached_block_query.iter()
                     {
-                        if attached_block_link.player_entity == player_entity {
-                            let rotated_offset = next_frame_pos.rotation
-                                * bevy::prelude::Vec3::new(
-                                    attached_block_link.grid_offset.0 as f32 * grid.cell_size,
-                                    attached_block_link.grid_offset.1 as f32 * grid.cell_size,
-                                    5.0,
-                                );
+                        if attached_link.player_entity == player_entity {
+                            // Find block pos for next frame
+                            let new_block_pos =
+                                get_rotated_offset_pos(&attached_link, &next_frame_pos, &grid);
 
-                            let new_block_pos = (next_frame_pos.translation) + (rotated_offset);
-
+                            // Check block collision against other blocks not owned by player
                             if new_block_pos
                                 .truncate()
                                 .distance(block_transform.translation.truncate())
@@ -202,20 +189,13 @@ pub fn player_movement(
                 }
             }
 
+            // If no collision at all then apply  movement
             if !collided_with_obstacle
                 && !collided_with_block
                 && !blocks_collided_obstacles
                 && !will_collide(new_pos.truncate(), &obstacle_query)
                 && !will_collide_with_opponent(new_pos.truncate(), &opponent_transforms)
             {
-                //println!(
-                //    "{} {} {} {} {}",
-                //    collided_with_obstacle,
-                //    collided_with_block,
-                //    blocks_collided_obstacles,
-                //    will_collide(new_pos.truncate(), &obstacle_query),
-                //    will_collide_with_opponent(new_pos.truncate(), &opponent_transforms),
-                //);
                 // Apply tanslation
                 transform.translation = new_pos;
                 // Apply rotation
@@ -225,7 +205,46 @@ pub fn player_movement(
             }
         }
 
+        // Upload new player pos
         update_player_position(ctx_wrapper, &transform);
+    }
+}
+
+fn get_rotated_offset_pos(
+    attach_link: &AttachedBlock,
+    next_frame_pos: &Transform,
+    grid: &PlayerGrid,
+) -> bevy::prelude::Vec3 {
+    let rotated_offset = next_frame_pos.rotation
+        * bevy::prelude::Vec3::new(
+            attach_link.grid_offset.0 as f32 * grid.cell_size,
+            attach_link.grid_offset.1 as f32 * grid.cell_size,
+            5.0,
+        );
+
+    (next_frame_pos.translation) + (rotated_offset)
+}
+
+fn set_movement(
+    keyboard_input: &Res<ButtonInput<KeyCode>>,
+    mut rotation_dir: &mut f32,
+    mut move_dir: &mut bevy::prelude::Vec3,
+) {
+    // Handle rotation with A/D keys
+    if keyboard_input.pressed(KeyCode::KeyA) || keyboard_input.pressed(KeyCode::ArrowLeft) {
+        *rotation_dir += 1.0;
+    }
+    if keyboard_input.pressed(KeyCode::KeyD) || keyboard_input.pressed(KeyCode::ArrowRight) {
+        *rotation_dir -= 1.0;
+    }
+
+    // Handle movement with W/S keys (forward/backward relative to rotation)
+    if keyboard_input.pressed(KeyCode::KeyW) || keyboard_input.pressed(KeyCode::ArrowUp) {
+        move_dir.y += 1.0;
+    }
+    if keyboard_input.pressed(KeyCode::KeyS) || keyboard_input.pressed(KeyCode::ArrowDown) {
+        move_dir.y -= 1.0;
+        //rotation_dir *= -1.;
     }
 }
 
