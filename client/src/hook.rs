@@ -181,6 +181,7 @@ pub fn hook_collision_system(
         (Entity, &Transform, &mut Player, &mut PlayerGrid),
         (Without<Hook>, Without<Block>),
     >,
+    mut grid_query: Query<&mut PlayerGrid, Without<Player>>,
     attachable_blocks: Query<&PlayerAttach>,
     mut commands: Commands,
     ctx_wrapper: Res<CtxWrapper>,
@@ -218,7 +219,27 @@ pub fn hook_collision_system(
 
                     // NOTE: If block is attached or not. (Option<AttachedBlock>)
                     if let Some(mut attach_link) = attach_link_option {
-                        // TODO: Remove entity from previous owner hashmap
+                        // Remove grid_pos/block entity tuple from target grid
+                        //if let Ok((_target_ent, _target_tran, _target_play, mut target_grid)) =
+                        //    player_query.get(attach_link.player_entity)
+                        //{
+                        //    target_grid.block_position.remove(&attach_link.grid_offset);
+                        //    println!(
+                        //        "Stole block at: ({}, {}) from player",
+                        //        attach_link.grid_offset.0, attach_link.grid_offset.1
+                        //    );
+                        //     } else
+                        if let Ok(mut target_grid) = grid_query.get_mut(attach_link.player_entity) {
+                            target_grid.block_position.remove(&attach_link.grid_offset);
+                            println!(
+                                "Stole block at: ({}, {}) from bot or opp",
+                                attach_link.grid_offset.0, attach_link.grid_offset.1
+                            );
+                        }
+
+                        // Add grid_pos/block entity tuple to player grid
+                        grid.block_position.insert(nextpos, block_entity);
+                        println!("Add new block in gridpos: ({}, {})", nextpos.0, nextpos.1);
 
                         // Update block ownership locally
                         attach_link.player_entity = player_entity;

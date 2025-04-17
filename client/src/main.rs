@@ -1,5 +1,5 @@
 // Game engine
-use bevy::prelude::*;
+use bevy::{prelude::*, ui::update};
 use bevy_ecs_tilemap::prelude::*;
 use noisy_bevy::simplex_noise_2d; // For map generation. May be temporary
 use bevy::{app::AppExit, color::palettes::css::CRIMSON, prelude::*};
@@ -39,6 +39,7 @@ use start_menu::*;
 use bots::{render_bots_from_db, spawn_bot_blocks, spawn_bots};
 use camera::{camera_follow, setup_camera};
 use db_connection::{update_opponent_positions, setup_connection, update_opponent_hooks, update_opponent_tracks};
+use grid::check_grid_connectivity;
 use hook::handle_obstacle_hit;
 use map::setup_tilemap;
 use opponent::{despawn_opponents, spawn_opponent_tracks_system, setup_blocks_opponent};
@@ -101,9 +102,17 @@ fn main() {
                 spawn_opponent_tracks_system,
                 update_opponent_tracks, 
                 handle_obstacle_hit,
-                update_block_owner,
-            ) .run_if(in_game_or_edit),
+                check_grid_connectivity,
+            ) 
+            .run_if(in_game_or_edit),
         )
+        .add_systems(
+            Update,
+             (
+                update_block_owner,
+             )
+             .run_if(in_game_or_edit),
+            )
         .add_systems(
             FixedUpdate,
             (
