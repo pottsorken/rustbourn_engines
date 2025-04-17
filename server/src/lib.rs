@@ -53,14 +53,6 @@ pub struct Bot {
     rotation_dir: f32,
 }
 
-// Hook component data
-#[derive(Debug, SpacetimeType)]
-pub struct Hook {
-    position: Vec2,
-    rotation: f32,
-    width: f32,
-    height: f32,
-}
 #[spacetimedb::table(name = block, public)]
 pub struct Block {
     offset_x: i32,
@@ -171,7 +163,12 @@ pub fn update_player_position(
 }
 
 #[spacetimedb::reducer]
-pub fn update_owner_grid(ctx: &ReducerContext, load: i32, next_free_x: i32, next_free_y: i32) {
+pub fn update_owner_grid(
+    ctx: &ReducerContext,
+    load: i32,
+    next_free_x: i32,
+    next_free_y: i32,
+) -> Result<(), String> {
     if let Some(_player) = ctx.db.player().identity().find(ctx.sender) {
         ctx.db.player().identity().update(Player {
             grid: Grid {

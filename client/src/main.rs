@@ -33,6 +33,7 @@ use player_attach::*;
 use bots::{render_bots_from_db, spawn_bot_blocks, spawn_bots};
 use camera::{camera_follow, setup_camera};
 use db_connection::{print_player_positions, setup_connection, update_opponent_hooks};
+use grid::check_grid_connectivity;
 use hook::handle_obstacle_hit;
 use map::setup_tilemap;
 use opponent::{despawn_opponents, setup_blocks_opponent};
@@ -77,6 +78,7 @@ fn main() {
                 attach_items,
                 update_opponent_hooks,
                 handle_obstacle_hit,
+                check_grid_connectivity,
             ),
         )
         .add_systems(
