@@ -25,9 +25,6 @@ mod edit_menu; use edit_menu::*;
 use camera::*;
 use block::*;
 use hook::*;
-<<<<<<< HEAD
-=======
-use parry::*;
 use map::*;
 >>>>>>> 726d987 (parry)
 use obstacle::*;
@@ -95,11 +92,6 @@ fn main() {
                 print_player_positions,
                 hook_collision_system,
                 hook_controls,
-<<<<<<< HEAD
-                render_bots_from_db,
-=======
-                parry_controls,
->>>>>>> 726d987 (parry)
                 attach_objects,
                 attach_items,
                 update_opponent_hooks,
