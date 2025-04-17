@@ -230,7 +230,7 @@ pub fn update_bots(
 
 
     }
-}
+}*/
 
 
 pub fn will_collide(
