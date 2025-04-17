@@ -15,7 +15,6 @@ pub mod player_connected_reducer;
 pub mod player_disconnected_reducer;
 pub mod player_table;
 pub mod player_type;
-pub mod reset_bots_if_no_players_online_reducer;
 pub mod update_bot_position_reducer;
 pub mod update_hook_movement_reducer;
 pub mod update_hook_position_reducer;
@@ -40,10 +39,6 @@ pub use player_disconnected_reducer::{
 };
 pub use player_table::*;
 pub use player_type::Player;
-pub use reset_bots_if_no_players_online_reducer::{
-    reset_bots_if_no_players_online, set_flags_for_reset_bots_if_no_players_online,
-    ResetBotsIfNoPlayersOnlineCallbackId,
-};
 pub use update_bot_position_reducer::{
     set_flags_for_update_bot_position, update_bot_position, UpdateBotPositionCallbackId,
 };
@@ -73,7 +68,6 @@ pub enum Reducer {
     },
     PlayerConnected,
     PlayerDisconnected,
-    ResetBotsIfNoPlayersOnline,
     UpdateBotPosition {
         bevy_transform: BevyTransform,
         bot_id: u64,
@@ -104,7 +98,6 @@ impl __sdk::Reducer for Reducer {
             Reducer::DamageObstacle { .. } => "damage_obstacle",
             Reducer::PlayerConnected => "player_connected",
             Reducer::PlayerDisconnected => "player_disconnected",
-            Reducer::ResetBotsIfNoPlayersOnline => "reset_bots_if_no_players_online",
             Reducer::UpdateBotPosition { .. } => "update_bot_position",
             Reducer::UpdateHookMovement { .. } => "update_hook_movement",
             Reducer::UpdateHookPosition { .. } => "update_hook_position",
@@ -128,12 +121,6 @@ impl TryFrom<__ws::ReducerCallInfo<__ws::BsatnFormat>> for Reducer {
                 player_disconnected_reducer::PlayerDisconnectedArgs,
             >("player_disconnected", &value.args)?
             .into()),
-            "reset_bots_if_no_players_online" => {
-                Ok(__sdk::parse_reducer_args::<
-                    reset_bots_if_no_players_online_reducer::ResetBotsIfNoPlayersOnlineArgs,
-                >("reset_bots_if_no_players_online", &value.args)?
-                .into())
-            }
             "update_bot_position" => Ok(__sdk::parse_reducer_args::<
                 update_bot_position_reducer::UpdateBotPositionArgs,
             >("update_bot_position", &value.args)?

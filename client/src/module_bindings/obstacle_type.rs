@@ -9,8 +9,8 @@ use super::vec_2_type::Vec2;
 #[derive(__lib::ser::Serialize, __lib::de::Deserialize, Clone, PartialEq, Debug)]
 #[sats(crate = __lib)]
 pub struct Obstacle {
-    pub position: Vec2,
     pub id: u64,
+    pub position: Vec2,
     pub hp: u32,
 }
 
