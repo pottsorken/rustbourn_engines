@@ -1,8 +1,8 @@
 use crate::common::{
     AttachedBlock, Block, Obstacle, Opponent, Player, PlayerGrid, BLOCK_CONFIG, GRID_CONFIG,
-    MAP_CONFIG, OBSTACLE_CONFIG, PLAYER_CONFIG,
+    MAP_CONFIG, OBSTACLE_CONFIG, PLAYER_CONFIG, CtxWrapper,
 };
-use crate::db_connection::{update_player_position, CtxWrapper};
+use crate::db_connection::update_player_position;
 use crate::module_bindings::*;
 use crate::player_attach::*;
 use bevy::prelude::*;

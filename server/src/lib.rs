@@ -73,7 +73,7 @@ pub struct Vec3 {
     z: f32,
 }
 
-/// Reducer for decreading a ("id") specific obstacle's HP by "damage" points.
+/// Reducer for decreasing a ("id") specific obstacle's HP by "damage" points.
 /// Client invokes this reducer in "handle_obstacle_hit" function when dealing damage to an obstacle with their hook.
 #[spacetimedb::reducer]
 pub fn damage_obstacle(ctx: &ReducerContext, id: u64, damage: u32) -> Result<(), String> {

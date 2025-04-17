@@ -1,14 +1,9 @@
-use crate::common::{Obstacle, MAP_CONFIG, OBSTACLE_CONFIG};
-use crate::db_connection::{load_obstacles, CtxWrapper};
+use crate::common::{Obstacle, MAP_CONFIG, OBSTACLE_CONFIG, SpawnedObstacles, CtxWrapper};
+use crate::db_connection::load_obstacles;
 use bevy::prelude::*;
 use bevy::window::PrimaryWindow;
 use rand::random;
 use std::collections::HashSet;
-
-#[derive(Resource, Default)]
-pub struct SpawnedObstacles {
-    pub ids: HashSet<u64>,
-}
 
 pub fn setup_obstacle(
     mut commands: Commands,

@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 
-use crate::{common::Opponent, db_connection::CtxWrapper, module_bindings::*};
+use crate::{common::{Opponent, CtxWrapper}, module_bindings::*};
 use spacetimedb_sdk::{Identity, Table};
 
 pub fn spawn_opponent(

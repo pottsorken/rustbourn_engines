@@ -36,7 +36,7 @@ use start_menu::*;
 
 use bots::{render_bots_from_db, spawn_bot_blocks, spawn_bots};
 use camera::{camera_follow, setup_camera};
-use db_connection::{print_player_positions, setup_connection, update_opponent_hooks};
+use db_connection::{update_opponent_positions, setup_connection, update_opponent_hooks};
 use hook::handle_obstacle_hit;
 use map::setup_tilemap;
 use opponent::despawn_opponents;
@@ -85,7 +85,7 @@ fn main() {
                 confine_player_movement,
                 camera_follow,
                 camera_zoom,
-                print_player_positions,
+                update_opponent_positions,
                 hook_collision_system,
                 hook_controls,
                 render_bots_from_db,

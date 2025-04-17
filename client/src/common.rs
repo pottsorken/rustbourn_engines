@@ -5,7 +5,14 @@
 use bevy::prelude::*;
 use bevy_ecs_tilemap::prelude::*;
 use spacetimedb_sdk::Identity;
-use std::collections::HashMap;
+use crate::module_bindings::DbConnection;
+use std::collections::{HashMap, HashSet};
+
+// Our very important struct containing our even more important context :)
+#[derive(Resource)]
+pub struct CtxWrapper {
+    pub ctx: DbConnection,
+}
 
 //
 // === Bot defined constraints ===
@@ -207,6 +214,12 @@ pub const BLOCK_CONFIG: BlockConfig = BlockConfig {
 #[derive(Component)]
 pub struct Obstacle {
     pub id: u64,
+}
+
+// Hashset storing all spawned obstacle IDs.
+#[derive(Resource, Default)]
+pub struct SpawnedObstacles {
+    pub ids: HashSet<u64>,
 }
 
 // Configuration struct for initializing the Player entity

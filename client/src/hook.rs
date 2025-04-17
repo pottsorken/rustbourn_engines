@@ -2,9 +2,9 @@ use crate::module_bindings::*;
 use crate::{
     common::{
         AttachedBlock, Block, Hook, HookCharge, Obstacle, OpponentHook, Player, PlayerAttach,
-        PlayerGrid, BLOCK_CONFIG, HOOK_CONFIG, OBSTACLE_CONFIG, PLAYER_CONFIG,
+        PlayerGrid, BLOCK_CONFIG, HOOK_CONFIG, OBSTACLE_CONFIG, PLAYER_CONFIG, CtxWrapper,
     },
-    db_connection::{load_obstacles, CtxWrapper},
+    db_connection::load_obstacles,
     grid::increment_grid_pos,
     opponent,
 };

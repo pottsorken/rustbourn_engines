@@ -1,8 +1,8 @@
 use crate::common::{
     AttachedBlock, Block, Bot, Obstacle, Opponent, PlayerGrid, BLOCK_CONFIG, BOT_CONFIG,
-    GRID_CONFIG, OBSTACLE_CONFIG,
+    GRID_CONFIG, OBSTACLE_CONFIG, CtxWrapper,
 };
-use crate::db_connection::{load_bots, update_bot_position, CtxWrapper};
+use crate::db_connection::{load_bots, update_bot_position};
 use crate::grid::increment_grid_pos;
 use crate::module_bindings::BotsTableAccess;
 use crate::player_attach::check_collision;

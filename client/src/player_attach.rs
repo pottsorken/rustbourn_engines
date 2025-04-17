@@ -1,10 +1,7 @@
 use bevy::prelude::*;
 
 use crate::module_bindings::*;
-use crate::{
-    common::{AttachedBlock, Bot, Hook, Player, PlayerAttach, PlayerGrid, PLAYER_CONFIG},
-    db_connection::CtxWrapper,
-};
+use crate::common::{AttachedBlock, Bot, Hook, Player, PlayerAttach, PlayerGrid, PLAYER_CONFIG, CtxWrapper};
 use spacetimedb_sdk::{
     credentials, DbContext, Error, Event, Identity, Status, Table, TableWithPrimaryKey,
 };
