@@ -62,7 +62,7 @@ pub const BOT_CONFIG: BotConfig = BotConfig {
     size: Vec2::new(80.0, 80.0),
     path: "sprites/top-view/robot_3Dyellow.png",
     count: 3,
-    movement_speed: 200.0,
+    movement_speed: 20.0,
     rotation_speed: f32::to_radians(180.0),
 };
 

@@ -154,6 +154,12 @@ pub fn spawn_bot_blocks(
                                 player_entity: bot_entity,
                             },
                         ));
+
+                        // Insert spawned block to the bot's grid
+                        bot_grid
+                            .block_position
+                            .insert((block.offset_x, block.offset_y), block_entity.id());
+
                         increment_grid_pos(&mut bot_grid);
                         spawned_blocks.ids.insert(block.id);
                         spawned_blocks.entities.insert(block_entity.id(), block.id);

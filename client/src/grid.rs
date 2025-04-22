@@ -53,6 +53,12 @@ pub fn check_grid_connectivity(
             }
         }
 
+        println!("----------");
+        for pos in visited.clone() {
+            println!("Visited block : ({}, {}) ---- ", pos.0, pos.1);
+        }
+        println!("----------");
+
         // Collect disconnected positions
         let disconnected_positions: Vec<_> = player_grid
             .block_position
@@ -63,11 +69,15 @@ pub fn check_grid_connectivity(
 
         // Remove disconnected blocks
         for pos in disconnected_positions {
+            println!(
+                "Disconnecting free blocks here at: ({}, {}) ---- ",
+                pos.0, pos.1
+            );
             if let Some(block_entity) = player_grid.block_position.remove(&pos) {
                 commands.entity(block_entity).remove::<AttachedBlock>();
                 // Optional: Add components to simulate falling, e.g., Gravity, Velocity
                 // commands.entity(block_entity).insert(Gravity::default());
-                player_grid.load = player_grid.load.saturating_sub(1);
+                //player_grid.load = player_grid.load.saturating_sub(1);
             }
         }
     }
