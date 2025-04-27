@@ -124,6 +124,32 @@ pub fn update_hook_position(
     }
 }
 
+#[spacetimedb::reducer]
+pub fn update_tracks_system(
+    ctx: &ReducerContext,
+    owner_identity: Identity,
+    position: BevyTransform,
+    rotation: f32,
+    width: f32,
+    height: f32,
+    id: u64,
+) -> Result<(), String> {
+    if let Some(_player) = ctx.db.player().identity().find(ctx.sender) {
+        ctx.db.track().insert(Track {
+            owner_identity,
+            position,
+            rotation,
+            width,
+            height,
+            id,
+        });
+        Ok(())
+    } else {
+        Err("Player not found".to_string())
+    }
+}
+
+
 /// Reducer for updating a ("identity") specific hook's movement in extension and retraction through it's "width" and "height".
 /// Client invokes this reducer in "hook_controls" function when player extends and retracs hook.
 #[spacetimedb::reducer]
