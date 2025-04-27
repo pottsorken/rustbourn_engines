@@ -15,10 +15,13 @@ pub mod player_connected_reducer;
 pub mod player_disconnected_reducer;
 pub mod player_table;
 pub mod player_type;
+pub mod track_table;
+pub mod track_type;
 pub mod update_bot_position_reducer;
 pub mod update_hook_movement_reducer;
 pub mod update_hook_position_reducer;
 pub mod update_player_position_reducer;
+pub mod update_tracks_system_reducer;
 pub mod vec_2_type;
 pub mod vec_3_type;
 
@@ -39,6 +42,8 @@ pub use player_disconnected_reducer::{
 };
 pub use player_table::*;
 pub use player_type::Player;
+pub use track_table::*;
+pub use track_type::Track;
 pub use update_bot_position_reducer::{
     set_flags_for_update_bot_position, update_bot_position, UpdateBotPositionCallbackId,
 };
@@ -50,6 +55,9 @@ pub use update_hook_position_reducer::{
 };
 pub use update_player_position_reducer::{
     set_flags_for_update_player_position, update_player_position, UpdatePlayerPositionCallbackId,
+};
+pub use update_tracks_system_reducer::{
+    set_flags_for_update_tracks_system, update_tracks_system, UpdateTracksSystemCallbackId,
 };
 pub use vec_2_type::Vec2;
 pub use vec_3_type::Vec3;
@@ -86,6 +94,14 @@ pub enum Reducer {
     UpdatePlayerPosition {
         bevy_transform: BevyTransform,
     },
+    UpdateTracksSystem {
+        owner_identity: __sdk::Identity,
+        position: BevyTransform,
+        rotation: f32,
+        width: f32,
+        height: f32,
+        id: u64,
+    },
 }
 
 impl __sdk::InModule for Reducer {
@@ -102,6 +118,7 @@ impl __sdk::Reducer for Reducer {
             Reducer::UpdateHookMovement { .. } => "update_hook_movement",
             Reducer::UpdateHookPosition { .. } => "update_hook_position",
             Reducer::UpdatePlayerPosition { .. } => "update_player_position",
+            Reducer::UpdateTracksSystem { .. } => "update_tracks_system",
         }
     }
 }
@@ -137,6 +154,10 @@ impl TryFrom<__ws::ReducerCallInfo<__ws::BsatnFormat>> for Reducer {
                 update_player_position_reducer::UpdatePlayerPositionArgs,
             >("update_player_position", &value.args)?
             .into()),
+            "update_tracks_system" => Ok(__sdk::parse_reducer_args::<
+                update_tracks_system_reducer::UpdateTracksSystemArgs,
+            >("update_tracks_system", &value.args)?
+            .into()),
             unknown => {
                 Err(
                     __sdk::InternalError::unknown_name("reducer", unknown, "ReducerCallInfo")
@@ -154,6 +175,7 @@ pub struct DbUpdate {
     bots: __sdk::TableUpdate<Bot>,
     obstacle: __sdk::TableUpdate<Obstacle>,
     player: __sdk::TableUpdate<Player>,
+    track: __sdk::TableUpdate<Track>,
 }
 
 impl TryFrom<__ws::DatabaseUpdate<__ws::BsatnFormat>> for DbUpdate {
@@ -167,6 +189,7 @@ impl TryFrom<__ws::DatabaseUpdate<__ws::BsatnFormat>> for DbUpdate {
                     db_update.obstacle = obstacle_table::parse_table_update(table_update)?
                 }
                 "player" => db_update.player = player_table::parse_table_update(table_update)?,
+                "track" => db_update.track = track_table::parse_table_update(table_update)?,
 
                 unknown => {
                     return Err(__sdk::InternalError::unknown_name(
@@ -202,6 +225,9 @@ impl __sdk::DbUpdate for DbUpdate {
         diff.player = cache
             .apply_diff_to_table::<Player>("player", &self.player)
             .with_updates_by_pk(|row| &row.identity);
+        diff.track = cache
+            .apply_diff_to_table::<Track>("track", &self.track)
+            .with_updates_by_pk(|row| &row.owner_identity);
 
         diff
     }
@@ -214,6 +240,7 @@ pub struct AppliedDiff<'r> {
     bots: __sdk::TableAppliedDiff<'r, Bot>,
     obstacle: __sdk::TableAppliedDiff<'r, Obstacle>,
     player: __sdk::TableAppliedDiff<'r, Player>,
+    track: __sdk::TableAppliedDiff<'r, Track>,
 }
 
 impl __sdk::InModule for AppliedDiff<'_> {
@@ -229,6 +256,7 @@ impl<'r> __sdk::AppliedDiff<'r> for AppliedDiff<'r> {
         callbacks.invoke_table_row_callbacks::<Bot>("bots", &self.bots, event);
         callbacks.invoke_table_row_callbacks::<Obstacle>("obstacle", &self.obstacle, event);
         callbacks.invoke_table_row_callbacks::<Player>("player", &self.player, event);
+        callbacks.invoke_table_row_callbacks::<Track>("track", &self.track, event);
     }
 }
 
@@ -807,5 +835,6 @@ impl __sdk::SpacetimeModule for RemoteModule {
         bots_table::register_table(client_cache);
         obstacle_table::register_table(client_cache);
         player_table::register_table(client_cache);
+        track_table::register_table(client_cache);
     }
 }

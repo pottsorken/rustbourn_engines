@@ -15,6 +15,7 @@ pub struct Player {
     position: BevyTransform,
     online: bool,
     hook: Hook,
+    track: Track,
 }
 
 /// Obstacle component data
@@ -38,6 +39,17 @@ pub struct Bot {
     movement_dir: Vec3,
     // Rotation direction
     rotation_dir: f32,
+}
+
+#[spacetimedb::table(name = track, public)]
+pub struct Track {
+    #[primary_key]
+    owner_identity: Identity,
+    position: BevyTransform,
+    rotation: f32,
+    width: f32,
+    height: f32,
+    id: u64,
 }
 
 /// Hook component data
@@ -242,6 +254,18 @@ pub fn player_connected(ctx: &ReducerContext) {
                 rotation: 0.0,
                 width: 0.0,
                 height: 0.0,
+            },
+            track: Track {
+                owner_identity: ctx.sender,
+                position: BevyTransform {
+                    coordinates: Vec2 { x: 0.0, y: 0.0 },
+                    rotation: 0.0,
+                    scale: Vec2 { x: 50.0, y: 100.0 },
+                },
+                width: 0.0,
+                height: 0.0,
+                rotation: 0.0,
+                id: 0, 
             },
         });
     }

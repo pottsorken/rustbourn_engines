@@ -100,7 +100,7 @@ pub const PLAYER_CONFIG: PlayerConfig = PlayerConfig {
 
 // Track specific component
 #[derive(Component)]
-pub struct TRACK_CONFIG {
+pub struct TrackConfig {
     pub path: &'static str,
     pub size: Vec2,
     pub spawn_distance: f32,
@@ -108,7 +108,7 @@ pub struct TRACK_CONFIG {
     pub track_spacing: f32,
 }
 
-pub const TRACK_CONFIG: TRACK_CONFIG = TRACK_CONFIG {
+pub const TRACK_CONFIG: TrackConfig = TrackConfig {
     path: "sprites/td_tanks/track16.png",
     size: Vec2::new(16.0, 16.0),
     spawn_distance: 5.0,
@@ -120,6 +120,18 @@ pub const TRACK_CONFIG: TRACK_CONFIG = TRACK_CONFIG {
 pub struct Track {
     pub timer: Timer,
 }
+
+#[derive(Component)]
+pub struct OpponentTrack {
+    pub owner_id: Identity,
+    pub id: u64,
+    pub x: f32,
+    pub y: f32,
+    pub rotation: f32,
+    pub width: f32,
+    pub height: f32,
+}
+
 
 #[derive(Component)]
 pub struct LastTrackPos(pub Vec2);

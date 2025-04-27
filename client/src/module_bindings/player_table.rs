@@ -5,6 +5,7 @@
 use super::bevy_transform_type::BevyTransform;
 use super::hook_type::Hook;
 use super::player_type::Player;
+use super::track_type::Track;
 use spacetimedb_sdk::__codegen::{self as __sdk, __lib, __sats, __ws};
 
 /// Table handle for the table `player`.

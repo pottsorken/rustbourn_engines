@@ -1,10 +1,12 @@
-use crate::common::{Player, LastTrackPos, TRACK_CONFIG};
+use crate::common::{Player, Track, OpponentTrack, LastTrackPos, TRACK_CONFIG};
 use bevy::prelude::*;
+use spacetimedb_sdk::{
+    credentials, DbContext, Error, Event, Status, Table, TableWithPrimaryKey, Identity
+};
+use bevy::prelude::Resource;
 
-#[derive(Component)]
-pub struct Track {
-    pub timer: Timer,
-}
+#[derive(Resource, Clone)]
+pub struct LocalPlayerId(pub Identity);
 
 pub fn spawn_tracks_system(
     mut commands: Commands,
@@ -40,7 +42,7 @@ pub fn spawn_tracks_system(
                     Timer::from_seconds(
                         TRACK_CONFIG.fade_time, 
                         TimerMode::Once
-                    )
+                    ),
                 },
             ));
 
@@ -60,7 +62,7 @@ pub fn spawn_tracks_system(
                     Timer::from_seconds(
                         TRACK_CONFIG.fade_time, 
                         TimerMode::Once
-                    )
+                    ),
                 },
             ));
 

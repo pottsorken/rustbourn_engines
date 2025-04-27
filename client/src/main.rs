@@ -38,13 +38,13 @@ use start_menu::*;
 
 use bots::{render_bots_from_db, spawn_bot_blocks, spawn_bots};
 use camera::{camera_follow, setup_camera};
-use db_connection::{update_opponent_positions, setup_connection, update_opponent_hooks};
+use db_connection::{update_opponent_positions, setup_connection, update_opponent_hooks, update_opponent_tracks};
 use hook::handle_obstacle_hit;
 use map::setup_tilemap;
-use opponent::despawn_opponents;
+use opponent::{despawn_opponents, spawn_opponent_tracks_system};
 use player::{player_movement, setup_player};
 use common::*;
-
+use track_spawner::{spawn_tracks_system, track_lifetime_system};
 
 fn main() {
     App::new()
@@ -90,13 +90,16 @@ fn main() {
                 update_opponent_positions,
                 hook_collision_system,
                 hook_controls,
+                handle_obstacle_hit,
+                track_lifetime_system,
                 render_bots_from_db,
                 attach_objects,
                 attach_items,
                 update_opponent_hooks,
-                handle_obstacle_hit,
                 spawn_tracks_system,
                 track_lifetime_system,
+                spawn_opponent_tracks_system,
+                update_opponent_tracks, 
             ) .run_if(in_game_or_edit),
         )
         .add_systems(

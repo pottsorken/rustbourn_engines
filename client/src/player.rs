@@ -1,6 +1,6 @@
 use crate::common::{
-    AttachedBlock, Block, Obstacle, Opponent, Player, PlayerGrid, BLOCK_CONFIG, GRID_CONFIG,
-    MAP_CONFIG, OBSTACLE_CONFIG, PLAYER_CONFIG, CtxWrapper, LastTrackPos,
+    AttachedBlock, Block, Obstacle, Opponent, Player, PlayerGrid, LastTrackPos, CtxWrapper, BLOCK_CONFIG, GRID_CONFIG,
+    MAP_CONFIG, OBSTACLE_CONFIG, PLAYER_CONFIG, TRACK_CONFIG
 };
 use crate::db_connection::update_player_position;
 use crate::module_bindings::*;
@@ -9,11 +9,13 @@ use bevy::prelude::{*, Vec2};
 use bevy::window::PrimaryWindow;
 use std::collections::HashMap;
 
+
 use rand::Rng;
 
 // server
 use spacetimedb_sdk::{
     credentials, DbContext, Error, Event, Identity, Status, Table, TableWithPrimaryKey,
+    ReducerEvent,
 };
 
 pub fn setup_player(
