@@ -43,7 +43,6 @@ pub fn spawn_tracks_system(
                         TRACK_CONFIG.fade_time, 
                         TimerMode::Once
                     ),
-                    has_extended: false,
                 },
             ));
 
@@ -64,7 +63,6 @@ pub fn spawn_tracks_system(
                         TRACK_CONFIG.fade_time, 
                         TimerMode::Once
                     ),
-                    has_extended: false,
                 },
             ));
 
@@ -103,5 +101,3 @@ pub fn track_lifetime_system(
         }
     }
 }
-
-
