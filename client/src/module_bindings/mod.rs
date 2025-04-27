@@ -21,6 +21,7 @@ pub mod update_bot_position_reducer;
 pub mod update_hook_movement_reducer;
 pub mod update_hook_position_reducer;
 pub mod update_player_position_reducer;
+pub mod update_tracks_system_reducer;
 pub mod vec_2_type;
 pub mod vec_3_type;
 
@@ -54,6 +55,9 @@ pub use update_hook_position_reducer::{
 };
 pub use update_player_position_reducer::{
     set_flags_for_update_player_position, update_player_position, UpdatePlayerPositionCallbackId,
+};
+pub use update_tracks_system_reducer::{
+    set_flags_for_update_tracks_system, update_tracks_system, UpdateTracksSystemCallbackId,
 };
 pub use vec_2_type::Vec2;
 pub use vec_3_type::Vec3;
@@ -90,6 +94,14 @@ pub enum Reducer {
     UpdatePlayerPosition {
         bevy_transform: BevyTransform,
     },
+    UpdateTracksSystem {
+        owner_identity: __sdk::Identity,
+        position: BevyTransform,
+        rotation: f32,
+        width: f32,
+        height: f32,
+        id: u64,
+    },
 }
 
 impl __sdk::InModule for Reducer {
@@ -106,6 +118,7 @@ impl __sdk::Reducer for Reducer {
             Reducer::UpdateHookMovement { .. } => "update_hook_movement",
             Reducer::UpdateHookPosition { .. } => "update_hook_position",
             Reducer::UpdatePlayerPosition { .. } => "update_player_position",
+            Reducer::UpdateTracksSystem { .. } => "update_tracks_system",
         }
     }
 }
@@ -140,6 +153,10 @@ impl TryFrom<__ws::ReducerCallInfo<__ws::BsatnFormat>> for Reducer {
             "update_player_position" => Ok(__sdk::parse_reducer_args::<
                 update_player_position_reducer::UpdatePlayerPositionArgs,
             >("update_player_position", &value.args)?
+            .into()),
+            "update_tracks_system" => Ok(__sdk::parse_reducer_args::<
+                update_tracks_system_reducer::UpdateTracksSystemArgs,
+            >("update_tracks_system", &value.args)?
             .into()),
             unknown => {
                 Err(
