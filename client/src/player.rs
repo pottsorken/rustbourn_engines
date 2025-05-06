@@ -8,6 +8,8 @@ use crate::player_attach::*;
 use bevy::prelude::{*, Vec2};
 use bevy::window::PrimaryWindow;
 use std::collections::HashMap;
+use crate::common::WaterTiles;
+use bevy::math::*; 
 
 
 use rand::Rng;
@@ -70,6 +72,7 @@ pub fn player_movement(
     mut _commands: Commands,
     time: Res<Time>,
     ctx: Res<CtxWrapper>,
+    water_tiles: Res<WaterTiles>,
 ) {
     //if let Ok((mut transform, _player)) = query.get_single_mut() { // NOTE: merge conflict
     let ctx_wrapper = &ctx.into_inner();
@@ -198,6 +201,7 @@ pub fn player_movement(
                 && !blocks_collided_obstacles
                 && !will_collide(new_pos.truncate(), &obstacle_query)
                 && !will_collide_with_opponent(new_pos.truncate(), &opponent_transforms)
+                && !will_collide_with_water_tiles(new_pos.truncate(), &water_tiles)
             {
                 // Apply tanslation
                 transform.translation = new_pos;
@@ -211,6 +215,33 @@ pub fn player_movement(
         // Upload new player pos
         update_player_position(ctx_wrapper, &transform);
     }
+}
+
+fn will_collide_with_water_tiles(player_pos: bevy::prelude::Vec2, water_tiles: &WaterTiles) -> bool {
+    let half_size = PLAYER_CONFIG.size / 2.0;
+
+    // Compute tile bounds the player overlaps
+    let left = player_pos.x - half_size.x;
+    let right = player_pos.x + half_size.x;
+    let bottom = player_pos.y - half_size.y;
+    let top = player_pos.y + half_size.y;
+
+    let tile_size = MAP_CONFIG.tile_size;
+
+    let tile_x_start = ((left + (MAP_CONFIG.map_size.x as f32 * tile_size.x) / 2.0) / tile_size.x).floor() as u32;
+    let tile_x_end = ((right + (MAP_CONFIG.map_size.x as f32 * tile_size.x) / 2.0) / tile_size.x).floor() as u32;
+    let tile_y_start = ((bottom + (MAP_CONFIG.map_size.y as f32 * tile_size.y) / 2.0) / tile_size.y).floor() as u32;
+    let tile_y_end = ((top + (MAP_CONFIG.map_size.y as f32 * tile_size.y) / 2.0) / tile_size.y).floor() as u32;
+
+    for x in tile_x_start..=tile_x_end {
+        for y in tile_y_start..=tile_y_end {
+            if water_tiles.positions.contains(&(x, y)) {
+                return true;
+            }
+        }
+    }
+
+    false
 }
 
 fn get_rotated_offset_pos(

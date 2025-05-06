@@ -8,6 +8,14 @@ use bevy_ecs_tilemap::prelude::*;
 use spacetimedb_sdk::Identity;
 use std::collections::{HashMap, HashSet};
 
+
+
+#[derive(Resource, Debug)]
+pub struct WaterTiles {
+    pub positions: HashSet<(u32, u32)>,
+}
+
+
 // Our very important struct containing our even more important context :)
 #[derive(Resource)]
 pub struct CtxWrapper {
