@@ -8,6 +8,14 @@ use spacetimedb_sdk::Identity;
 use crate::module_bindings::DbConnection;
 use std::collections::{HashMap, HashSet};
 
+
+
+#[derive(Resource, Debug)]
+pub struct WaterTiles {
+    pub positions: HashSet<(u32, u32)>,
+}
+
+
 // Our very important struct containing our even more important context :)
 #[derive(Resource)]
 pub struct CtxWrapper {
