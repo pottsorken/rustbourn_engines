@@ -271,7 +271,6 @@ pub struct OpponentHookHead {
     pub id: Identity,
 }
 
-
 #[derive(Component)]
 pub struct Hook {
     pub hook_speed: f32,
@@ -580,5 +579,4 @@ pub struct LeaderboardConfig {
 // Global bot config
 pub const LEADRERBOARD_CONFIG: LeaderboardConfig = LeaderboardConfig {
     size: Vec2::new(80.0, 80.0),
-
 };

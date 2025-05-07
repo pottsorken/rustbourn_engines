@@ -20,10 +20,15 @@ mod parse;
 mod player;
 mod player_attach;
 mod start_menu;
+<<<<<<< HEAD
 use edit_menu::*;
 mod leaderboard;
 mod nametag;
 mod track_spawner;
+=======
+mod edit_menu; use edit_menu::*;
+mod leaderboard;
+>>>>>>> 9e0e757 (leaderboard first try)
 
 use block::*;
 use camera::*;
@@ -35,7 +40,11 @@ use obstacle::*;
 use player::*;
 use player_attach::*;
 use start_menu::*;
+<<<<<<< HEAD
 use track_spawner::*;
+=======
+use leaderboard::*;
+>>>>>>> 9e0e757 (leaderboard first try)
 
 //#[cfg(windows)]
 //#[global_allocator]
