@@ -84,11 +84,7 @@ pub struct PlayerConfig {
     pub path: &'static str,
     pub max_block_count: i32,
 }
-// Global constant config for the player
-#[derive(Component)]
-pub struct OpponentHook {
-    pub id: Identity, // Match with the opponent's identity
-}
+
 /// Global constant config for the player
 pub const PLAYER_CONFIG: PlayerConfig = PlayerConfig {
     size: Vec2::new(80.0, 80.0),
@@ -97,6 +93,11 @@ pub const PLAYER_CONFIG: PlayerConfig = PlayerConfig {
     path: "sprites/top-view/newcore.png",
     max_block_count: 100,
 };
+
+//
+// === Track defined constraints ===
+//
+
 
 // Track specific component
 #[derive(Component)]
@@ -112,7 +113,7 @@ pub const TRACK_CONFIG: TrackConfig = TrackConfig {
     path: "sprites/td_tanks/track16.png",
     size: Vec2::new(16.0, 16.0),
     spawn_distance: 5.0,
-    fade_time: 60.0, // seconds until despawn
+    fade_time: 10.0, // seconds until despawn
     track_spacing: 60.0,
 };
 
@@ -190,6 +191,12 @@ pub struct Opponent {
 //
 // === Hook defined constraints ===
 //
+
+// Global constant config for the player
+#[derive(Component)]
+pub struct OpponentHook {
+    pub id: Identity, // Match with the opponent's identity
+}
 
 #[derive(Component)]
 pub struct Hook {
