@@ -215,7 +215,7 @@ pub fn hook_collision_system(
                     && attachable_blocks.get(block_entity).is_err()
                     && player.block_count < PLAYER_CONFIG.max_block_count
                 {
-                    let nextpos = grid.next_free_pos.clone();
+                    let nextpos = grid.find_next_free_pos().expect("No position found");
 
                     // NOTE: If block is attached or not. (Option<AttachedBlock>)
                     if let Some(mut attach_link) = attach_link_option {
@@ -229,6 +229,7 @@ pub fn hook_collision_system(
                         //        attach_link.grid_offset.0, attach_link.grid_offset.1
                         //    );
                         //     } else
+
                         if let Ok(mut target_grid) = grid_query.get_mut(attach_link.player_entity) {
                             target_grid.block_position.remove(&attach_link.grid_offset);
                             println!(

@@ -61,6 +61,6 @@ pub fn update_block(
     for (mut transform, _player) in &mut block_query {
         rotation_dir += 0.1;
 
-        transform.rotate_z(rotation_dir * BLOCK_CONFIG.rotation_speed * time.delta_secs());
+        //transform.rotate_z(rotation_dir * BLOCK_CONFIG.rotation_speed * time.delta_secs());
     }
 }

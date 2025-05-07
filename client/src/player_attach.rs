@@ -79,14 +79,15 @@ pub fn update_block_owner(
             .expect("Failed to find block_id");
 
         let players = ctx_wrapper.ctx.db.player().iter().collect::<Vec<_>>();
-        let owner_identity_type = ctx_wrapper
+        let block_from_db = ctx_wrapper
             .ctx
             .db
             .block()
             .id()
             .find(server_block_id)
-            .expect("Failed to find db tuple from blockid")
-            .owner;
+            .expect("Failed to find db tuple from blockid");
+        let owner_identity_type = block_from_db.owner;
+        let block_pos: (i32, i32) = (block_from_db.offset_x, block_from_db.offset_y);
 
         if let OwnerType::Player(owner_identity) = owner_identity_type {
             let mut owner_entity: Option<Entity> = None;
@@ -113,6 +114,9 @@ pub fn update_block_owner(
                 Some(new_owner_entity) => attach_link.player_entity = new_owner_entity,
                 None => (),
             }
+
+            // Update block offset to new grid
+            attach_link.grid_offset = block_pos; // NOTE: might be not necessary
 
             // TODO: Add if bots can take blocks from players
         }

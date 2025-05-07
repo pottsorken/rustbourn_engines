@@ -82,3 +82,25 @@ pub fn check_grid_connectivity(
         }
     }
 }
+
+impl PlayerGrid {
+    pub fn find_next_free_pos(&self) -> Option<(i32, i32)> {
+        for y in 0..self.grid_size.1 {
+            for x in -self.grid_size.0..self.grid_size.0 {
+                let pos = (x, -y); // -y since blocks increment backwards
+
+                // skip if center block
+                if pos == (0, 0) {
+                    continue;
+                }
+
+                println!("Checking if free for ({}, {})", pos.0, pos.1);
+                // return position if it is free
+                if !self.block_position.contains_key(&pos) {
+                    return Some(pos);
+                }
+            }
+        }
+        None
+    }
+}

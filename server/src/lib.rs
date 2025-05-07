@@ -438,7 +438,7 @@ fn generate_bots(ctx: &ReducerContext) {
 /// Function for generating obstacles in server.
 /// Server invokes this function in "server_startup" reducer during server initialization.
 fn generate_blocks(ctx: &ReducerContext) {
-    let blocks_per_bot = 5;
+    let blocks_per_bot = 10;
     let grid_size = (1, 2); // num 2 does not matter
     let mut block_id = 0;
 
