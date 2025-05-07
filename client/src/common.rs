@@ -94,6 +94,11 @@ pub const PLAYER_CONFIG: PlayerConfig = PlayerConfig {
     max_block_count: 100,
 };
 
+//
+// === Track defined constraints ===
+//
+
+
 // Track specific component
 #[derive(Component)]
 pub struct TrackConfig {
@@ -108,7 +113,7 @@ pub const TRACK_CONFIG: TrackConfig = TrackConfig {
     path: "sprites/td_tanks/track16.png",
     size: Vec2::new(16.0, 16.0),
     spawn_distance: 5.0,
-    fade_time: 60.0, // seconds until despawn
+    fade_time: 10.0, // seconds until despawn
     track_spacing: 60.0,
 };
 
