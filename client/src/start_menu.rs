@@ -6,12 +6,12 @@ use bevy::{app::AppExit, color::palettes::css::CRIMSON, prelude::*};
 use crate::common::*;
 
 pub const TEXT_COLOR: Color = Color::srgb(0.9, 0.9, 0.9);
-pub const BACKGROUND_COLOR: Color = Color::srgb(0.498, 0.498, 0.498);
+pub const BACKGROUND_COLOR: Color = Color::srgb(0.11764705882352941, 0.11764705882352941, 0.11764705882352941);
 pub const SPLASH_COLOR: Color = Color::srgb(0.0, 0.0, 0.0);
 
 pub const NORMAL_BUTTON: Color = Color::srgb(0.15, 0.15, 0.15);
-pub const HOVERED_BUTTON: Color = Color::srgb(0.25, 0.25, 0.25);
-pub const HOVERED_PRESSED_BUTTON: Color = Color::srgb(0.25, 0.65, 0.25);
+pub const HOVERED_BUTTON: Color = Color::srgb(0.2823529411764706, 0.2823529411764706, 0.2823529411764706);
+pub const HOVERED_PRESSED_BUTTON: Color = Color::srgb(0.9254901960784314, 0.6313725490196078, 0.2196078431372549);
 pub const PRESSED_BUTTON: Color = Color::srgb(0.35, 0.75, 0.35);
 
 
@@ -224,7 +224,7 @@ pub fn main_menu_setup(mut commands: Commands, asset_server: Res<AssetServer>) {
                 .with_children(|parent| {
                     // Display title screen
                     parent.spawn((
-                        ImageNode::new(asset_server.load("screens/rbepaint.png")),
+                        ImageNode::new(asset_server.load("screens/titlescreen.png")),
                         Node {
                             width: Val::Px(600.0),
                             margin: UiRect::all(Val::Px(50.0)),
