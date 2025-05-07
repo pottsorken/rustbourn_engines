@@ -20,6 +20,7 @@ mod player;
 mod player_attach;
 mod start_menu;
 mod edit_menu; use edit_menu::*;
+mod leaderboard;
 
 use camera::*;
 use block::*;
@@ -28,6 +29,7 @@ use obstacle::*;
 use player::*;
 use player_attach::*;
 use start_menu::*;
+use leaderboard::*;
 
 //#[cfg(windows)]
 //#[global_allocator]
@@ -57,12 +59,14 @@ fn main() {
         .add_plugins(TilemapPlugin)
         .init_state::<GameState>()
         .insert_resource(DisplayQuality::Medium)
+        .insert_resource(Leaderboard::default())
         .insert_resource(Volume(7))
         .add_plugins((splash_plugin, menu_plugin, game_plugin, edit_plugin))
         .add_systems(
             Startup,
             (
                 setup_camera,
+                setup_scoreboard,
             )
             .chain(),
         )
