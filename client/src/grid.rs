@@ -85,8 +85,12 @@ pub fn check_grid_connectivity(
 
 impl PlayerGrid {
     pub fn find_next_free_pos(&self) -> Option<(i32, i32)> {
-        for y in 0..self.grid_size.1 {
-            for x in -self.grid_size.0..self.grid_size.0 {
+        println!(
+            "Grid size: ({}, {}) --------------",
+            -self.grid_size.0, self.grid_size.0
+        );
+        for y in 0..=self.grid_size.1 {
+            for x in -self.grid_size.0..=self.grid_size.0 {
                 let pos = (x, -y); // -y since blocks increment backwards
 
                 // skip if center block

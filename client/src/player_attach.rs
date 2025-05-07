@@ -66,8 +66,11 @@ fn update_slave_pos(
 
 pub fn update_block_owner(
     mut block_query: Query<(Entity, &mut AttachedBlock)>,
-    opponent_query: Query<(Entity, &Opponent), Without<AttachedBlock>>,
-    player_query: Query<Entity, (With<Player>, Without<AttachedBlock>)>,
+    mut opponent_query: Query<
+        (Entity, &Opponent, &mut PlayerGrid),
+        (Without<AttachedBlock>, Without<Player>),
+    >,
+    mut player_query: Query<(Entity, &mut PlayerGrid), (With<Player>, Without<AttachedBlock>)>,
 
     ctx_wrapper: Res<CtxWrapper>,
     mut spawned_blocks: ResMut<SpawnedBlocks>,
@@ -90,29 +93,48 @@ pub fn update_block_owner(
         let block_pos: (i32, i32) = (block_from_db.offset_x, block_from_db.offset_y);
 
         if let OwnerType::Player(owner_identity) = owner_identity_type {
-            let mut owner_entity: Option<Entity> = None;
-
-            if owner_identity == ctx_wrapper.ctx.identity() {
-                owner_entity = Some(
-                    player_query
-                        .get_single()
-                        .expect("Failed to get player entity"),
-                );
+            let (owner_entity, mut grid) = if owner_identity == ctx_wrapper.ctx.identity() {
+                let (player_entity, player_grid) = player_query
+                    .get_single_mut()
+                    .expect("Failed get single mut for player in update block owner");
+                (player_entity, player_grid)
             } else {
-                for (opp_entity, opponent) in opponent_query.iter() {
+                let mut found = None;
+                for (opp_entity, opponent, mut grid_search) in opponent_query.iter_mut() {
                     if opponent.id == owner_identity {
-                        owner_entity = Some(opp_entity);
-                        //println!(
-                        //    "updating for block: {} player: {}, entity: {}",
-                        //    server_block_id, owner_identity, owner_entity,
-                        //);
+                        found = Some((opp_entity, grid_search));
+                        break;
                     }
                 }
-            }
+                found.expect("No opponent found with matching ID")
+            };
+            //let mut owner_entity: Entity;
+            //let mut grid: &mut PlayerGrid;
+            //
+            //if owner_identity == ctx_wrapper.ctx.identity() {
+            //    if let Ok((new_owner_entity, mut new_new_grid)) = player_query.get_single_mut() {
+            //        owner_entity = new_owner_entity;
+            //        grid = &mut new_new_grid;
+            //    } else {
+            //        panic!("Failed get single mut for player in update block owner");
+            //    }
+            //} else {
+            //    for (opp_entity, opponent, mut grid_search) in opponent_query.iter_mut() {
+            //        if opponent.id == owner_identity {
+            //            owner_entity = opp_entity;
+            //            grid = &mut grid_search;
+            //            //println!(
+            //            //    "updating for block: {} player: {}, entity: {}",
+            //            //    server_block_id, owner_identity, owner_entity,
+            //            //);
+            //        }
+            //    }
+            //}
 
-            match owner_entity {
-                Some(new_owner_entity) => attach_link.player_entity = new_owner_entity,
-                None => (),
+            attach_link.player_entity = owner_entity;
+
+            if !grid.block_position.contains_key(&block_pos) {
+                grid.block_position.insert(block_pos.clone(), block_entity);
             }
 
             // Update block offset to new grid
