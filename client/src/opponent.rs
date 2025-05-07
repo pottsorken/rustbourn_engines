@@ -169,6 +169,7 @@ pub fn spawn_opponent_tracks_system(
                 },
                 Track {
                     timer: Timer::from_seconds(TRACK_CONFIG.fade_time, TimerMode::Once),
+                    has_extended: false,
                 },
             ));
 
@@ -186,6 +187,7 @@ pub fn spawn_opponent_tracks_system(
                 },
                 Track {
                     timer: Timer::from_seconds(TRACK_CONFIG.fade_time, TimerMode::Once),
+                    has_extended: false,
                 },
             ));
 

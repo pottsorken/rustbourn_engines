@@ -43,6 +43,7 @@ pub fn spawn_tracks_system(
                         TRACK_CONFIG.fade_time, 
                         TimerMode::Once
                     ),
+                    has_extended: false,
                 },
             ));
 
@@ -63,6 +64,7 @@ pub fn spawn_tracks_system(
                         TRACK_CONFIG.fade_time, 
                         TimerMode::Once
                     ),
+                    has_extended: false,
                 },
             ));
 
@@ -74,13 +76,32 @@ pub fn spawn_tracks_system(
 pub fn track_lifetime_system(
     mut commands: Commands,
     time: Res<Time>,
+    player_query: Query<&Player>,
     mut query: Query<(Entity, &mut Track)>,
 ) {
+    let block_count = if let Ok(player) = player_query.get_single() {
+        player.block_count
+    } else {
+        0
+    };
+
+    let lifetime_modifier = 5.0; // seconds per block
+
     for (entity, mut track) in query.iter_mut() {
         track.timer.tick(time.delta());
 
         if track.timer.finished() {
-            commands.entity(entity).despawn();
+            if lifetime_modifier > 0.0 && !track.has_extended {
+                // Extend timer just once
+                let extended_duration = track.timer.duration().as_secs_f32() + lifetime_modifier * block_count as f32;
+                track.timer.set_duration(std::time::Duration::from_secs_f32(extended_duration));
+                track.timer.reset();
+                track.has_extended = true; // <-- Mark as extended
+            } else {
+                commands.entity(entity).despawn();
+            }
         }
     }
 }
+
+
