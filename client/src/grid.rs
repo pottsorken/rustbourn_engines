@@ -1,4 +1,4 @@
-use crate::common::{AttachedBlock, PlayerGrid};
+use crate::{block::SpawnedBlocks, common::{AttachedBlock, PlayerGrid, CtxWrapper}, module_bindings::{update_block_owner, OwnerType}};
 use bevy::prelude::*;
 use std::collections::{HashSet, VecDeque};
 
@@ -25,8 +25,11 @@ pub fn increment_grid_pos(grid: &mut PlayerGrid) {
 
 pub fn check_grid_connectivity(
     mut commands: Commands,
-    mut grid_query: Query<(Entity, &mut PlayerGrid), Changed<PlayerGrid>>,
+    mut grid_query: Query<(Entity, &mut PlayerGrid)>,
+    mut spawned_blocks: ResMut<SpawnedBlocks>,
+    ctx_wrapper: Res<CtxWrapper>,
 ) {
+    // TODO: Does not disconnect local player blocks??? WHY?
     for (player_entity, mut player_grid) in grid_query.iter_mut() {
         let blocks_set: HashSet<(i32, i32)> = player_grid.block_position.keys().cloned().collect();
         let mut visited = HashSet::new();
@@ -78,8 +81,15 @@ pub fn check_grid_connectivity(
                 // Optional: Add components to simulate falling, e.g., Gravity, Velocity
                 // commands.entity(block_entity).insert(Gravity::default());
                 //player_grid.load = player_grid.load.saturating_sub(1);
+                
+                // Update block ownership to none
+                let server_block_id = spawned_blocks
+                .entities
+                .get(&block_entity)
+                .expect("Failed to get block id");
+            ctx_wrapper.ctx.reducers.update_block_owner(*server_block_id, OwnerType::None, pos.0, pos.1).unwrap();
             }
-        }
+        } 
     }
 }
 

@@ -85,6 +85,7 @@ pub struct Block {
 pub enum OwnerType {
     Bot(u64),
     Player(Identity),
+    None,
 }
 
 /// Custom struct containing bevy transform data

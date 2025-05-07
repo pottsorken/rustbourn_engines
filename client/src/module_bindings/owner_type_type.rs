@@ -10,6 +10,8 @@ pub enum OwnerType {
     Bot(u64),
 
     Player(__sdk::Identity),
+
+    None,
 }
 
 impl __sdk::InModule for OwnerType {

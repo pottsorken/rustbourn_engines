@@ -256,12 +256,26 @@ pub fn hook_collision_system(
                             OwnerType::Player(ctx_wrapper.ctx.identity()),
                             nextpos.0,
                             nextpos.1,
-                        );
+                        ).unwrap();
                     } else {
                         commands.entity(block_entity).insert(AttachedBlock {
                             grid_offset: nextpos,
                             player_entity: player_entity,
                         });
+
+                        // Update the server as well
+                        let id_block_db = spawned_blocks
+                            .entities
+                            .get(&block_entity)
+                            .expect("Failed lookup for block Entity->ServerID");
+
+                        ctx_wrapper.ctx.reducers().update_block_owner(
+                            id_block_db.clone(),
+                            OwnerType::Player(ctx_wrapper.ctx.identity()),
+                            nextpos.0,
+                            nextpos.1,
+                        ).unwrap();
+
                     }
                     grid.block_position.insert(nextpos, block_entity);
                     block_transform.translation.x += 200_000.;
