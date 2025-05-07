@@ -120,6 +120,7 @@ pub const TRACK_CONFIG: TrackConfig = TrackConfig {
 #[derive(Component)]
 pub struct Track {
     pub timer: Timer,
+    pub has_extended: bool,
 }
 
 #[derive(Component)]
