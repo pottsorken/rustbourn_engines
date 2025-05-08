@@ -417,7 +417,7 @@ fn generate_random_spawnpoint(ctx_wrapper: &CtxWrapper) -> (f32, f32) {
             let dx = player_position.coordinates.x - random_x;
             let dy = player_position.coordinates.y - random_y;
 
-            if (dx < PLAYER_CONFIG.size.x && dy < PLAYER_CONFIG.size.y) {
+            if dx < PLAYER_CONFIG.size.x && dy < PLAYER_CONFIG.size.y {
                 too_close = true;
                 break;
             }

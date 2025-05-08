@@ -3,16 +3,24 @@
 
 use bevy::prelude::*;
 use bevy::{app::AppExit, color::palettes::css::CRIMSON, prelude::*};
+use bevy::text::*;
 use crate::common::*;
+
+use rand::seq::SliceRandom;
+use rand::prelude::IndexedRandom;
+use rand::thread_rng;
+
 
 pub const TEXT_COLOR: Color = Color::srgb(0.9, 0.9, 0.9);
 pub const BACKGROUND_COLOR: Color = Color::srgb(0.11764705882352941, 0.11764705882352941, 0.11764705882352941);
 pub const SPLASH_COLOR: Color = Color::srgb(0.0, 0.0, 0.0);
 
 pub const NORMAL_BUTTON: Color = Color::srgb(0.15, 0.15, 0.15);
+// pub const USERNAME_BUTTON: Color = Color::srgb(0.2823529411764706, 0.2823529411764706, 0.2823529411764706);
+pub const USERNAME_BUTTON: Color = Color::srgb(1.0, 0.0, 0.0);
 pub const HOVERED_BUTTON: Color = Color::srgb(0.2823529411764706, 0.2823529411764706, 0.2823529411764706);
 pub const HOVERED_PRESSED_BUTTON: Color = Color::srgb(0.9254901960784314, 0.6313725490196078, 0.2196078431372549);
-pub const PRESSED_BUTTON: Color = Color::srgb(0.35, 0.75, 0.35);
+pub const PRESSED_BUTTON: Color = Color::srgb(0.7686274509803922, 0.3764705882352941, 0.054901960784313725);
 
 
 
@@ -115,23 +123,23 @@ pub fn menu_plugin(app: &mut App) {
             OnEnter(MenuState::SettingsDisplay),
             display_settings_menu_setup,
         )
-        .add_systems(
-            Update,
-            (setting_button::<DisplayQuality>.run_if(in_state(MenuState::SettingsDisplay)),),
-        )
-        .add_systems(
-            OnExit(MenuState::SettingsDisplay),
-            despawn_screen::<OnDisplaySettingsMenuScreen>,
-        )
-        .add_systems(OnEnter(MenuState::SettingsSound), sound_settings_menu_setup)
-        .add_systems(
-            Update,
-            setting_button::<Volume>.run_if(in_state(MenuState::SettingsSound)),
-        )
-        .add_systems(
-            OnExit(MenuState::SettingsSound),
-            despawn_screen::<OnSoundSettingsMenuScreen>,
-        )
+        // .add_systems(
+        //     Update,
+        //     (setting_button::<DisplayQuality>.run_if(in_state(MenuState::SettingsDisplay)),),
+        // )
+        // .add_systems(
+        //     OnExit(MenuState::SettingsDisplay),
+        //     despawn_screen::<OnDisplaySettingsMenuScreen>,
+        // )
+        // .add_systems(OnEnter(MenuState::SettingsSound), sound_settings_menu_setup)
+        // .add_systems(
+        //     Update,
+        //     setting_button::<Volume>.run_if(in_state(MenuState::SettingsSound)),
+        // )
+        // .add_systems(
+        //     OnExit(MenuState::SettingsSound),
+        //     despawn_screen::<OnSoundSettingsMenuScreen>,
+        // )
         // Common systems to all screens that handle buttons
         .add_systems(
             Update,
@@ -183,12 +191,22 @@ pub fn main_menu_setup(mut commands: Commands, asset_server: Res<AssetServer>) {
     // Common style for all buttons on the screen
     let button_node = Node {
         width: Val::Px(300.0),
-        height: Val::Px(65.0),
+        height: Val::Px(75.0),
         margin: UiRect::all(Val::Px(20.0)),
+        padding: UiRect::all(Val::Px(20.0)),
         justify_content: JustifyContent::Center,
         align_items: AlignItems::Center,
         ..default()
     };
+    // let username_button_node = Node {
+    //     width: Val::Px(300.0),
+    //     height: Val::Px(75.0),
+    //     margin: UiRect::all(Val::Px(20.0)),
+    //     padding: UiRect::all(Val::Px(20.0)),
+    //     justify_content: JustifyContent::Center,
+    //     align_items: AlignItems::Center,
+    //     ..default()
+    // };
     let button_icon_node = Node {
         width: Val::Px(30.0),
         position_type: PositionType::Absolute,
@@ -196,9 +214,35 @@ pub fn main_menu_setup(mut commands: Commands, asset_server: Res<AssetServer>) {
         ..default()
     };
     let button_text_font = TextFont {
-        font_size: 33.0,
+        font_size: 30.0,
         ..default()
     };
+    let username_button_text_font = TextFont {
+        font_size: 20.0,
+        ..default()
+    };
+
+    pub fn print_random_string() -> String {
+        let usernames_first = [
+            "cool", "lazy", "brisk", "sneaky", "quirky", "noisy", "zany", "clever", "sleepy", "rowdy",
+            "nimble", "grumpy", "shady", "peppy", "twitchy", "mellow", "spunky", "clumsy", "perky", "brainy",
+        ];
+
+        let usernames_second = [
+            "gear", "cog", "motor", "circuit", "valve", "bot", "servo", "engine", "module", "piston",
+            "drone", "terminal", "chip", "sensor", "actuator", "pump", "turbine", "switch", "matrix", "relay",
+        ];
+
+        let mut rng_first = thread_rng();
+        let mut rng_second = thread_rng();
+
+        let Some(random_username_first) = usernames_first.choose(&mut rng_first) else {todo!()};
+        let Some(random_username_second) = usernames_second.choose(&mut rng_second) else {todo!()};
+        let random_username = format!("{}-{}", random_username_first, random_username_second);
+
+        // println!("{}", random_username);
+        return random_username.to_string();
+    }
 
     commands
         .spawn((
@@ -233,9 +277,41 @@ pub fn main_menu_setup(mut commands: Commands, asset_server: Res<AssetServer>) {
                     ));
 
                     // Display three buttons for each action available from the main menu:
-                    // - new game
-                    // - settings
-                    // - quit
+                    parent
+                    .spawn((
+                        Button,
+                        button_node.clone(),
+                        BackgroundColor(PRESSED_BUTTON),
+                        // MenuButtonAction::Settings,
+                    ))
+                    .with_children(|parent| {
+                        // parent.spawn((ImageNode::new(icon), button_icon_node.clone()));
+                        parent.spawn((
+                            Text::new(print_random_string()),
+                            username_button_text_font.clone(),
+                            TextColor(PRESSED_BUTTON),
+                        ));
+                    });
+
+                    
+                    // parent
+                    //     .spawn((
+                    //         Sprite::from_color(Color::srgb(0.25, 0.25, 0.55), box_size),
+                    //         Transform::from_translation(box_position.extend(0.0)),
+                    //     ))
+                    //     .with_children(|builder| {
+                    //         builder.spawn((
+                    //             Text2d::new("this text wraps in the box\n(Unicode linebreaks)"),
+                    //             button_text_font.clone(),
+                    //             TextLayout::new(JustifyText::Left, LineBreak::WordBoundary),
+                    //             // Wrap text in the rectangle
+                    //             TextBounds::from(box_size),
+                    //             // Ensure the text is drawn on top of the box
+                    //             Transform::from_translation(Vec3::Z),
+                    //         ));
+                    //     });
+            
+
                     parent
                         .spawn((
                             Button,
@@ -244,30 +320,29 @@ pub fn main_menu_setup(mut commands: Commands, asset_server: Res<AssetServer>) {
                             MenuButtonAction::Play,
                         ))
                         .with_children(|parent| {
-                            let icon = asset_server.load("textures/Game Icons/right.png");
-                            parent.spawn((ImageNode::new(icon), button_icon_node.clone()));
                             parent.spawn((
                                 Text::new("PLAY"),
                                 button_text_font.clone(),
                                 TextColor(TEXT_COLOR),
                             ));
                         });
-                    parent
-                        .spawn((
-                            Button,
-                            button_node.clone(),
-                            BackgroundColor(NORMAL_BUTTON),
-                            MenuButtonAction::Settings,
-                        ))
-                        .with_children(|parent| {
-                            let icon = asset_server.load("textures/Game Icons/wrench.png");
-                            parent.spawn((ImageNode::new(icon), button_icon_node.clone()));
-                            parent.spawn((
-                                Text::new("Settings"),
-                                button_text_font.clone(),
-                                TextColor(TEXT_COLOR),
-                            ));
-                        });
+                    // parent
+                    //     .spawn((
+                    //         Button,
+                    //         button_node.clone(),
+                    //         BackgroundColor(NORMAL_BUTTON),
+                    //         MenuButtonAction::Settings,
+                    //     ))
+                    //     .with_children(|parent| {
+                    //         let icon = asset_server.load("textures/Game Icons/wrench.png");
+                    //         parent.spawn((ImageNode::new(icon), button_icon_node.clone()));
+                    //         parent.spawn((
+                    //             Text::new("Settings"),
+                    //             button_text_font.clone(),
+                    //             TextColor(TEXT_COLOR),
+                    //         ));
+                    //     });
+              
                     parent
                         .spawn((
                             Button,
@@ -285,6 +360,19 @@ pub fn main_menu_setup(mut commands: Commands, asset_server: Res<AssetServer>) {
                             ));
                         });
                 });
+
+                // .with_children(|parent| {
+                //     parent.spawn(TextBundle::from_section(
+                //         "Enter Username: ",
+                //         TextStyle {
+                //             font: asset_server.load("fonts/FiraSans-Bold.ttf"),
+                //             font_size: 40.0,
+                //             color: Color::WHITE,
+                //         },
+                //     ).with_text_alignment(TextAlignment::Left))
+                //     .insert(UsernameText);
+                // });
+
         });
 }
 
@@ -562,3 +650,48 @@ pub fn despawn_screen<T: Component>(to_despawn: Query<Entity, With<T>>, mut comm
 }
 
 
+
+
+
+
+
+// KEYBOARD????
+
+
+
+
+// #[derive(Resource, Default)]
+// struct Username {
+//     current: String,
+// }
+
+// // Marker component for the UI text we want to update
+// #[derive(Component)]
+// struct UsernameText;
+
+// fn handle_keyboard_input(
+//     mut char_evr: EventReader<ReceivedCharacter>,
+//     keys: Res<Input<KeyCode>>,
+//     mut username: ResMut<Username>,
+// ) {
+//     for ev in char_evr.iter() {
+//         if !ev.char.is_control() {
+//             username.current.push(ev.char);
+//         }
+//     }
+
+//     // Handle backspace
+//     if keys.just_pressed(KeyCode::Back) {
+//         username.current.pop();
+//     }
+// }
+
+// fn update_text_display(
+//     username: Res<Username>,
+//     mut query: Query<&mut Text, With<UsernameText>>,
+// ) {
+//     if username.is_changed() {
+//         let mut text = query.single_mut();
+//         text.sections[0].value = format!("Enter Username: {}", username.current);
+//     }
+// }

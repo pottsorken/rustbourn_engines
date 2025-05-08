@@ -120,5 +120,9 @@ fn main() {
         )
         .insert_resource(Time::from_seconds(0.5))
         .insert_resource(SpawnedObstacles::default())
+        //nytt
+        // .insert_resource(Username::default())
+        // .add_system(handle_keyboard_input)
+        // .add_system(update_text_display)
         .run();
 }
