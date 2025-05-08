@@ -350,7 +350,7 @@ pub struct MapConfig {
     pub map_size: TilemapSize,
     pub tile_size: TilemapTileSize,
     pub noise_scale: f32, // Grid size == tile size
-    pub tile_textures: [&'static str; 18], // Change this for the number of tiles in the list
+    pub tile_textures: [&'static str; 22], // Change this for the number of tiles in the list
     pub image_path: &'static str,
     pub safe_zone_size: f32,
 }
@@ -377,6 +377,10 @@ pub const MAP_CONFIG: MapConfig = MapConfig {
         "sprites/tiles/grass/grass13.png",
         "sprites/tiles/grass/grass14.png",
         "sprites/tiles/grass/grass15.png",
+        "sprites/tiles/grass/grass16.png",
+        "sprites/tiles/grass/grass17.png",
+        "sprites/tiles/grass/grass18.png",
+        "sprites/tiles/grass/grass19.png",
 
         "sprites/tiles/grass/grass01.png",
         "sprites/tiles/grass/grass01.png",
