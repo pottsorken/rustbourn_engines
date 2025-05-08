@@ -2,10 +2,10 @@
 // Configuration and shared components for the game
 //
 
+use crate::module_bindings::DbConnection;
 use bevy::prelude::*;
 use bevy_ecs_tilemap::prelude::*;
 use spacetimedb_sdk::Identity;
-use crate::module_bindings::DbConnection;
 use std::collections::{HashMap, HashSet};
 
 // Our very important struct containing our even more important context :)
@@ -94,7 +94,7 @@ pub const PLAYER_CONFIG: PlayerConfig = PlayerConfig {
     size: Vec2::new(80.0, 80.0),
     movement_speed: 300.0,
     rotation_speed: f32::to_radians(180.0),
-    path: "sprites/top-view/robot_3Dblue.png",
+    path: "sprites/top-view/newcore.png",
     max_block_count: 100,
 };
 
@@ -112,7 +112,7 @@ pub struct GridConfig {
 // Global constant config for the player
 pub const GRID_CONFIG: GridConfig = GridConfig {
     grid_size: (1, 1),
-    cell_size: 84.,
+    cell_size: 79.,
     next_free_pos: (-1, 0),
     capacity: 100,
     load: 0,
@@ -196,14 +196,19 @@ pub struct Block {}
 pub struct BlockConfig {
     pub size: Vec2,
     pub rotation_speed: f32,
-    pub path: &'static str,
+    pub path: [&'static str; 4],
     pub count: i32,
 }
 /// Global constant config for the block
 pub const BLOCK_CONFIG: BlockConfig = BlockConfig {
     size: Vec2::new(80.0, 80.0),
     rotation_speed: f32::to_radians(90.0),
-    path: "sprites/top-view/robot_green.png",
+    path: [
+        "sprites/top-view/newblock1.png",
+        "sprites/top-view/newblock2.png",
+        "sprites/top-view/newblock3.png",
+        "sprites/top-view/newblock4.png",
+    ],
     count: 100,
 };
 
@@ -264,8 +269,6 @@ pub const MAP_CONFIG: MapConfig = MapConfig {
     image_path: r"assets/tribasicmap1024.png",
     safe_zone_size: 300.0,
 };
-
-
 
 /////////////////////////////////////////////////////////
 #[derive(Clone, Copy, Default, Eq, PartialEq, Debug, Hash, States)]
@@ -336,3 +339,4 @@ pub enum MenuButtonAction {
 
 #[derive(Component)]
 pub struct OnEditScreen;
+

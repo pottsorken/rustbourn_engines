@@ -1,12 +1,13 @@
 use crate::common::{
-    AttachedBlock, Block, Bot, Obstacle, Opponent, PlayerGrid, BLOCK_CONFIG, BOT_CONFIG,
-    GRID_CONFIG, OBSTACLE_CONFIG, CtxWrapper,
+    AttachedBlock, Block, Bot, CtxWrapper, Obstacle, Opponent, PlayerGrid, BLOCK_CONFIG,
+    BOT_CONFIG, GRID_CONFIG, OBSTACLE_CONFIG,
 };
 use crate::db_connection::{load_bots, update_bot_position};
 use crate::grid::increment_grid_pos;
 use crate::module_bindings::BotsTableAccess;
 use crate::player_attach::check_collision;
 use bevy::prelude::*;
+use rand::Rng;
 use spacetimedb_sdk::Identity;
 use std::collections::HashMap;
 
@@ -134,10 +135,11 @@ pub fn spawn_bot_blocks(
         //println!("Spawning for bot: {}", bot_entity);
         for x in 0..3 {
             if bot_grid.load < bot_grid.capacity {
+                let num = rand::thread_rng().gen_range(0..=3);
                 commands.spawn((
                     Sprite {
                         custom_size: Some(BLOCK_CONFIG.size),
-                        image: asset_server.load(BLOCK_CONFIG.path),
+                        image: asset_server.load(BLOCK_CONFIG.path[num]),
                         ..default()
                     },
                     Transform::from_xyz(0., 0., 1.0),
