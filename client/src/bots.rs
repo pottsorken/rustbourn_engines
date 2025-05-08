@@ -145,21 +145,20 @@ pub fn render_bots_from_db(
 // bots.rs
 pub fn render_bots_from_db(
     mut param_set: ParamSet<(
-        Query<(&mut Transform, &Bot), Without<Obstacle>>,          // Param 0             ¨
-        //Query<&Transform, With<Obstacle>>,                         // Param 1
+        Query<(&mut Transform, &Bot), Without<Obstacle>>,          // Param 0
+        Query<&Transform, With<Obstacle>>,                         // Param 1
         Query<&Transform, With<Opponent>>,                         // Param 2
         Query<&Transform, With<Player>>,
         
     )>,
-    obstacle_query: Query<&Transform, With<Obstacle>>,
+
     ctx_wrapper: Res<CtxWrapper>,
     time: Res<Time>, // Time resource for movement speed calculation
-    lava_tiles: Res<LavaTiles>,
 ) {
 
-    let opponent_transforms: Vec<Transform> = param_set.p1().iter().cloned().collect();
-    let local_player_transforms: Vec<Transform> = param_set.p2().iter().cloned().collect();
-    //let obstacle_query = param_set.p1();
+    let opponent_transforms: Vec<Transform> = param_set.p2().iter().cloned().collect();
+    let local_player_transforms: Vec<Transform> = param_set.p3().iter().cloned().collect();
+    let obstacle_query: Vec<Transform> = param_set.p1().iter().cloned().collect();
 
 
     for (mut transform, bot) in param_set.p0().iter_mut() {
@@ -193,7 +192,7 @@ pub fn render_bots_from_db(
             let front_direction = transform.rotation * Vec3::new(1.0, 0.0, 0.0);
             let front_pos = transform.translation + front_direction * BOT_CONFIG.size.x; // Adjust distance
 
-            if !will_collide(front_pos.truncate(), &obstacle_query, &lava_tiles) && !will_collide_with_local_player(front_pos.truncate(), &local_player_transforms) && !will_collide_with_opponent(front_pos.truncate(), &opponent_transforms){
+            if !will_collide(front_pos.truncate(), &obstacle_query) && !will_collide_with_local_player(front_pos.truncate(), &local_player_transforms) && !will_collide_with_opponent(front_pos.truncate(), &opponent_transforms){
 
                 // If no collision, update the bot's position
                 transform.translation = new_pos;
@@ -214,8 +213,8 @@ pub fn render_bots_from_db(
                 let left_pos = transform.translation + left_direction * BOT_CONFIG.size.x;
                 let right_pos = transform.translation + right_direction * BOT_CONFIG.size.x;
 
-                let left_clear = !will_collide(left_pos.truncate(), &obstacle_query, &lava_tiles) && !will_collide_with_local_player(front_pos.truncate(), &local_player_transforms) && !will_collide_with_opponent(front_pos.truncate(), &opponent_transforms);
-                let right_clear = !will_collide(right_pos.truncate(), &obstacle_query, &lava_tiles) && !will_collide_with_local_player(front_pos.truncate(), &local_player_transforms) && !will_collide_with_opponent(front_pos.truncate(), &opponent_transforms);
+                let left_clear = !will_collide(left_pos.truncate(), &obstacle_query) && !will_collide_with_local_player(front_pos.truncate(), &local_player_transforms) && !will_collide_with_opponent(front_pos.truncate(), &opponent_transforms);
+                let right_clear = !will_collide(right_pos.truncate(), &obstacle_query) && !will_collide_with_local_player(front_pos.truncate(), &local_player_transforms) && !will_collide_with_opponent(front_pos.truncate(), &opponent_transforms);
 
                 // Decide which direction to go
                 if left_clear && !right_clear {
