@@ -1,12 +1,13 @@
 use crate::common::{
     AttachedBlock, Block, Obstacle, Opponent, Player, PlayerGrid, LastTrackPos, CtxWrapper, WaterTiles, DirtTiles, GrassTiles, StoneTiles, BLOCK_CONFIG, GRID_CONFIG,
-    MAP_CONFIG, OBSTACLE_CONFIG, PLAYER_CONFIG, TRACK_CONFIG,
+    MAP_CONFIG, OBSTACLE_CONFIG, PLAYER_CONFIG, TRACK_CONFIG, MODIFIER_CONFIG,
 };
 use crate::db_connection::update_player_position;
 use crate::module_bindings::*;
 use crate::player_attach::*;
 use bevy::pbr::light_consts::lux::DIRECT_SUNLIGHT;
 use bevy::prelude::{*, Vec2};
+use bevy::text::cosmic_text::rustybuzz::script::MODI;
 use bevy::window::PrimaryWindow;
 use std::collections::HashMap;
 use bevy::math::*; 
@@ -247,11 +248,11 @@ fn speed_modifer(
      for x in tile_x_start..=tile_x_end {
         for y in tile_y_start..=tile_y_end {
             if dirt_tiles.positions.contains(&(x, y)) {
-                speed_modifier = 0.5; // Slow down on dirt tiles
+                speed_modifier = MODIFIER_CONFIG.dirt; // Slow down on dirt tiles
             } else if grass_tiles.positions.contains(&(x, y)) {
-                speed_modifier = 1.5; // Speed up on grass tiles
+                speed_modifier = MODIFIER_CONFIG.grass; // Speed up on grass tiles
             } else if stone_tiles.positions.contains(&(x, y)) {
-                speed_modifier = 2.0; // Speed up on stone tiles
+                speed_modifier = MODIFIER_CONFIG.stone; // Speed up on stone tiles
             }
         }
     }

@@ -160,6 +160,20 @@ pub struct OpponentTrack {
 #[derive(Component)]
 pub struct LastTrackPos(pub Vec2);
 
+#[derive(Component)]
+pub struct ModifierConfig {
+    pub dirt: f32,
+    pub grass: f32,
+    pub stone: f32,
+}
+
+pub const MODIFIER_CONFIG: ModifierConfig = ModifierConfig {
+    dirt: 0.5,
+    grass: 0.8,
+    stone: 1.5,
+};
+
+
 
 //
 // === Grid defined constraints ===
