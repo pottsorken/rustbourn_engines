@@ -4,11 +4,10 @@
 
 use crate::module_bindings::DbConnection;
 use bevy::prelude::*;
+use bevy::text::{FontSmoothing, LineBreak, TextBounds};
 use bevy_ecs_tilemap::prelude::*;
 use spacetimedb_sdk::Identity;
 use std::collections::{HashMap, HashSet};
-
-
 
 #[derive(Resource, Debug)]
 pub struct WaterTiles {
@@ -120,7 +119,6 @@ pub const PLAYER_CONFIG: PlayerConfig = PlayerConfig {
 // === Track defined constraints ===
 //
 
-
 // Track specific component
 #[derive(Component)]
 pub struct TrackConfig {
@@ -156,7 +154,6 @@ pub struct OpponentTrack {
     pub height: f32,
 }
 
-
 #[derive(Component)]
 pub struct LastTrackPos(pub Vec2);
 
@@ -172,8 +169,6 @@ pub const MODIFIER_CONFIG: ModifierConfig = ModifierConfig {
     grass: 0.8,
     stone: 1.5,
 };
-
-
 
 //
 // === Grid defined constraints ===
@@ -224,6 +219,16 @@ pub struct Opponent {
     // DB identity
     pub id: Identity,
 }
+
+//
+// === Nametags defined constraints ===
+//
+
+//pub const TEXT_TAG_FONT: TextFont = TextFont {
+//    font_size: 50.0,
+//    ..default()
+//};
+//pub const TEXT_JUSTIFICATION: JustifyText = JustifyText::Center;
 
 //
 // === Hook defined constraints ===
