@@ -36,7 +36,7 @@ use start_menu::*;
 //static GLOBAL: mimalloc::MiMalloc = mimalloc::MiMalloc;
 // Spacedime dependencies
 
-use bots::{render_bots_from_db, spawn_bot_blocks, spawn_bots, send_bots_to_db};
+use bots::{render_bots_from_db, spawn_bot_blocks, spawn_bots};
 use camera::{camera_follow, setup_camera};
 use db_connection::{update_opponent_positions, setup_connection, update_opponent_hooks, update_opponent_tracks};
 use hook::handle_obstacle_hit;
