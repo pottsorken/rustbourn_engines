@@ -62,7 +62,7 @@ pub fn setup_tilemap(
 
             let mut rng = rand::thread_rng();
             let texture_index = if g == 255 {
-                rng.gen_range(0..12)
+                rng.gen_range(0..16)
                 // 0 // Green -> Grass
             } else if b == 255 {
                 2 // Blue -> Water
