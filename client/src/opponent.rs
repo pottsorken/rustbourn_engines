@@ -259,7 +259,8 @@ pub fn setup_blocks_opponent(
                             },
                         ));
                         // Increase next free position when loading from server
-                        increment_grid_pos(&mut grid);
+                        grid.next_free_pos = grid.find_next_free_pos().unwrap();
+                        //increment_grid_pos(&mut grid);
                         spawned_blocks.ids.insert(block.id);
                         spawned_blocks.entities.insert(block_entity.id(), block.id);
                     }

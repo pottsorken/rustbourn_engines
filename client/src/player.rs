@@ -66,7 +66,6 @@ pub fn setup_player(
 pub fn setup_blocks_player(
     mut commands: Commands,
     mut player_query: Query<(Entity, &mut PlayerGrid), With<Player>>,
-
     asset_server: Res<AssetServer>,
     ctx: Res<CtxWrapper>,
     mut spawned_blocks: ResMut<SpawnedBlocks>,
@@ -91,7 +90,8 @@ pub fn setup_blocks_player(
                             },
                         ));
                         // Increase next free position when loading from server
-                        increment_grid_pos(&mut grid);
+                        grid.next_free_pos = grid.next_free_pos;
+                        //increment_grid_pos(&mut grid);
                         spawned_blocks.ids.insert(block.id);
                         spawned_blocks.entities.insert(block_entity.id(), block.id);
                     }

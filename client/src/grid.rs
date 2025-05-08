@@ -1,5 +1,6 @@
-use crate::{block::SpawnedBlocks, common::{AttachedBlock, PlayerGrid, CtxWrapper}, module_bindings::{update_block_owner, OwnerType}};
+use crate::{block::SpawnedBlocks, common::{AttachedBlock, Opponent, Player, PlayerGrid, CtxWrapper}, module_bindings::{update_block_owner, BlockTableAccess, OwnerType}, player};
 use bevy::prelude::*;
+use spacetimedb_sdk::DbContext;
 use std::collections::{HashSet, VecDeque};
 
 pub fn increment_grid_pos(grid: &mut PlayerGrid) {
@@ -16,12 +17,6 @@ pub fn increment_grid_pos(grid: &mut PlayerGrid) {
     grid.load += 1;
     //player.block_count += 1;
 }
-
-//pub fn balance_owner_grid(
-//    query
-//) {
-//
-//}
 
 pub fn check_grid_connectivity(
     mut commands: Commands,
@@ -90,6 +85,79 @@ pub fn check_grid_connectivity(
             ctx_wrapper.ctx.reducers.update_block_owner(*server_block_id, OwnerType::None, pos.0, pos.1).unwrap();
             }
         } 
+    }
+}
+
+// Detaches unowned blocks, and removes blocks from grid
+pub fn balance_player_grid(
+    mut commands: Commands,
+    mut player_query: Query<(&Player, &mut PlayerGrid), With<Player>>,
+    mut spawned_blocks: ResMut<SpawnedBlocks>,
+    ctx_wrapper: Res<CtxWrapper>,
+) {
+    if let Ok((player, mut grid)) = player_query.get_single_mut() {
+        let mut to_detach: Vec<(i32, i32)> = Vec::new();
+        let mut to_remove: Vec<(i32, i32)> = Vec::new();
+        for (grid_pos, block_ent) in grid.block_position.iter_mut() {
+            if let Some(block_id) = spawned_blocks.entities.get(block_ent) {
+                if let Some(block_from_db) = ctx_wrapper.ctx.db.block().id().find(block_id) {
+                    let player_identity = ctx_wrapper.ctx.identity();
+                    if let OwnerType::None = block_from_db.owner{
+                        to_detach.push(*grid_pos);  
+                    } else if OwnerType::Player(player_identity) != block_from_db.owner{
+                        to_remove.push(*grid_pos);
+                    }
+                } else {
+                    warn!("Block ID {:?} not found in DB", block_id);
+                }
+            } else {
+                warn!("Block entity {:?} not found in spawned_blocks", block_ent);
+            }
+        }
+
+        for grid_pos in to_detach {
+            if let Some(block_ent) = grid.block_position.remove(&grid_pos) {
+                commands.entity(block_ent).remove::<AttachedBlock>();
+            }
+        }
+
+        for grid_pos in to_remove {
+            grid.block_position.remove(&grid_pos);
+        }
+
+        if let Some(next_pos) = grid.find_next_free_pos() {
+            grid.next_free_pos = next_pos;
+        }
+    }
+}
+
+pub fn balance_opponents_grid(
+    mut opp_query: Query<(&Opponent, &mut PlayerGrid)>,
+    mut spawned_blocks: ResMut<SpawnedBlocks>,
+    ctx_wrapper: Res<CtxWrapper>,
+){
+    for (opp, mut grid) in opp_query.iter_mut(){
+        let mut to_remove: Vec<(i32, i32)> = Vec::new();
+        for (grid_pos, block_ent) in grid.block_position.iter_mut() {
+            if let Some(block_id) = spawned_blocks.entities.get(block_ent) {
+                if let Some(block_from_db) = ctx_wrapper.ctx.db.block().id().find(block_id) {
+                    let player_identity = opp.id;
+                    if OwnerType::Player(player_identity) != block_from_db.owner{
+                        to_remove.push(*grid_pos);  
+                    }
+                } else {
+                    warn!("Block ID {:?} not found in DB", block_id);
+                }
+            }
+        }
+
+        for grid_pos in to_remove {
+            grid.block_position.remove(&grid_pos);
+        }
+
+        if let Some(next_pos) = grid.find_next_free_pos() {
+            grid.next_free_pos = next_pos;
+        }
     }
 }
 

@@ -38,8 +38,8 @@ use start_menu::*;
 
 use bots::{render_bots_from_db, spawn_bot_blocks, spawn_bots};
 use camera::{camera_follow, setup_camera};
-use db_connection::{update_opponent_positions, setup_connection, update_opponent_hooks, update_opponent_tracks};
-use grid::check_grid_connectivity;
+use db_connection::{update_opponent_positions, setup_connection, update_opponent_hooks, update_opponent_tracks, db_setup};
+use grid::{check_grid_connectivity,  balance_player_grid, balance_opponents_grid};
 use hook::handle_obstacle_hit;
 use map::setup_tilemap;
 use opponent::{despawn_opponents, spawn_opponent_tracks_system, setup_blocks_opponent};
@@ -110,6 +110,8 @@ fn main() {
             Update,
              (
                 update_block_owner,
+                balance_player_grid,
+                balance_opponents_grid,
              )
              .run_if(in_game_or_edit),
             )
@@ -127,9 +129,8 @@ fn main() {
         )
         .insert_resource(Time::from_seconds(0.5))
         .insert_resource(SpawnedObstacles::default())
-        //nytt
-        // .insert_resource(Username::default())
-        // .add_system(handle_keyboard_input)
-        // .add_system(update_text_display)
+        .insert_resource(CtxWrapper {
+            ctx: db_setup(),
+        })
         .run();
 }

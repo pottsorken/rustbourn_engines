@@ -139,6 +139,7 @@ pub fn update_block_owner(
 
             // Update block offset to new grid
             attach_link.grid_offset = block_pos; // NOTE: might be not necessary
+            
 
             // TODO: Add if bots can take blocks from players
         }
