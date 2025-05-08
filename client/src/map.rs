@@ -7,20 +7,20 @@ use image::{GenericImageView, ImageReader};
 use rand::Rng;
 
 pub fn setup_tilemap(
-    mut commands: Commands, 
+    mut commands: Commands,
     asset_server: Res<AssetServer>,
     mut image: ResMut<Assets<Image>>,
 ) {
     // Tile images. ORDER IS IMPORTANT!
-    let texture_handle: Vec<Handle<Image>> = MAP_CONFIG 
+    let texture_handle: Vec<Handle<Image>> = MAP_CONFIG
         .tile_textures
         .iter()
         .map(|path| {
             let handle = asset_server.load(*path);
             handle
-    })
+        })
         .collect();
-    
+
     // New map with 64x64 chunks being 32x32 tiles
     let grid_size = MAP_CONFIG.tile_size.into(); // Grid size == tile size
     let map_type = TilemapType::default();
@@ -62,7 +62,7 @@ pub fn setup_tilemap(
 
             let mut rng = rand::thread_rng();
             let texture_index = if g == 255 {
-                rng.gen_range(0..16);
+                rng.gen_range(0..16)
                 // 0 // Green -> Grass
             } else if b == 255 {
                 1 // Blue -> Water

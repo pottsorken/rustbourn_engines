@@ -248,9 +248,9 @@ pub const OBSTACLE_CONFIG: ObstacleConfig = ObstacleConfig {
 /// Configuration for initlializing the tilemap
 pub struct MapConfig {
     pub map_size: TilemapSize,
-    pub tile_size: TilemapTileSize, 
-    pub noise_scale: f32,           // Grid size == tile size
-    pub tile_textures: [&'static str; 4],
+    pub tile_size: TilemapTileSize,
+    pub noise_scale: f32, // Grid size == tile size
+    pub tile_textures: [&'static str; 20],
     pub image_path: &'static str,
     pub safe_zone_size: f32,
 }
@@ -261,24 +261,22 @@ pub const MAP_CONFIG: MapConfig = MapConfig {
     tile_size: TilemapTileSize { x: 8.0, y: 8.0 },
     noise_scale: 0.1,
     tile_textures: [
-        
-        "sprites/tiles/grass/grass0",
-        "sprites/tiles/grass/grass1",
-        "sprites/tiles/grass/grass2",
-        "sprites/tiles/grass/grass3",
-        "sprites/tiles/grass/grass4",
-        "sprites/tiles/grass/grass5",
-        "sprites/tiles/grass/grass6",
-        "sprites/tiles/grass/grass7",
-        "sprites/tiles/grass/grass8",
-        "sprites/tiles/grass/grass9",
-        "sprites/tiles/grass/grass10",
-        "sprites/tiles/grass/grass11",
-        "sprites/tiles/grass/grass12",
-        "sprites/tiles/grass/grass13",
-        "sprites/tiles/grass/grass14",
-        "sprites/tiles/grass/grass15", 
-               
+        "sprites/tiles/grass/grass0.png",
+        "sprites/tiles/grass/grass1.png",
+        "sprites/tiles/grass/grass2.png",
+        "sprites/tiles/grass/grass3.png",
+        "sprites/tiles/grass/grass4.png",
+        "sprites/tiles/grass/grass5.png",
+        "sprites/tiles/grass/grass6.png",
+        "sprites/tiles/grass/grass7.png",
+        "sprites/tiles/grass/grass8.png",
+        "sprites/tiles/grass/grass9.png",
+        "sprites/tiles/grass/grass10.png",
+        "sprites/tiles/grass/grass11.png",
+        "sprites/tiles/grass/grass12.png",
+        "sprites/tiles/grass/grass13.png",
+        "sprites/tiles/grass/grass14.png",
+        "sprites/tiles/grass/grass15.png",
         "sprites/td_tanks/grass8.png", //0
         "sprites/td_tanks/water8.png",
         "sprites/td_tanks/stone8.png",
@@ -357,4 +355,3 @@ pub enum MenuButtonAction {
 
 #[derive(Component)]
 pub struct OnEditScreen;
-
