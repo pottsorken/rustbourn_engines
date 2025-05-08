@@ -15,6 +15,20 @@ pub struct WaterTiles {
     pub positions: HashSet<(u32, u32)>,
 }
 
+#[derive(Resource, Debug)]
+pub struct DirtTiles {
+    pub positions: HashSet<(u32, u32)>,
+}
+
+#[derive(Resource, Debug)]
+pub struct GrassTiles {
+    pub positions: HashSet<(u32, u32)>,
+}
+
+#[derive(Resource, Debug)]
+pub struct StoneTiles {
+    pub positions: HashSet<(u32, u32)>,
+}
 
 // Our very important struct containing our even more important context :)
 #[derive(Resource)]
