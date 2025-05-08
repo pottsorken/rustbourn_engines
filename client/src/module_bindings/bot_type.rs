@@ -5,7 +5,7 @@
 use spacetimedb_sdk::__codegen::{self as __sdk, __lib, __sats, __ws};
 
 use super::bevy_transform_type::BevyTransform;
-use super::vec_3_type::Vec3;
+use super::vec_3_space_type::Vec3Space;
 
 #[derive(__lib::ser::Serialize, __lib::de::Deserialize, Clone, PartialEq, Debug)]
 #[sats(crate = __lib)]
@@ -13,7 +13,7 @@ pub struct Bot {
     pub id: u64,
     pub position: BevyTransform,
     pub alive: bool,
-    pub movement_dir: Vec3,
+    pub movement_dir: Vec3Space,
     pub rotation_dir: f32,
 }
 

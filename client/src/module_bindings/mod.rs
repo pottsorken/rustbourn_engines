@@ -23,7 +23,7 @@ pub mod update_hook_position_reducer;
 pub mod update_player_position_reducer;
 pub mod update_tracks_system_reducer;
 pub mod vec_2_type;
-pub mod vec_3_type;
+pub mod vec_3_space_type;
 
 pub use bevy_transform_type::BevyTransform;
 pub use bot_type::Bot;
@@ -60,7 +60,7 @@ pub use update_tracks_system_reducer::{
     set_flags_for_update_tracks_system, update_tracks_system, UpdateTracksSystemCallbackId,
 };
 pub use vec_2_type::Vec2;
-pub use vec_3_type::Vec3;
+pub use vec_3_space_type::Vec3Space;
 
 #[derive(Clone, PartialEq, Debug)]
 
