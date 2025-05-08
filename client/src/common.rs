@@ -350,7 +350,7 @@ pub struct MapConfig {
     pub map_size: TilemapSize,
     pub tile_size: TilemapTileSize,
     pub noise_scale: f32, // Grid size == tile size
-    pub tile_textures: [&'static str; 20],
+    pub tile_textures: [&'static str; 5], // Change this for the number of tiles in the list
     pub image_path: &'static str,
     pub safe_zone_size: f32,
 }
@@ -358,10 +358,13 @@ pub struct MapConfig {
 /// Global constant config for the tilemap
 pub const MAP_CONFIG: MapConfig = MapConfig {
     map_size: TilemapSize { x: 1024, y: 1024 },
-    tile_size: TilemapTileSize { x: 32.0, y: 32.0 },
+    tile_size: TilemapTileSize { x: 32.0, y: 32.0 }, // Change tile size here
     noise_scale: 0.1,
     tile_textures: [
         "sprites/tiles/grass/grass0.png",
+        "sprites/tiles/grass/grass1.png",
+        "sprites/tiles/grass/grass2.png",
+        "sprites/tiles/grass/grass1.png",
         "sprites/tiles/grass/grass1.png",
         // "sprites/tiles/grass/grass2.png",
         // "sprites/tiles/grass/grass3.png",
@@ -378,9 +381,9 @@ pub const MAP_CONFIG: MapConfig = MapConfig {
         // "sprites/tiles/grass/grass14.png",
         // "sprites/tiles/grass/grass15.png",
         // "sprites/td_tanks/grass8.png", //0
-        "sprites/td_tanks/water8.png",
-        "sprites/td_tanks/stone8.png",
-        "sprites/td_tanks/dirt8.png",
+        // "sprites/td_tanks/water8.png",
+        // "sprites/td_tanks/stone8.png",
+        // "sprites/td_tanks/dirt8.png",
     ],
     image_path: r"assets/tribasicmap1024.png",
     safe_zone_size: 300.0,
