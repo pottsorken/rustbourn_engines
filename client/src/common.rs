@@ -4,10 +4,10 @@
 
 use crate::module_bindings::DbConnection;
 use bevy::prelude::*;
+use bevy::text::{FontSmoothing, LineBreak, TextBounds};
 use bevy_ecs_tilemap::prelude::*;
 use spacetimedb_sdk::Identity;
 use std::collections::{HashMap, HashSet};
-
 
 #[derive(Resource, Debug)]
 pub struct LavaTiles {
@@ -88,7 +88,6 @@ pub struct HookAttach {
     pub offset: Vec2,
 }
 
-
 #[derive(Component)]
 pub struct PlayerGrid {
     pub block_position: HashMap<(i32, i32), Entity>,
@@ -127,7 +126,6 @@ pub const PLAYER_CONFIG: PlayerConfig = PlayerConfig {
 // === Track defined constraints ===
 //
 
-
 // Track specific component
 #[derive(Component)]
 pub struct TrackConfig {
@@ -163,7 +161,6 @@ pub struct OpponentTrack {
     pub height: f32,
 }
 
-
 #[derive(Component)]
 pub struct LastTrackPos(pub Vec2);
 
@@ -179,8 +176,6 @@ pub const MODIFIER_CONFIG: ModifierConfig = ModifierConfig {
     reg: 1.0,
     stone: 0.7,
 };
-
-
 
 //
 // === Grid defined constraints ===
@@ -233,6 +228,16 @@ pub struct Opponent {
 }
 
 //
+// === Nametags defined constraints ===
+//
+
+//pub const TEXT_TAG_FONT: TextFont = TextFont {
+//    font_size: 50.0,
+//    ..default()
+//};
+//pub const TEXT_JUSTIFICATION: JustifyText = JustifyText::Center;
+
+//
 // === Hook defined constraints ===
 //
 
@@ -259,7 +264,6 @@ pub struct HookRange;
 
 #[derive(Component)]
 pub struct HookHead;
-
 
 #[derive(Component)]
 pub struct HookConfig {
@@ -350,7 +354,7 @@ pub const OBSTACLE_CONFIG: ObstacleConfig = ObstacleConfig {
 pub struct MapConfig {
     pub map_size: TilemapSize,
     pub tile_size: TilemapTileSize,
-    pub noise_scale: f32, 
+    pub noise_scale: f32,
     pub tile_textures: [&'static str; 86], // Change this for the number of tiles in the list
     pub image_path: &'static str,
     pub safe_zone_size: f32,
