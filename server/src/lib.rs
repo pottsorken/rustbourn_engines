@@ -7,7 +7,9 @@ use spacetimedb::{
 const N_BOTS: u64 = 30;
 const N_OBSTACLES: u64 = 200;
 
+use glam::{Vec3, Quat};
 use noise::{NoiseFn, Perlin};
+use std::f32::consts::PI;
 
 /// Player component data
 use glam::{Vec3, Quat};
@@ -109,7 +111,9 @@ pub struct Vec2 {
     y: f32,
 }
 
-/// Custom f32 3D vector containing xyz-coordinates
+// New
+// Vector with x, y coordinates
+
 #[derive(Debug, SpacetimeType)]
 pub struct Vec3_space {
     x: f32,
@@ -301,23 +305,22 @@ pub fn decrease_grid_load(
 #[spacetimedb::reducer]
 pub fn update_bot_position(
     ctx: &ReducerContext,
-    //bevy_transform: BevyTransform,
+    bevy_transform: BevyTransform,
     bot_id: u64,
-    //new_rotate_dir: f32,
+    new_rotate_dir: f32,
 ) -> Result<(), String> {
     log::info!(
-        "Code reaches this point! --------------",
+        "Code reaches this point! --------{:?}------",
+        bevy_transform
     );
 
-    //let obstacles = ctx.db.obstacle().iter().collect::<Vec<_>>();
-    //let players = ctx.db.player().iter().collect::<Vec<_>>();
-
-    //let max_check_distance = BOT_SIZE * 2.5;
-
+    let obstacles = ctx.db.obstacle().iter().collect::<Vec<_>>();
+    let players = ctx.db.player().iter().collect::<Vec<_>>();
+    let rotation_speed = f32::to_radians(1.0);
 
     if let Some(mut _bot) = ctx.db.bots().iter().find(|b| b.id == bot_id) {
-        //_bot.position = bevy_transform;
-       // _bot.rotation_dir = new_rotate_dir;
+        _bot.position = bevy_transform;
+        _bot.rotation_dir = new_rotate_dir;
 
         let bevy_dir = Vec3::new(_bot.movement_dir.x, _bot.movement_dir.y, _bot.movement_dir.z);
         
@@ -327,47 +330,35 @@ pub fn update_bot_position(
         let rotation_quat = Quat::from_rotation_z(_bot.position.rotation);
 
         let mut movement_dir = rotation_quat * bevy_dir;
-        let front_dir = rotation_quat * Vec3::new(1.8, 0.0, 0.0);
+        let front_dir = rotation_quat * Vec3::new(1.5, 0.0, 0.0);
         //let left_dir = rotation_quat * Quat::from_rotation_z(f32::to_radians(45.0)) * Vec3::X;
         //let right_dir = rotation_quat * Quat::from_rotation_z(f32::to_radians(-45.0)) * Vec3::X;
         
-        let left_dir = rotation_quat * Vec3::new(2.0, 1.0, 0.0);
-        let left_dir2: Vec3 = rotation_quat * Vec3::new(1.0, 1.5, 0.0);
-
-
-
-        let right_dir = rotation_quat * Vec3::new(2.0, -1.0, 0.0);
-        let right_dir2: Vec3 = rotation_quat * Vec3::new(1.0, -1.5, 0.0);
+        let left_dir = rotation_quat * Vec3::new(2.0, 1.5, 0.0);
+        let right_dir = rotation_quat * Vec3::new(2.0, -1.5, 0.0);
 
         let mut rotation_dir = _bot.rotation_dir;
 
         let front_pos = transform_translation + front_dir * BOT_SIZE; // Adjust distance
         let left_pos = transform_translation + left_dir * BOT_SIZE; // Adjust distance
-        let left_pos2 = transform_translation + left_dir2 * BOT_SIZE; // Adjust distance
         let right_pos = transform_translation + right_dir * BOT_SIZE; // Adjust distance
-        let right_pos2 = transform_translation + right_dir2 * BOT_SIZE; // Adjust distance
-
-        let check_points = vec![front_pos, left_pos, right_pos ,left_pos2, right_pos2];
-
-        // Single pass through all entities
-        let collision_results = check_collisions_at_points(
-            &check_points,
-            ctx.db.obstacle().iter(),
-            ctx.db.player().iter(),
-            ctx.db.bots().iter(),
-            BOT_SIZE * 1.5
-        );
-
-        let front_clear = collision_results[0];
-        let left_clear = collision_results[1];
-        let right_clear = collision_results[2];
-        let left_clear2 = collision_results[3];
-        let right_clear2 = collision_results[4];
 
         let mut new_pos = transform_translation + movement_dir * BOT_MOVE * FIXED_DELTA;
 
-        if !left_clear.0 && !right_clear.0 && !front_clear.0 && 
-           !left_clear.1 && !right_clear.1 && !front_clear.1 {
+        let left_clear = will_collide(left_pos, &obstacles, &players);
+        let right_clear = will_collide(right_pos, &obstacles, &players);
+        let front_clear = will_collide(front_pos, &obstacles, &players);
+
+
+        /* 
+        if !will_collide(front_pos, &obstacles, &players) { // Front vector
+            _bot.position.coordinates.x = new_pos.x;
+            _bot.position.coordinates.y = new_pos.y;
+        } 
+        */
+
+
+        if !left_clear.0 && !right_clear.0 && !front_clear.0 && !left_clear.1 && !right_clear.1 && !front_clear.1 {
             _bot.position.coordinates.x = new_pos.x;
             _bot.position.coordinates.y = new_pos.y;
         }
@@ -377,14 +368,14 @@ pub fn update_bot_position(
             // Player is on the left and NOT on the right → rotate right to chas
             // Check left and right vision
 
-            if left_clear.0 && !right_clear.0 || left_clear2.0 && !right_clear2.0{
+            if left_clear.0 && !right_clear.0{
                 // If left is clear but right is blocked, rotate right
                 //_bot.position.rotation += rotation_speed * FIXED_DELTA; // Rotate left (positive direction)
                 _bot.position.rotation += rotation_speed * FIXED_DELTA; // Tracking to right
 
             } 
             // Player is on the right and NOT on the left → rotate left to chase
-            else if right_clear.0 && !left_clear.0 || right_clear2.0 && !left_clear2.0{
+            else if right_clear.0 && !left_clear.0{
                 // If right is clear but left is blocked, rotate left
                 //_bot.position.rotation -= rotation_speed * FIXED_DELTA; // Rotate right (negative direction)
                 _bot.position.rotation -= rotation_speed * FIXED_DELTA; // tracking to left
@@ -392,12 +383,7 @@ pub fn update_bot_position(
             } 
             
             else if (right_clear.1 && left_clear.1 && !front_clear.0) || 
-                    (front_clear.1 && !front_clear.0) ||
-                    (right_clear2.1 && left_clear2.1 && !front_clear.0) ||
-                    (right_clear2.1 && left_clear.1 && !front_clear.0) ||
-                    (right_clear.1 && left_clear2.1 && !front_clear.0) ||
-                    (right_clear.1 && right_clear2.1 && left_clear.1) ||
-                    (left_clear.1 && left_clear2.1 && right_clear.1) {
+                    (front_clear.1 && !front_clear.0){
                 // Move backward slightly
                 _bot.position.coordinates.x -= movement_dir.x * (BOT_MOVE * 0.5) * FIXED_DELTA; 
 
@@ -406,11 +392,11 @@ pub fn update_bot_position(
                 
             }
             
-            else if left_clear.1 && !right_clear.1 || left_clear2.1 && !right_clear2.1{
+            else if left_clear.1 && !right_clear.1{
                 _bot.position.rotation -= rotation_speed * FIXED_DELTA; // Rotate left (positive direction)
             } 
             
-            else if right_clear.1 && !left_clear.1 || right_clear2.1 && !left_clear2.1{
+            else if right_clear.1 && !left_clear.1{
                 _bot.position.rotation += rotation_speed * FIXED_DELTA; // Rotate right to avoid collision (positive direction)
             }
             
@@ -514,9 +500,9 @@ pub fn update_bot_position(
 
         // Update column in "bots" table.
         ctx.db.bots().id().update(_bot);
+
         Ok(())
     } else {
-        // Reaches only when requesting a bot with a unknown identity.
         Err("Bot not found".to_string())
     }
 }*/
@@ -577,6 +563,64 @@ pub fn update_bot_position(
     }
 }
 */
+
+
+/* 
+// Reducer for updating bot position
+#[spacetimedb::reducer]
+pub fn update_bot_position(
+    ctx: &ReducerContext,
+    bot_id: u64,
+) -> Result<(), String> {
+    log::info!(
+        "Code reaches this point! --------------",
+
+    );
+    let obstacles = ctx.db.obstacle().iter().collect::<Vec<_>>();
+    let players = ctx.db.player().iter().collect::<Vec<_>>();
+
+
+    if let Some(mut _bot) = ctx.db.bots().iter().find(|b| b.id == bot_id) {
+        let server_dir= &_bot.movement_dir;
+        let bevy_dir = Vec3::new(server_dir.x, server_dir.y, server_dir.z);
+
+        let server_rotation = _bot.position.rotation;
+
+        let mut transform_rotation = Quat::from_rotation_z(server_rotation);
+        let mut transform_translation = Vec3::new(
+            _bot.position.coordinates.x,
+            _bot.position.coordinates.y,
+            0.0,
+        );
+
+        let mut movement_dir = transform_rotation * bevy_dir;
+        
+        let mut new_pos = transform_translation + movement_dir * BOT_MOVE * FIXED_DELTA;
+
+        let mut rotation_dir = _bot.rotation_dir;
+
+        let front_direction = transform_rotation * Vec3::new(1.0, 0.0, 0.0);
+        let front_pos = transform_translation + front_direction * BOT_SIZE; // Adjust distance
+
+
+        //if !will_collide(front_pos, &obstacles, &players){
+            transform_translation = new_pos;
+            _bot.position.coordinates.x = transform_translation.x;
+            _bot.position.coordinates.y = transform_translation.y;
+            _bot.position.rotation = transform_rotation.to_euler(glam::EulerRot::XYZ).2;
+            _bot.rotation_dir = rotation_dir;
+            ctx.db.bots().id().update(_bot);
+        
+
+        //ctx.db.bots().id().update(_bot);
+
+        Ok(())
+    } else {
+        Err("Bot not found".to_string())
+    }
+}
+*/
+
 
 /// Function for respawning all bots in server when no player is online.
 /// Server invokes this function in "player_disconnected" reducer when all players in the server is marked "offline" (online=false).
@@ -753,6 +797,7 @@ pub fn update_block_owner(
     }
 }
 
+
 // Function for generating bots in server.
 // Server invokes this function in "server_startup" reducer during server intialization.
 fn generate_bots(ctx: &ReducerContext) {
@@ -855,10 +900,10 @@ fn increment_grid_pos(grid_pos: &mut (i32, i32), grid_max: (i32, i32)) {
 }
 
 fn generate_obstacles(ctx: &ReducerContext) {
-    // Initialize 2 noise generators with different seeds.
+    let mut rng = ctx.rng();
     let perlin_x = Perlin::new(21);
     let perlin_y = Perlin::new(1345);
-    // Generate 200 obstacles.
+    // Generate 200 obstacles
     for i in 0..200 {
         // Control frequency.
         let x = (i as f32) / 10.0;

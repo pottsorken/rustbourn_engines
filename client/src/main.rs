@@ -43,7 +43,7 @@ use track_spawner::*;
 //static GLOBAL: mimalloc::MiMalloc = mimalloc::MiMalloc;
 // Spacedime dependencies
 
-use bots::{render_bots_from_db, spawn_bot_blocks, spawn_bots};
+use bots::{render_bots_from_db, spawn_bot_blocks, spawn_bots, send_bots_to_db};
 use camera::{camera_follow, setup_camera};
 use common::*;
 use db_connection::{
