@@ -1,14 +1,14 @@
 use crate::common::{
-    AttachedBlock, Block, Obstacle, Opponent, Player, PlayerGrid, LastTrackPos, CtxWrapper, BLOCK_CONFIG, GRID_CONFIG,
-    MAP_CONFIG, OBSTACLE_CONFIG, PLAYER_CONFIG, TRACK_CONFIG
+    AttachedBlock, Block, Obstacle, Opponent, Player, PlayerGrid, LastTrackPos, CtxWrapper, WaterTiles, DirtTiles, GrassTiles, StoneTiles, BLOCK_CONFIG, GRID_CONFIG,
+    MAP_CONFIG, OBSTACLE_CONFIG, PLAYER_CONFIG, TRACK_CONFIG,,
 };
 use crate::db_connection::update_player_position;
 use crate::module_bindings::*;
 use crate::player_attach::*;
+use bevy::pbr::light_consts::lux::DIRECT_SUNLIGHT;
 use bevy::prelude::{*, Vec2};
 use bevy::window::PrimaryWindow;
 use std::collections::HashMap;
-use crate::common::WaterTiles;
 use bevy::math::*; 
 
 
@@ -73,6 +73,9 @@ pub fn player_movement(
     time: Res<Time>,
     ctx: Res<CtxWrapper>,
     water_tiles: Res<WaterTiles>,
+    dirt_tiles: Res<DirtTiles>,
+    grass_tiles: Res<GrassTiles>,
+    stone_tiles: Res<StoneTiles>,
 ) {
     //if let Ok((mut transform, _player)) = query.get_single_mut() { // NOTE: merge conflict
     let ctx_wrapper = &ctx.into_inner();
@@ -82,7 +85,8 @@ pub fn player_movement(
         // Scale player speed and rotation depending on n blocks
         let speed_scale = 1.0 / (1.0 + player.block_count as f32 * 0.1);
         let rotation_scale = 1.0 / (1.0 + player.block_count as f32 * 0.1);
-        let move_speed = PLAYER_CONFIG.movement_speed * speed_scale;
+        let speed_modifier = speed_modifer(transform.translation.truncate(), &dirt_tiles, &grass_tiles, &stone_tiles, player.block_count);
+        let move_speed = PLAYER_CONFIG.movement_speed * speed_scale * speed_modifier;
         let rot_speed = PLAYER_CONFIG.rotation_speed * rotation_scale;
 
         // Set move and rotation direction to 0
@@ -217,7 +221,48 @@ pub fn player_movement(
     }
 }
 
-fn will_collide_with_water_tiles(player_pos: bevy::prelude::Vec2, water_tiles: &WaterTiles) -> bool {
+fn speed_modifer(
+    player_pos: bevy::prelude::Vec2, 
+    dirt_tiles: &DirtTiles,
+    grass_tiles: &GrassTiles,
+    stone_tiles: &StoneTiles,
+    block_count: i32,
+) -> f32 {    
+    let mut speed_modifier = 1.0;
+    let half_size = PLAYER_CONFIG.size / 2.0;
+
+     // Compute tile bounds the player overlaps
+     let left = player_pos.x - half_size.x;
+     let right = player_pos.x + half_size.x;
+     let bottom = player_pos.y - half_size.y;
+     let top = player_pos.y + half_size.y;
+ 
+     let tile_size = MAP_CONFIG.tile_size;
+ 
+     let tile_x_start = ((left + (MAP_CONFIG.map_size.x as f32 * tile_size.x) / 2.0) / tile_size.x).floor() as u32;
+     let tile_x_end = ((right + (MAP_CONFIG.map_size.x as f32 * tile_size.x) / 2.0) / tile_size.x).floor() as u32;
+     let tile_y_start = ((bottom + (MAP_CONFIG.map_size.y as f32 * tile_size.y) / 2.0) / tile_size.y).floor() as u32;
+     let tile_y_end = ((top + (MAP_CONFIG.map_size.y as f32 * tile_size.y) / 2.0) / tile_size.y).floor() as u32;
+
+     for x in tile_x_start..=tile_x_end {
+        for y in tile_y_start..=tile_y_end {
+            if dirt_tiles.positions.contains(&(x, y)) {
+                speed_modifier = 0.5; // Slow down on dirt tiles
+            } else if grass_tiles.positions.contains(&(x, y)) {
+                speed_modifier = 1.5; // Speed up on grass tiles
+            } else if stone_tiles.positions.contains(&(x, y)) {
+                speed_modifier = 2.0; // Speed up on stone tiles
+            }
+        }
+    }
+
+    return speed_modifier;
+}
+
+fn will_collide_with_water_tiles(
+    player_pos: bevy::prelude::Vec2, 
+    water_tiles: &WaterTiles
+) -> bool {
     let half_size = PLAYER_CONFIG.size / 2.0;
 
     // Compute tile bounds the player overlaps
