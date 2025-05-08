@@ -201,6 +201,7 @@ pub fn update_bot_position(
             &check_points,
             ctx.db.obstacle().iter(),
             ctx.db.player().iter(),
+            ctx.db.bots().iter(),
             BOT_SIZE * 1.5
         );
 
@@ -276,6 +277,7 @@ pub fn check_collisions_at_points(
     points: &[Vec3],
     obstacles: impl Iterator<Item = Obstacle>,
     players: impl Iterator<Item = Player>,
+    bots: impl Iterator<Item = Bot>,
     check_radius: f32,
 ) -> Vec<(bool, bool)> {
     let radius_sq = check_radius * check_radius;
@@ -288,6 +290,17 @@ pub fn check_collisions_at_points(
         for (i, point) in points.iter().enumerate() {
             if point.distance_squared(o_pos) < radius_sq {
                 results[i].1 = true; // Obstacle hit
+            }
+        }
+    }
+
+     // Check players
+     for bot in bots {
+        let b_pos = Vec3::new(bot.position.coordinates.x, bot.position.coordinates.y, 0.0);
+        
+        for (i, point) in points.iter().enumerate() {
+            if point.distance_squared(b_pos) < radius_sq {
+                results[i].1 = true; // Player hit
             }
         }
     }
