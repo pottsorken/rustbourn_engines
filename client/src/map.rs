@@ -1,29 +1,29 @@
 use bevy::prelude::*;
 use bevy_ecs_tilemap::prelude::*;
 use image::{GenericImageView, ImageReader};
-<<<<<<< HEAD
 use std::collections::HashSet;
 use crate::common::{MAP_CONFIG, WaterTiles, DirtTiles, GrassTiles, StoneTiles};
-=======
 // use rand::random;
 use rand::Rng;
->>>>>>> 87221d7 (Trying with textures)
 
-// Define the Obstacle component
-#[derive(Component)]
-pub struct Obstacle;
-
-// Define the Obstacle component
-#[derive(Component)]
-pub struct Modifier;
-
-pub fn setup_tilemap(mut commands: Commands, asset_server: Res<AssetServer>) {
-    // Load tile textures
+pub fn setup_tilemap(
+    mut commands: Commands,
+    asset_server: Res<AssetServer>,
+    mut image: ResMut<Assets<Image>>,
+) {
+    // Tile images. ORDER IS IMPORTANT!
     let texture_handle: Vec<Handle<Image>> = MAP_CONFIG
         .tile_textures
         .iter()
-        .map(|path| asset_server.load(*path))
+        .map(|path| {
+            let handle = asset_server.load(*path);
+            handle
+        })
         .collect();
+
+    // New map with 64x64 chunks being 32x32 tiles
+    let grid_size = MAP_CONFIG.tile_size.into(); // Grid size == tile size
+    let map_type = TilemapType::default();
 
     let grid_size = MAP_CONFIG.tile_size.into();
     let map_type = TilemapType::default();
@@ -66,7 +66,7 @@ pub fn setup_tilemap(mut commands: Commands, asset_server: Res<AssetServer>) {
 
             let mut rng = rand::thread_rng();
             let texture_index = if g == 255 {
-                rng.gen_range(0..16);
+                rng.gen_range(0..16)
                 // 0 // Green -> Grass
             } else if b == 255 {
                 water_tiles.insert((x, y)); // Track water tiles
