@@ -3,6 +3,8 @@ use crate::common::MAP_CONFIG;
 use bevy::prelude::*;
 use bevy_ecs_tilemap::prelude::*;
 use image::{GenericImageView, ImageReader};
+// use rand::random;
+use rand::Rng;
 
 pub fn setup_tilemap(
     mut commands: Commands, 
@@ -45,8 +47,23 @@ pub fn setup_tilemap(
             let g = pixel[1];
             let b = pixel[2];
 
+            // let mut start;
+            // let mut stop;
+
+            // let texture_index = if g == 255 {
+            //     0 // Green -> Grass
+            // } else if b == 255 {
+            //     1 // Blue -> Water
+            // } else if r == 255 {
+            //     2 // Red -> Stone
+            // } else {
+            //     3 // Default -> Dirt
+            // };
+
+            let mut rng = rand::thread_rng();
             let texture_index = if g == 255 {
-                0 // Green -> Grass
+                rng.gen_range(0..16);
+                // 0 // Green -> Grass
             } else if b == 255 {
                 1 // Blue -> Water
             } else if r == 255 {
@@ -54,6 +71,12 @@ pub fn setup_tilemap(
             } else {
                 3 // Default -> Dirt
             };
+
+            // if g == 255 {
+            //     start = 0;
+            //     stop = 16;
+            //     texture
+            // }
 
             let tile_entity = commands
                 .spawn(TileBundle {
