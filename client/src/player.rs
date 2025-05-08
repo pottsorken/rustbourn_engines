@@ -1,6 +1,6 @@
 use crate::common::{
     AttachedBlock, Block, Obstacle, Opponent, Player, PlayerGrid, LastTrackPos, CtxWrapper, WaterTiles, DirtTiles, GrassTiles, StoneTiles, BLOCK_CONFIG, GRID_CONFIG,
-    MAP_CONFIG, OBSTACLE_CONFIG, PLAYER_CONFIG, TRACK_CONFIG,,
+    MAP_CONFIG, OBSTACLE_CONFIG, PLAYER_CONFIG, TRACK_CONFIG,
 };
 use crate::db_connection::update_player_position;
 use crate::module_bindings::*;
