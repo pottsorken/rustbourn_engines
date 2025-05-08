@@ -66,9 +66,10 @@ pub fn setup_tilemap(
 
             let mut rng = rand::thread_rng();
             let texture_index = if g == 255 {
-                rng.gen_range(0..16)
+                rng.gen_range(0..2)
                 // 0 // Green -> Grass
             } else if b == 255 {
+<<<<<<< HEAD
                 water_tiles.insert((x, y)); // Track water tiles
                 1 // Water
             } else if r == 255 {
@@ -77,6 +78,13 @@ pub fn setup_tilemap(
             } else {
                 dirt_tiles.insert((x, y)); // Track dirt tiles
                 3 // Dirt (default)
+=======
+                2 // Blue -> Water
+            } else if r == 255 {
+                3 // Red -> Stone
+            } else {
+                4 // Default -> Dirt
+>>>>>>> 4bd1d1e (trying new texture size)
             };
 
             // if g == 255 {
