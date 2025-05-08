@@ -2,7 +2,7 @@ use crate::module_bindings::*;
 use crate::{
     common::{
         AttachedBlock, Block, CtxWrapper, Hook, HookCharge, HookRange, Obstacle, OpponentHook,
-        Player, PlayerAttach, PlayerGrid, BLOCK_CONFIG, HOOK_CONFIG, OBSTACLE_CONFIG,
+        Player, PlayerAttach, PlayerGrid, HookCooldown, BLOCK_CONFIG, HOOK_CONFIG, OBSTACLE_CONFIG,
         PLAYER_CONFIG,
     },
     db_connection::load_obstacles,
@@ -35,12 +35,19 @@ pub fn setup_hook(mut commands: Commands, asset_server: Res<AssetServer>) {
         PlayerAttach {
             offset: HOOK_CONFIG.player_attach_offset,
         },
+        HookCooldown {
+            timer: {
+                let mut t = Timer::from_seconds(5.0, TimerMode::Once);
+                t.set_elapsed(t.duration()); 
+                t
+            },
+        },
     ));
 
     commands.spawn((
         Sprite {
-            custom_size: Some(Vec2::new(12.0, 26.0)),
-            color: Color::srgb(0.8, 0.4, 0.2),
+            custom_size: Some(Vec2::ZERO), // Start hidden
+            color: Color::rgb(0.8, 0.4, 0.2),
             anchor: bevy::sprite::Anchor::BottomCenter,
             ..default()
         },
@@ -49,10 +56,17 @@ pub fn setup_hook(mut commands: Commands, asset_server: Res<AssetServer>) {
     ));
 }
 
+
 pub fn hook_controls(
     keyboard_input: Res<ButtonInput<KeyCode>>,
     mut query: ParamSet<(
-        Query<(&mut Sprite, &mut Transform, &Hook, &mut HookCharge)>,
+        Query<(
+            &mut Sprite,
+            &mut Transform,
+            &Hook,
+            &mut HookCharge,
+            &mut HookCooldown,
+        )>,
         Query<(&mut Sprite, &mut Transform), With<HookRange>>,
     )>,
     time: Res<Time>,
@@ -60,26 +74,58 @@ pub fn hook_controls(
 ) {
     let mut range_update_info: Option<(Vec3, Quat, f32)> = None;
 
-    for (mut sprite, mut transform, hook, mut charge) in query.p0().iter_mut() {
-        if keyboard_input.pressed(KeyCode::Space) && charge.target_length == 0.0 {
-            charge.time_held += time.delta_secs();
-            let estimated_range =
-                (charge.time_held / 2.0 * hook.hook_speed).min(hook.hook_max_range);
+    for (mut sprite, mut transform, hook, mut charge, mut cooldown) in query.p0().iter_mut() {
+        let current_height = sprite.custom_size.unwrap().y;
 
+        if keyboard_input.pressed(KeyCode::Space) && charge.target_length == 0.0 {
+            let charge_time = if cooldown.timer.finished() {
+                charge.time_held + time.delta_secs()
+            } else {
+                charge.time_held 
+            };
+
+            let estimated_range =
+                (charge_time / 2.0 * hook.hook_speed).min(hook.hook_max_range);
             let start_pos = transform.translation;
             let rotation = transform.rotation;
-
             range_update_info = Some((start_pos, rotation, estimated_range));
         }
 
-        if keyboard_input.just_released(KeyCode::Space) {
-            charge.target_length =
-                (charge.time_held / 2.0 * hook.hook_speed).min(hook.hook_max_range);
-            charge.time_held = 0.0;
+    
+        if charge.target_length == 0.0
+            && current_height > 0.0
+            && !keyboard_input.pressed(KeyCode::Space)
+        {
+            let next_height =
+                (current_height - HOOK_CONFIG.retract_speed * time.delta_secs()).max(0.0);
+
+            let rotation = transform.rotation;
+            let offset = rotation * Vec3::Y * ((current_height - next_height) / 2.0);
+            transform.translation -= offset;
+
+            sprite.custom_size = Some(Vec2::new(sprite.custom_size.unwrap().x, next_height));
+
+            ctx.ctx
+                .reducers()
+                .update_hook_movement(ctx.ctx.identity(), sprite.custom_size.unwrap().x, next_height)
+                .unwrap();
         }
 
-        let current_height = sprite.custom_size.unwrap().y;
+    
+        if cooldown.timer.finished() {
+            if keyboard_input.pressed(KeyCode::Space) && charge.target_length == 0.0 {
+                charge.time_held += time.delta_secs();
+            }
 
+            if keyboard_input.just_released(KeyCode::Space) {
+                charge.target_length =
+                    (charge.time_held / 2.0 * hook.hook_speed).min(hook.hook_max_range);
+                charge.time_held = 0.0;
+                cooldown.timer.reset(); 
+            }
+        }
+
+    
         if charge.target_length > 0.0 {
             let next_height = (current_height + HOOK_CONFIG.extend_speed * time.delta_secs())
                 .min(charge.target_length);
@@ -90,30 +136,14 @@ pub fn hook_controls(
 
             sprite.custom_size = Some(Vec2::new(sprite.custom_size.unwrap().x, next_height));
 
-            let old_size = sprite.custom_size.unwrap();
             ctx.ctx
                 .reducers()
-                .update_hook_movement(ctx.ctx.identity(), old_size.x, next_height)
+                .update_hook_movement(ctx.ctx.identity(), sprite.custom_size.unwrap().x, next_height)
                 .unwrap();
 
             if (next_height - charge.target_length).abs() < 0.1 {
                 charge.target_length = 0.0;
             }
-        } else if current_height > 0.0 && !keyboard_input.pressed(KeyCode::Space) {
-            let next_height =
-                (current_height - HOOK_CONFIG.retract_speed * time.delta_secs()).max(0.0);
-
-            let rotation = transform.rotation;
-            let offset = rotation * Vec3::Y * ((current_height - next_height) / 2.0);
-            transform.translation -= offset;
-
-            sprite.custom_size = Some(Vec2::new(sprite.custom_size.unwrap().x, next_height));
-
-            let old_size = sprite.custom_size.unwrap();
-            ctx.ctx
-                .reducers()
-                .update_hook_movement(ctx.ctx.identity(), old_size.x, next_height)
-                .unwrap();
         }
     }
 
@@ -127,7 +157,6 @@ pub fn hook_controls(
         }
     }
 }
-
 pub fn hook_collision_system(
     hook_query: Query<(&Transform, &Sprite), (With<Hook>, Without<Block>)>,
     mut block_query: Query<(Entity, &mut Transform, Option<&mut AttachedBlock>), (With<Block>)>,
@@ -194,6 +223,17 @@ pub fn hook_collision_system(
         }
     }
 }
+
+pub fn hook_cooldown_system(
+    time: Res<Time>,
+    mut query: Query<&mut HookCooldown>,
+) {
+    for mut cooldown in query.iter_mut() {
+        cooldown.timer.tick(time.delta());
+    }
+}
+
+
 pub fn spawn_opponent_hook(
     commands: &mut Commands,
     asset_server: &Res<AssetServer>,
@@ -226,7 +266,6 @@ pub fn spawn_opponent_hook(
         OpponentHook { id: *opponent_id },
     ));
 }
-
 pub fn update_opponent_hook(
     query: &mut Query<(&mut Sprite, &mut Transform, &OpponentHook), With<OpponentHook>>,
     id: &Identity,

@@ -146,6 +146,11 @@ pub struct Track {
 }
 
 #[derive(Component)]
+pub struct HookCooldown {
+    pub timer: Timer,
+}
+
+#[derive(Component)]
 pub struct OpponentTrack {
     pub owner_id: Identity,
     pub id: u64,

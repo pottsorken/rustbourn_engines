@@ -90,6 +90,7 @@ fn main() {
                 update_opponent_positions,
                 hook_collision_system,
                 hook_controls,
+                hook_cooldown_system,
                 handle_obstacle_hit,
                 track_lifetime_system,
                 render_bots_from_db,
