@@ -350,7 +350,7 @@ pub struct MapConfig {
     pub map_size: TilemapSize,
     pub tile_size: TilemapTileSize,
     pub noise_scale: f32, // Grid size == tile size
-    pub tile_textures: [&'static str; 8], // Change this for the number of tiles in the list
+    pub tile_textures: [&'static str; 13], // Change this for the number of tiles in the list
     pub image_path: &'static str,
     pub safe_zone_size: f32,
 }
@@ -361,14 +361,20 @@ pub const MAP_CONFIG: MapConfig = MapConfig {
     tile_size: TilemapTileSize { x: 32.0, y: 32.0 }, // Change tile size here
     noise_scale: 0.1,
     tile_textures: [
-        "sprites/tiles/grass/grass0.png",
-        "sprites/tiles/grass/grass1.png",
-        "sprites/tiles/grass/grass2.png",
-        "sprites/tiles/grass/grass3.png",
-        "sprites/tiles/grass/grass4.png",
-        "sprites/tiles/grass/grass5.png",
-        "sprites/tiles/grass/grass1.png",
-        "sprites/tiles/grass/grass1.png",
+        "sprites/tiles/grass/grass00.png",
+        "sprites/tiles/grass/grass01.png",
+        "sprites/tiles/grass/grass02.png",
+        "sprites/tiles/grass/grass03.png",
+        "sprites/tiles/grass/grass04.png",
+        "sprites/tiles/grass/grass05.png",
+        "sprites/tiles/grass/grass06.png",
+        "sprites/tiles/grass/grass07.png",
+        "sprites/tiles/grass/grass08.png",
+        "sprites/tiles/grass/grass09.png",
+        "sprites/tiles/grass/grass10.png",
+
+        "sprites/tiles/grass/grass01.png",
+        "sprites/tiles/grass/grass01.png",
         // "sprites/tiles/grass/grass2.png",
         // "sprites/tiles/grass/grass3.png",
         // "sprites/tiles/grass/grass4.png",
