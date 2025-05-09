@@ -127,6 +127,10 @@ pub const PLAYER_CONFIG: PlayerConfig = PlayerConfig {
 //
 
 // Track specific component
+
+#[derive(Component)]
+struct Despawned;
+
 #[derive(Component)]
 pub struct TrackConfig {
     pub path: &'static str,

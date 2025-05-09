@@ -1,9 +1,9 @@
-use crate::common::{Player, Track, OpponentTrack, LastTrackPos, TRACK_CONFIG};
+use crate::common::{Despawned, LastTrackPos, OpponentTrack, Player, Track, TRACK_CONFIG};
+use bevy::prelude::Resource;
 use bevy::prelude::*;
 use spacetimedb_sdk::{
-    credentials, DbContext, Error, Event, Status, Table, TableWithPrimaryKey, Identity
+    credentials, DbContext, Error, Event, Identity, Status, Table, TableWithPrimaryKey,
 };
-use bevy::prelude::Resource;
 
 #[derive(Resource, Clone)]
 pub struct LocalPlayerId(pub Identity);
@@ -37,12 +37,8 @@ pub fn spawn_tracks_system(
                     rotation: transform.rotation,
                     scale: Vec3::splat(1.0),
                 },
-                Track { 
-                    timer: 
-                    Timer::from_seconds(
-                        TRACK_CONFIG.fade_time, 
-                        TimerMode::Once
-                    ),
+                Track {
+                    timer: Timer::from_seconds(TRACK_CONFIG.fade_time, TimerMode::Once),
                     has_extended: false,
                 },
             ));
@@ -58,12 +54,8 @@ pub fn spawn_tracks_system(
                     rotation: transform.rotation,
                     scale: Vec3::splat(1.0),
                 },
-                Track { 
-                    timer: 
-                    Timer::from_seconds(
-                        TRACK_CONFIG.fade_time, 
-                        TimerMode::Once
-                    ),
+                Track {
+                    timer: Timer::from_seconds(TRACK_CONFIG.fade_time, TimerMode::Once),
                     has_extended: false,
                 },
             ));
@@ -78,6 +70,7 @@ pub fn track_lifetime_system(
     time: Res<Time>,
     player_query: Query<&Player>,
     mut query: Query<(Entity, &mut Track)>,
+    track_query: Query<Entity, With<Track>>,
 ) {
     let block_count = if let Ok(player) = player_query.get_single() {
         player.block_count
@@ -93,15 +86,23 @@ pub fn track_lifetime_system(
         if track.timer.finished() {
             if lifetime_modifier > 0.0 && !track.has_extended {
                 // Extend timer just once
-                let extended_duration = track.timer.duration().as_secs_f32() + lifetime_modifier * block_count as f32;
-                track.timer.set_duration(std::time::Duration::from_secs_f32(extended_duration));
+                let extended_duration =
+                    track.timer.duration().as_secs_f32() + lifetime_modifier * block_count as f32;
+
+                track
+                    .timer
+                    .set_duration(std::time::Duration::from_secs_f32(extended_duration));
                 track.timer.reset();
                 track.has_extended = true; // <-- Mark as extended
             } else {
-                commands.entity(entity).despawn();
+                if track_query.get(entity).is_ok() {
+                    // fix for despawning non-existent entity
+                    commands.entity(entity).insert(Despawned);
+                    commands.entity(entity).despawn();
+                } else {
+                    //println!(" deleting entity track here ");
+                }
             }
         }
     }
 }
-
-
