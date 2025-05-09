@@ -284,9 +284,10 @@ pub fn hook_collision_system(
                         grid.next_free_pos.0, grid.next_free_pos.1
                     );
                     // increment grid pos
-                    increment_grid_pos(&mut grid);
+                    //increment_grid_pos(&mut grid);
 
                     player.block_count += 1;
+                    ctx_wrapper.ctx.reducers().update_owner_grid(player.block_count, grid.next_free_pos.0, grid.next_free_pos.1).unwrap();
                 }
             }
         }

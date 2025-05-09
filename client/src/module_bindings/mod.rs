@@ -10,6 +10,7 @@ pub mod block_type;
 pub mod bot_type;
 pub mod bots_table;
 pub mod damage_obstacle_reducer;
+pub mod decrease_grid_load_reducer;
 pub mod grid_type;
 pub mod hook_type;
 pub mod obstacle_table;
@@ -38,6 +39,9 @@ pub use bot_type::Bot;
 pub use bots_table::*;
 pub use damage_obstacle_reducer::{
     damage_obstacle, set_flags_for_damage_obstacle, DamageObstacleCallbackId,
+};
+pub use decrease_grid_load_reducer::{
+    decrease_grid_load, set_flags_for_decrease_grid_load, DecreaseGridLoadCallbackId,
 };
 pub use grid_type::Grid;
 pub use hook_type::Hook;
@@ -90,6 +94,10 @@ pub enum Reducer {
         id: u64,
         damage: u32,
     },
+    DecreaseGridLoad {
+        identity: __sdk::Identity,
+        load: i32,
+    },
     PlayerConnected,
     PlayerDisconnected,
     UpdateBlockOwner {
@@ -139,6 +147,7 @@ impl __sdk::Reducer for Reducer {
     fn reducer_name(&self) -> &'static str {
         match self {
             Reducer::DamageObstacle { .. } => "damage_obstacle",
+            Reducer::DecreaseGridLoad { .. } => "decrease_grid_load",
             Reducer::PlayerConnected => "player_connected",
             Reducer::PlayerDisconnected => "player_disconnected",
             Reducer::UpdateBlockOwner { .. } => "update_block_owner",
@@ -158,6 +167,10 @@ impl TryFrom<__ws::ReducerCallInfo<__ws::BsatnFormat>> for Reducer {
             "damage_obstacle" => Ok(__sdk::parse_reducer_args::<
                 damage_obstacle_reducer::DamageObstacleArgs,
             >("damage_obstacle", &value.args)?
+            .into()),
+            "decrease_grid_load" => Ok(__sdk::parse_reducer_args::<
+                decrease_grid_load_reducer::DecreaseGridLoadArgs,
+            >("decrease_grid_load", &value.args)?
             .into()),
             "player_connected" => Ok(__sdk::parse_reducer_args::<
                 player_connected_reducer::PlayerConnectedArgs,

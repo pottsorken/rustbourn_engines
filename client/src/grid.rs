@@ -88,27 +88,33 @@ pub fn check_grid_connectivity(
     }
 }
 
-// Detaches unowned blocks, and removes blocks from grid
+// MAGIC FUNCTION :)
 pub fn balance_player_grid(
     mut commands: Commands,
-    mut player_query: Query<(&Player, &mut PlayerGrid), With<Player>>,
+    mut player_query: Query<(&Player, Entity, &mut PlayerGrid), With<Player>>,
+    mut block_query: Query<&mut AttachedBlock>,
     mut spawned_blocks: ResMut<SpawnedBlocks>,
     ctx_wrapper: Res<CtxWrapper>,
 ) {
-    if let Ok((player, mut grid)) = player_query.get_single_mut() {
+    if let Ok((player, player_entity, mut grid)) = player_query.get_single_mut() {
+
+        if let Some(next_pos) = grid.find_next_free_pos() {
+            grid.next_free_pos = next_pos;
+        }
+
         let mut to_detach: Vec<(i32, i32)> = Vec::new();
         let mut to_remove: Vec<(i32, i32)> = Vec::new();
+        let player_identity = ctx_wrapper.ctx.identity();
         for (grid_pos, block_ent) in grid.block_position.iter_mut() {
             if let Some(block_id) = spawned_blocks.entities.get(block_ent) {
                 if let Some(block_from_db) = ctx_wrapper.ctx.db.block().id().find(block_id) {
-                    let player_identity = ctx_wrapper.ctx.identity();
                     if let OwnerType::None = block_from_db.owner{
                         to_detach.push(*grid_pos);  
                     } else if OwnerType::Player(player_identity) != block_from_db.owner{
                         to_remove.push(*grid_pos);
                     }
                 } else {
-                    warn!("Block ID {:?} not found in DB", block_id);
+                    warn!("Block ID {:?} not fosund in DB", block_id);
                 }
             } else {
                 warn!("Block entity {:?} not found in spawned_blocks", block_ent);
@@ -125,23 +131,62 @@ pub fn balance_player_grid(
             grid.block_position.remove(&grid_pos);
         }
 
+        let known_entities: std::collections::HashSet<_> =
+            grid.block_position.values().copied().collect();
+
+        for (block_entity, block_id) in spawned_blocks.entities.iter() {
+            if known_entities.contains(block_entity) {
+                continue;
+            }
+
+            if let Some(block_from_db) = ctx_wrapper.ctx.db.block().id().find(block_id) {
+                if block_from_db.owner == OwnerType::Player(player_identity) {
+
+                    if let Some(next_pos) = grid.find_next_free_pos() {
+                        grid.block_position.insert(next_pos, *block_entity);
+                        grid.load += 1;
+
+                        // Update or insert AttachedBlock
+                        if let Ok(mut attach_link) = block_query.get_mut(*block_entity) {
+                            attach_link.player_entity = player_entity;
+                            attach_link.grid_offset = next_pos;
+                        } else {
+                            commands.entity(*block_entity).insert(AttachedBlock {
+                                grid_offset: next_pos,
+                                player_entity,
+                            });
+                        }
+
+                        increment_grid_pos(&mut grid);
+                        println!(
+                            "Balanced block {:?} to ({}, {}) for player",
+                            block_id, next_pos.0, next_pos.1
+                        );
+                    }
+                }
+            }
+        }
+
         if let Some(next_pos) = grid.find_next_free_pos() {
             grid.next_free_pos = next_pos;
         }
     }
 }
 
+// MAGIC FUNCTION NR 2 :)
 pub fn balance_opponents_grid(
-    mut opp_query: Query<(&Opponent, &mut PlayerGrid)>,
+    mut commands: Commands,
+    mut opp_query: Query<(&Opponent,Entity, &mut PlayerGrid)>,
+    mut block_query: Query<&mut AttachedBlock>,
     mut spawned_blocks: ResMut<SpawnedBlocks>,
     ctx_wrapper: Res<CtxWrapper>,
 ){
-    for (opp, mut grid) in opp_query.iter_mut(){
+    for (opp, opp_entity, mut grid) in opp_query.iter_mut(){
+        let player_identity = opp.id;
         let mut to_remove: Vec<(i32, i32)> = Vec::new();
         for (grid_pos, block_ent) in grid.block_position.iter_mut() {
             if let Some(block_id) = spawned_blocks.entities.get(block_ent) {
                 if let Some(block_from_db) = ctx_wrapper.ctx.db.block().id().find(block_id) {
-                    let player_identity = opp.id;
                     if OwnerType::Player(player_identity) != block_from_db.owner{
                         to_remove.push(*grid_pos);  
                     }
@@ -155,9 +200,51 @@ pub fn balance_opponents_grid(
             grid.block_position.remove(&grid_pos);
         }
 
+        // Second pass: Find all blocks owned by the opponent but not in their grid
+        // Clone known block entities to avoid borrow conflict
+        let known_entities: std::collections::HashSet<_> = grid.block_position.values().copied().collect();
+
+        // Insert missing owned blocks into grid
+        for (block_ent, block_id) in &spawned_blocks.entities {
+            if known_entities.contains(block_ent) {
+                continue; // Already in grid
+            }
+
+            if let Some(block_from_db) = ctx_wrapper.ctx.db.block().id().find(block_id) {
+                if block_from_db.owner == OwnerType::Player(player_identity) {
+                    if grid.load >= grid.capacity {
+                        break;
+                    }
+
+                    if let Some(next_pos) = grid.find_next_free_pos() {
+                        grid.block_position.insert(next_pos, *block_ent);
+                        grid.load += 1;
+
+                        if let Ok(mut attach_link) = block_query.get_mut(*block_ent) {
+                            attach_link.player_entity = opp_entity;
+                            attach_link.grid_offset = next_pos;
+                        } else {
+                            commands.entity(*block_ent).insert(AttachedBlock {
+                                grid_offset: next_pos,
+                                player_entity: opp_entity,
+                            });
+                        }
+
+                        increment_grid_pos(&mut grid);
+                        println!(
+                            "Rebalanced: inserted block {:?} at ({}, {})",
+                            block_id, next_pos.0, next_pos.1
+                        );
+                    }
+                }
+            }
+        }
+
         if let Some(next_pos) = grid.find_next_free_pos() {
             grid.next_free_pos = next_pos;
         }
+
+
     }
 }
 

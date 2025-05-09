@@ -1,7 +1,5 @@
 use spacetimedb::{
-    reducer,
-    spacetimedb_lib::{db, identity},
-    table, DbContext, Identity, ReducerContext, SpacetimeType, Table, Timestamp,
+    reducer, spacetimedb_lib::{db, identity}, table, DbContext, Identity, Local, ReducerContext, SpacetimeType, Table, Timestamp
 };
 
 const N_BOTS: u64 = 3;
@@ -239,6 +237,22 @@ pub fn update_owner_grid(
         });
         Ok(())
     } else {
+        Err("Player not found".to_string())
+    }
+}
+
+#[spacetimedb::reducer]
+pub fn decrease_grid_load(
+    ctx: &ReducerContext,
+    identity: Identity,
+    load: i32,
+)-> Result<(), String>
+{
+    if let Some(mut player) = ctx.db.player().identity().find(identity){
+        player.grid.load = load;
+        ctx.db.player().identity().update(player);
+        Ok(())
+    } else{
         Err("Player not found".to_string())
     }
 }
