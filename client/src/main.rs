@@ -21,6 +21,7 @@ mod player;
 mod player_attach;
 mod start_menu;
 use edit_menu::*;
+mod leaderboard;
 mod nametag;
 mod track_spawner;
 
@@ -28,6 +29,7 @@ use block::*;
 use camera::*;
 use common::*;
 use hook::*;
+use leaderboard::*;
 use nametag::*;
 use obstacle::*;
 use player::*;
@@ -68,9 +70,10 @@ fn main() {
         .add_plugins(TilemapPlugin)
         .init_state::<GameState>()
         .insert_resource(DisplayQuality::Medium)
+        .insert_resource(Leaderboard::default())
         .insert_resource(Volume(7))
         .add_plugins((splash_plugin, menu_plugin, game_plugin)) //edit_plugin
-        .add_systems(Startup, (setup_camera,).chain())
+        .add_systems(Startup, (setup_camera, setup_scoreboard).chain())
         .add_systems(
             OnEnter(GameState::Game),
             (
