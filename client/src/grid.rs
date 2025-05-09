@@ -1,6 +1,6 @@
 use crate::{block::SpawnedBlocks, common::{AttachedBlock, Opponent, Player, PlayerGrid, CtxWrapper}, module_bindings::{update_block_owner, BlockTableAccess, OwnerType}, player};
 use bevy::prelude::*;
-use spacetimedb_sdk::DbContext;
+use spacetimedb_sdk::{DbContext, Identity};
 use std::collections::{HashSet, VecDeque};
 
 pub fn increment_grid_pos(grid: &mut PlayerGrid) {
@@ -242,6 +242,22 @@ pub fn balance_opponents_grid(
 
 
     }
+}
+
+pub fn get_block_count(
+    identity: Identity,
+    ctx_wrapper: &CtxWrapper,
+    spawned_blocks: &SpawnedBlocks,
+) -> i32{
+    let mut count = 0;
+    for block_id in spawned_blocks.ids.clone(){
+        if let Some(block_from_db) = ctx_wrapper.ctx.db().block().id().find(&block_id){
+            if block_from_db.owner == OwnerType::Player(identity){
+                count += 1;
+            }
+        }
+    }
+    count 
 }
 
 impl PlayerGrid {
