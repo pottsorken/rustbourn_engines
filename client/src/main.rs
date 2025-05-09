@@ -46,6 +46,7 @@ use hook::handle_obstacle_hit;
 use map::setup_tilemap;
 use opponent::{despawn_opponents, spawn_opponent_tracks_system, setup_blocks_opponent};
 use common::*;
+use leaderboard::{spawn_leaderboard, update_leaderboard_position};
 
 
 fn main() {
