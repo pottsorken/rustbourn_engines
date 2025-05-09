@@ -56,7 +56,7 @@ pub fn setup_hook(mut commands: Commands, asset_server: Res<AssetServer>) {
     commands.spawn((
         Sprite {
             custom_size: Some(Vec2::new(12.0, 26.0)),
-            color: Color::srgb(0.8, 0.4, 0.2),
+            color: Color::srgba(1.0, 0.0, 0.0, 0.4),
             anchor: bevy::sprite::Anchor::BottomCenter,
             ..default()
         },
@@ -167,7 +167,7 @@ pub fn hook_controls(
         if let Some((base_pos, rotation, length)) = range_update_info {
             range_transform.translation = base_pos;
             range_transform.rotation = rotation;
-            range_sprite.custom_size = Some(Vec2::new(12.0, length));
+            range_sprite.custom_size = Some(Vec2::new(25.0, length));
         } else {
             range_sprite.custom_size = Some(Vec2::ZERO);
         }
