@@ -11,6 +11,7 @@ use crate::player_attach::check_collision;
 use bevy::prelude::*;
 use spacetimedb_sdk::{Identity, Table};
 use std::collections::{HashMap, HashSet};
+use rand::Rng;
 
 pub fn spawn_bots(
     mut commands: Commands,
@@ -133,6 +134,7 @@ pub fn spawn_bot_blocks(
     asset_server: Res<AssetServer>,
     mut spawned_blocks: ResMut<SpawnedBlocks>,
 ) {
+    let mut rng = rand::rng();
     //println§!("spawn_bot_blocks run here --------------");
     for block in ctx_wrapper.ctx.db.block().iter() {
         let mut i = 0;
@@ -141,10 +143,12 @@ pub fn spawn_bot_blocks(
                 if let OwnerType::Bot(owner) = block.owner {
                     if owner == i {
                         println!("Spawning for bot: {}, blockid: {}", bot_entity, i);
+                        // Pick a random texture index
+                        let texture_index = rng.random_range(0..BLOCK_CONFIG.path.len());
                         let block_entity = commands.spawn((
                             Sprite {
                                 custom_size: Some(BLOCK_CONFIG.size),
-                                image: asset_server.load(BLOCK_CONFIG.path[1]),
+                                image: asset_server.load(BLOCK_CONFIG.path[texture_index]),
                                 ..default()
                             },
                             Transform::from_xyz(0., 0., 1.0),

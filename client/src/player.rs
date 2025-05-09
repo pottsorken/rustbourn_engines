@@ -70,16 +70,18 @@ pub fn setup_blocks_player(
     ctx: Res<CtxWrapper>,
     mut spawned_blocks: ResMut<SpawnedBlocks>,
 ) {
+    let mut rng = rand::rng();
     for (player_entity, mut grid) in player_query.iter_mut() {
         for block in ctx.ctx.db.block().iter() {
             if !spawned_blocks.ids.contains(&block.id) {
                 if let OwnerType::Player(owner) = block.owner {
                     if owner == ctx.ctx.identity() {
                         //println!("Spawning for Player: {}", player_entity,);
+                        let texture_index = rng.random_range(0..BLOCK_CONFIG.path.len());
                         let block_entity = commands.spawn((
                             Sprite {
                                 custom_size: Some(BLOCK_CONFIG.size),
-                                image: asset_server.load(BLOCK_CONFIG.path[1]),
+                                image: asset_server.load(BLOCK_CONFIG.path[texture_index]),
                                 ..default()
                             },
                             Transform::from_xyz(0., 0., 1.0),

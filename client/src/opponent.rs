@@ -10,6 +10,7 @@ use crate::{
 };
 use spacetimedb_sdk::{Identity, Table};
 use std::collections::HashMap;
+use rand::Rng;
 
 pub fn spawn_opponent(
     commands: &mut Commands,
@@ -238,6 +239,7 @@ pub fn setup_blocks_opponent(
     ctx: Res<CtxWrapper>,
     mut spawned_blocks: ResMut<SpawnedBlocks>,
 ) {
+    let mut rng = rand::rng();
     for (opponent_entity, mut grid, opponent) in opponent_query.iter_mut() {
         for block in ctx.ctx.db.block().iter() {
             if !spawned_blocks.ids.contains(&block.id) {
@@ -245,10 +247,11 @@ pub fn setup_blocks_opponent(
                     if owner == opponent.id {
                         println!("Spawning block for opponent: {}", &opponent.id);
                         //println!("Spawning for Player: {}", player_entity,);
+                        let texture_index = rng.random_range(0..BLOCK_CONFIG.path.len());
                         let block_entity = commands.spawn((
                             Sprite {
                                 custom_size: Some(BLOCK_CONFIG.size),
-                                image: asset_server.load(BLOCK_CONFIG.path[1]),
+                                image: asset_server.load(BLOCK_CONFIG.path[texture_index]),
                                 ..default()
                             },
                             Transform::from_xyz(0., 0., 1.0),
