@@ -65,7 +65,8 @@ pub fn setup_tilemap(
                 rng.gen_range(0..20)
                 // 0 // Green -> Grass
             } else if b == 255 {
-                2 // Blue -> Water
+                rng.gen_range(30..39)
+                // 2 // Blue -> Water
             } else if r == 255 {
                 3 // Red -> Stone
             } else {
