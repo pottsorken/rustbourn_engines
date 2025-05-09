@@ -1,34 +1,38 @@
 // Information from:
 // https://bevyengine.org/examples/games/game-menu/
 
-use bevy::prelude::*;
-use bevy::{app::AppExit, color::palettes::css::CRIMSON, prelude::*};
-use bevy::text::*;
 use crate::common::*;
+use crate::common::*;
+use bevy::prelude::*;
+use bevy::text::*;
+use bevy::{app::AppExit, color::palettes::css::CRIMSON, prelude::*};
 
-use rand::seq::SliceRandom;
 use rand::prelude::IndexedRandom;
+use rand::seq::SliceRandom;
 use rand::thread_rng;
 
-
 pub const TEXT_COLOR: Color = Color::srgb(0.9, 0.9, 0.9);
-pub const BACKGROUND_COLOR: Color = Color::srgb(0.11764705882352941, 0.11764705882352941, 0.11764705882352941);
+pub const BACKGROUND_COLOR: Color = Color::srgb(
+    0.11764705882352941,
+    0.11764705882352941,
+    0.11764705882352941,
+);
 pub const SPLASH_COLOR: Color = Color::srgb(0.0, 0.0, 0.0);
 
 pub const NORMAL_BUTTON: Color = Color::srgb(0.15, 0.15, 0.15);
 // pub const USERNAME_BUTTON: Color = Color::srgb(0.2823529411764706, 0.2823529411764706, 0.2823529411764706);
 pub const USERNAME_BUTTON: Color = Color::srgb(1.0, 0.0, 0.0);
-pub const HOVERED_BUTTON: Color = Color::srgb(0.2823529411764706, 0.2823529411764706, 0.2823529411764706);
-pub const HOVERED_PRESSED_BUTTON: Color = Color::srgb(0.9254901960784314, 0.6313725490196078, 0.2196078431372549);
-pub const PRESSED_BUTTON: Color = Color::srgb(0.7686274509803922, 0.3764705882352941, 0.054901960784313725);
-
-
+pub const HOVERED_BUTTON: Color =
+    Color::srgb(0.2823529411764706, 0.2823529411764706, 0.2823529411764706);
+pub const HOVERED_PRESSED_BUTTON: Color =
+    Color::srgb(0.9254901960784314, 0.6313725490196078, 0.2196078431372549);
+pub const PRESSED_BUTTON: Color =
+    Color::srgb(0.7686274509803922, 0.3764705882352941, 0.054901960784313725);
 
 // ###################################### SPLASH ##########################################
 
 pub fn splash_plugin(app: &mut App) {
-    app
-        .add_systems(OnEnter(GameState::Splash), splash_setup)
+    app.add_systems(OnEnter(GameState::Splash), splash_setup)
         .add_systems(Update, countdown.run_if(in_state(GameState::Splash)))
         .add_systems(OnExit(GameState::Splash), despawn_screen::<OnSplashScreen>);
 }
@@ -37,39 +41,39 @@ pub fn splash_setup(mut commands: Commands, asset_server: Res<AssetServer>) {
     let icon = asset_server.load("screens/splashscreen.png");
     // Display the logo on splash screen
     commands
-    .spawn((
-        Node {
-            width: Val::Percent(100.0),
-            height: Val::Percent(100.0),
-            // width: Val::Px(100.0),
-            // height: Val::Px(100.0),
-            align_items: AlignItems::Center,
-            justify_content: JustifyContent::Center,
-            ..default()
-        },
-        OnSplashScreen,
-        BackgroundColor(SPLASH_COLOR),
-    ))
-    .with_children(|parent| {
-        parent
-            .spawn(Node {
-                flex_direction: FlexDirection::Column,
-                align_items: AlignItems::Center,
+        .spawn((
+            Node {
                 width: Val::Percent(100.0),
                 height: Val::Percent(100.0),
+                // width: Val::Px(100.0),
+                // height: Val::Px(100.0),
+                align_items: AlignItems::Center,
+                justify_content: JustifyContent::Center,
                 ..default()
-            })
-            .with_children(|parent| {
-                parent.spawn((
-                    ImageNode::new(icon),
-                    Node {
-                        width: Val::Px(200.0), // Size of splash logo
-                        margin: UiRect::all(Val::Percent(20.0)), // How far from the top the splash logo is placed
-                        ..default()
-                    },
-                ));
-            });
-    });
+            },
+            OnSplashScreen,
+            BackgroundColor(SPLASH_COLOR),
+        ))
+        .with_children(|parent| {
+            parent
+                .spawn(Node {
+                    flex_direction: FlexDirection::Column,
+                    align_items: AlignItems::Center,
+                    width: Val::Percent(100.0),
+                    height: Val::Percent(100.0),
+                    ..default()
+                })
+                .with_children(|parent| {
+                    parent.spawn((
+                        ImageNode::new(icon),
+                        Node {
+                            width: Val::Px(200.0),                   // Size of splash logo
+                            margin: UiRect::all(Val::Percent(20.0)), // How far from the top the splash logo is placed
+                            ..default()
+                        },
+                    ));
+                });
+        });
 
     commands.insert_resource(SplashTimer(Timer::from_seconds(2.0, TimerMode::Once)));
 }
@@ -84,7 +88,6 @@ pub fn countdown(
     }
 }
 
-
 // ###################################### GAME ##########################################
 
 pub fn game_plugin(app: &mut App) {
@@ -93,18 +96,17 @@ pub fn game_plugin(app: &mut App) {
 }
 
 pub fn game_setup(mut commands: Commands) {
-    commands.spawn(Camera2dBundle::default());
-    commands
-        .spawn((
-            Node {
-                width: Val::Percent(100.0),
-                height: Val::Percent(100.0),
-                align_items: AlignItems::Center,
-                justify_content: JustifyContent::Center,
-                ..default()
-            },
-            OnGameScreen,
-        ));
+    //commands.spawn(Camera2dBundle::default());
+    //commands.spawn((
+    //    Node {
+    //        width: Val::Percent(100.0),
+    //        height: Val::Percent(100.0),
+    //        align_items: AlignItems::Center,
+    //        justify_content: JustifyContent::Center,
+    //        ..default()
+    //    },
+    //    OnGameScreen,
+    //));
 }
 
 // ###################################### MENU ##########################################
@@ -224,20 +226,26 @@ pub fn main_menu_setup(mut commands: Commands, asset_server: Res<AssetServer>) {
 
     pub fn get_username() -> String {
         let usernames_first = [
-            "cool", "lazy", "brisk", "sneaky", "quirky", "noisy", "zany", "clever", "sleepy", "rowdy",
-            "nimble", "grumpy", "shady", "peppy", "twitchy", "mellow", "spunky", "clumsy", "perky", "brainy",
+            "cool", "lazy", "brisk", "sneaky", "quirky", "noisy", "zany", "clever", "sleepy",
+            "rowdy", "nimble", "grumpy", "shady", "peppy", "twitchy", "mellow", "spunky", "clumsy",
+            "perky", "brainy",
         ];
 
         let usernames_second = [
-            "gear", "cog", "motor", "circuit", "valve", "bot", "servo", "engine", "module", "piston",
-            "drone", "terminal", "chip", "sensor", "actuator", "pump", "turbine", "switch", "matrix", "relay",
+            "gear", "cog", "motor", "circuit", "valve", "bot", "servo", "engine", "module",
+            "piston", "drone", "terminal", "chip", "sensor", "actuator", "pump", "turbine",
+            "switch", "matrix", "relay",
         ];
 
         let mut rng_first = thread_rng();
         let mut rng_second = thread_rng();
 
-        let Some(random_username_first) = usernames_first.choose(&mut rng_first) else {todo!()};
-        let Some(random_username_second) = usernames_second.choose(&mut rng_second) else {todo!()};
+        let Some(random_username_first) = usernames_first.choose(&mut rng_first) else {
+            todo!()
+        };
+        let Some(random_username_second) = usernames_second.choose(&mut rng_second) else {
+            todo!()
+        };
         let random_username = format!("{}-{}", random_username_first, random_username_second);
 
         // println!("{}", random_username);
@@ -280,22 +288,21 @@ pub fn main_menu_setup(mut commands: Commands, asset_server: Res<AssetServer>) {
 
                     // Display username
                     parent
-                    .spawn((
-                        Button,
-                        button_node.clone(),
-                        BackgroundColor(PRESSED_BUTTON),
-                        username = get_username(),
-                        // MenuButtonAction::Settings,
-                    ))
-                    .with_children(|parent| {
-                        parent.spawn((
-                            Text::new(username),
-                            username_button_text_font.clone(),
-                            TextColor(PRESSED_BUTTON),
-                        ));
-                    });
+                        .spawn((
+                            Button,
+                            button_node.clone(),
+                            BackgroundColor(PRESSED_BUTTON),
+                            username = get_username(),
+                            // MenuButtonAction::Settings,
+                        ))
+                        .with_children(|parent| {
+                            parent.spawn((
+                                Text::new(username),
+                                username_button_text_font.clone(),
+                                TextColor(PRESSED_BUTTON),
+                            ));
+                        });
 
-                    
                     // parent
                     //     .spawn((
                     //         Sprite::from_color(Color::srgb(0.25, 0.25, 0.55), box_size),
@@ -312,8 +319,8 @@ pub fn main_menu_setup(mut commands: Commands, asset_server: Res<AssetServer>) {
                     //             Transform::from_translation(Vec3::Z),
                     //         ));
                     //     });
-            
                     // Play button
+
                     parent
                         .spawn((
                             Button,
@@ -344,7 +351,7 @@ pub fn main_menu_setup(mut commands: Commands, asset_server: Res<AssetServer>) {
                     //             TextColor(TEXT_COLOR),
                     //         ));
                     //     });
-              
+
                     parent
                         .spawn((
                             Button,
@@ -363,18 +370,17 @@ pub fn main_menu_setup(mut commands: Commands, asset_server: Res<AssetServer>) {
                         });
                 });
 
-                // .with_children(|parent| {
-                //     parent.spawn(TextBundle::from_section(
-                //         "Enter Username: ",
-                //         TextStyle {
-                //             font: asset_server.load("fonts/FiraSans-Bold.ttf"),
-                //             font_size: 40.0,
-                //             color: Color::WHITE,
-                //         },
-                //     ).with_text_alignment(TextAlignment::Left))
-                //     .insert(UsernameText);
-                // });
-
+            // .with_children(|parent| {
+            //     parent.spawn(TextBundle::from_section(
+            //         "Enter Username: ",
+            //         TextStyle {
+            //             font: asset_server.load("fonts/FiraSans-Bold.ttf"),
+            //             font_size: 40.0,
+            //             color: Color::WHITE,
+            //         },
+            //     ).with_text_alignment(TextAlignment::Left))
+            //     .insert(UsernameText);
+            // });
         });
 }
 
@@ -487,10 +493,7 @@ pub fn display_settings_menu_setup(mut commands: Commands, display_quality: Res<
                         ))
                         .with_children(|parent| {
                             // Display a label for the current setting
-                            parent.spawn((
-                                Text::new("Display Quality"),
-                                button_text_style.clone(),
-                            ));
+                            parent.spawn((Text::new("Display Quality"), button_text_style.clone()));
                             // Display a button for each possible value
                             for quality_setting in [
                                 DisplayQuality::Low,
@@ -610,40 +613,40 @@ pub fn sound_settings_menu_setup(mut commands: Commands, volume: Res<Volume>) {
         });
 }
 
-    pub fn menu_action(
-        interaction_query: Query<
-            (&Interaction, &MenuButtonAction),
-            (Changed<Interaction>, With<Button>),
-        >,
-        mut app_exit_events: EventWriter<AppExit>,
-        mut menu_state: ResMut<NextState<MenuState>>,
-        mut game_state: ResMut<NextState<GameState>>,
-    ) {
-        for (interaction, menu_button_action) in &interaction_query {
-            if *interaction == Interaction::Pressed {
-                match menu_button_action {
-                    MenuButtonAction::Quit => {
-                        app_exit_events.send(AppExit::Success);
-                    }
-                    MenuButtonAction::Play => {
-                        game_state.set(GameState::Game);
-                        menu_state.set(MenuState::Disabled);
-                    }
-                    MenuButtonAction::Settings => menu_state.set(MenuState::Settings),
-                    MenuButtonAction::SettingsDisplay => {
-                        menu_state.set(MenuState::SettingsDisplay);
-                    }
-                    MenuButtonAction::SettingsSound => {
-                        menu_state.set(MenuState::SettingsSound);
-                    }
-                    MenuButtonAction::BackToMainMenu => menu_state.set(MenuState::Main),
-                    MenuButtonAction::BackToSettings => {
-                        menu_state.set(MenuState::Settings);
-                    }
+pub fn menu_action(
+    interaction_query: Query<
+        (&Interaction, &MenuButtonAction),
+        (Changed<Interaction>, With<Button>),
+    >,
+    mut app_exit_events: EventWriter<AppExit>,
+    mut menu_state: ResMut<NextState<MenuState>>,
+    mut game_state: ResMut<NextState<GameState>>,
+) {
+    for (interaction, menu_button_action) in &interaction_query {
+        if *interaction == Interaction::Pressed {
+            match menu_button_action {
+                MenuButtonAction::Quit => {
+                    app_exit_events.send(AppExit::Success);
+                }
+                MenuButtonAction::Play => {
+                    game_state.set(GameState::Game);
+                    menu_state.set(MenuState::Disabled);
+                }
+                MenuButtonAction::Settings => menu_state.set(MenuState::Settings),
+                MenuButtonAction::SettingsDisplay => {
+                    menu_state.set(MenuState::SettingsDisplay);
+                }
+                MenuButtonAction::SettingsSound => {
+                    menu_state.set(MenuState::SettingsSound);
+                }
+                MenuButtonAction::BackToMainMenu => menu_state.set(MenuState::Main),
+                MenuButtonAction::BackToSettings => {
+                    menu_state.set(MenuState::Settings);
                 }
             }
         }
     }
+}
 
 pub fn despawn_screen<T: Component>(to_despawn: Query<Entity, With<T>>, mut commands: Commands) {
     for entity in &to_despawn {
@@ -651,16 +654,7 @@ pub fn despawn_screen<T: Component>(to_despawn: Query<Entity, With<T>>, mut comm
     }
 }
 
-
-
-
-
-
-
 // KEYBOARD????
-
-
-
 
 // #[derive(Resource, Default)]
 // struct Username {

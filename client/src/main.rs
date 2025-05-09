@@ -67,7 +67,7 @@ fn main() {
         .init_state::<GameState>()
         .insert_resource(DisplayQuality::Medium)
         .insert_resource(Volume(7))
-        .add_plugins((splash_plugin, menu_plugin, game_plugin, edit_plugin))
+        .add_plugins((splash_plugin, menu_plugin, game_plugin)) //edit_plugin
         .add_systems(Startup, (setup_camera,).chain())
         .add_systems(
             OnEnter(GameState::Game),
@@ -113,6 +113,7 @@ fn main() {
                 update_block_owner,
                 balance_player_grid,
                 balance_opponents_grid,
+                update_nametags_positions,
             )
                 .run_if(in_game_or_edit),
         )
@@ -125,7 +126,8 @@ fn main() {
                 setup_blocks_player,
                 spawn_bot_blocks,
                 setup_blocks_opponent,
-                update_nametags, // update_bots,
+                update_nametags,         // update_bots,
+                update_nametags_content, // update_bots,
             )
                 .run_if(in_game_or_edit),
         )

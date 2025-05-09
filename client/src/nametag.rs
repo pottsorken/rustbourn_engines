@@ -99,13 +99,13 @@ pub fn spawn_opponent_nametag(
     spawn_text(&mut commands, "Lorem Ipsum", opponent_id);
 }
 
-pub fn update_nametags(
+pub fn update_nametags_content(
     ctx_wrapper: Res<CtxWrapper>,
     mut commands: Commands,
     asset_server: Res<AssetServer>,
-    mut query: Query<(&mut Sprite, &mut Transform, &OpponentHook), With<OpponentHook>>,
+    mut query: Query<(&mut Sprite, &mut Transform, &OpponentNametag), With<OpponentNametag>>,
     existing_nametags_query: Query<&OpponentNametag>,
-    despawn_query: Query<(Entity, &OpponentHook)>,
+    despawn_query: Query<(Entity, &OpponentNametag)>,
 ) {
     let players = ctx_wrapper.ctx.db.player().iter().collect::<Vec<_>>();
 
@@ -133,18 +133,27 @@ pub fn update_nametags(
     }
 }
 
-fn update_opponent_nametag(
-    query: &mut Query<(&mut Sprite, &mut Transform, &OpponentHook), With<OpponentHook>>,
-    id: &Identity,
-    x: f32,
-    y: f32,
-    rotation: f32,
+pub fn update_nametags_positions(
+    mut query: Query<(&mut Sprite, &mut Transform, &OpponentNametag), With<OpponentNametag>>,
+    ctx_wrapper: Res<CtxWrapper>,
+    //query: &mut Query<(&mut Sprite, &mut Transform, &OpponentNametag), With<OpponentNametag>>,
+    //id: &Identity,
+    //x: f32,
+    //y: f32,
+    //rotation: f32,
 ) {
-    for (mut sprite, mut transform, hook) in query.iter_mut() {
-        if hook.id == *id {
-            transform.translation.x = x;
-            transform.translation.y = y;
-            transform.rotation = Quat::from_rotation_z(rotation).normalize();
+    let players = ctx_wrapper.ctx.db.player().iter().collect::<Vec<_>>();
+
+    let local_player_id = ctx_wrapper.ctx.identity(); //Get local player's ID
+
+    for player in players {
+        let player_id = player.identity;
+        for (mut sprite, mut transform, hook) in query.iter_mut() {
+            if hook.id == player_id {
+                transform.translation.x = player.hook.position.x; //x;
+                transform.translation.y = player.hook.position.y; //y;
+                transform.rotation = Quat::from_rotation_z(player.hook.rotation).normalize();
+            }
         }
     }
 }
@@ -155,9 +164,13 @@ fn spawn_text(commands: &mut Commands, name: &str, opponent_id: &Identity) {
         .spawn((
             Sprite::from_color(Color::rgba(0.85, 0.05, 0.05, 0.5), box_size),
             Transform::from_translation(box_position.extend(30.0)),
-            PlayerAttach {
-                offset: Vec2::new(0., -40.),
-            },
+            OpponentNametag {
+                id: opponent_id.clone(),
+            }, // To not double spawn
+
+               //PlayerAttach {
+               //    offset: Vec2::new(0., -40.),
+               //},
         ))
         .with_children(|builder| {
             builder.spawn((
@@ -170,9 +183,6 @@ fn spawn_text(commands: &mut Commands, name: &str, opponent_id: &Identity) {
                 TextBounds::from(box_size),
                 TextColor::from(Color::srgb(0.99, 0., 0.)),
                 Transform::from_translation(Vec3::Z),
-                OpponentNametag {
-                    id: opponent_id.clone(),
-                }, // To not double spawn
             ));
         });
 }
