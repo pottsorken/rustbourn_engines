@@ -69,8 +69,8 @@ pub fn setup_tilemap(
                 rng.gen_range(0..20)
                 // 0 // Green -> Grass
             } else if b == 255 {
-                water_tiles.insert((x, y)); // Track water tiles
-                1 // Water
+                rng.gen_range(30..39)
+                // 2 // Blue -> Water
             } else if r == 255 {
                 stone_tiles.insert((x, y)); // Track stone tiles
                 2 // Stone
