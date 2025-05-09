@@ -5,7 +5,8 @@
 
 A 2D multiplayer base building game built with **Rust**, **Bevy**, and **SpacetimeDB**.
 
-![Game Screenshot](https://github.com/user-attachments/assets/5ba0cccd-bdee-4c20-b53b-ee5d83b9160c)
+![logo](https://github.com/user-attachments/assets/a63a40e5-a345-4a69-b4d4-c90d0ea966a6)
+![1746716967 263503](https://github.com/user-attachments/assets/2c759417-3848-4545-9910-8723520ca22b)
 
 ## Features ✨
 
