@@ -13,7 +13,7 @@ use std::f32::consts::PI;
 
 const FIXED_DELTA: f32 = 1.0 / 30.0; // Fixed delta for 3cd ..0 FPS simulation
 const BOT_SIZE: f32 = 80.0; // Size of bot
-const BOT_MOVE: f32 = 110.0;
+const BOT_MOVE: f32 = 60.0;
 
 /// Player component data
 //use glam::{Vec3, Quat};
