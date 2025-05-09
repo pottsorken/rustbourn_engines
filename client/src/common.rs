@@ -281,7 +281,6 @@ pub const MAP_CONFIG: MapConfig = MapConfig {
         "sprites/tiles/grass/grass17.png",
         "sprites/tiles/grass/grass18.png",
         "sprites/tiles/grass/grass19.png",
-
         "sprites/tiles/water/water30.png",
         "sprites/tiles/water/water31.png",
         "sprites/tiles/water/water32.png",
@@ -300,7 +299,7 @@ pub const MAP_CONFIG: MapConfig = MapConfig {
         "sprites/tiles/dirt-stone.png",
         "sprites/tiles/stone-grass.png",
     ],
-    image_path: r"assets/testmap.png",
+    image_path: r"assets/testmap2.png",
     safe_zone_size: 300.0,
 };
 
