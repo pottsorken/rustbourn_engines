@@ -64,10 +64,10 @@ pub fn setup_tilemap(
             let texture_index = if g >= 220 {
                 rng.gen_range(0..20)
                 // 0 // Green -> Grass
-            } else if >= 220 {
+            } else if b >= 220 {
                 rng.gen_range(30..39)
                 // 2 // Blue -> Water
-            } else if >= 220 {
+            } else if r >= 220 {
                 3 // Red -> Stone
             } else {
                 4 // Default -> Dirt
