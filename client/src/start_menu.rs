@@ -222,7 +222,7 @@ pub fn main_menu_setup(mut commands: Commands, asset_server: Res<AssetServer>) {
         ..default()
     };
 
-    pub fn print_random_string() -> String {
+    pub fn get_username() -> String {
         let usernames_first = [
             "cool", "lazy", "brisk", "sneaky", "quirky", "noisy", "zany", "clever", "sleepy", "rowdy",
             "nimble", "grumpy", "shady", "peppy", "twitchy", "mellow", "spunky", "clumsy", "perky", "brainy",
@@ -243,6 +243,8 @@ pub fn main_menu_setup(mut commands: Commands, asset_server: Res<AssetServer>) {
         // println!("{}", random_username);
         return random_username.to_string();
     }
+
+    let mut username = get_username();
 
     commands
         .spawn((
@@ -276,18 +278,18 @@ pub fn main_menu_setup(mut commands: Commands, asset_server: Res<AssetServer>) {
                         },
                     ));
 
-                    // Display three buttons for each action available from the main menu:
+                    // Display username
                     parent
                     .spawn((
                         Button,
                         button_node.clone(),
                         BackgroundColor(PRESSED_BUTTON),
+                        username = get_username(),
                         // MenuButtonAction::Settings,
                     ))
                     .with_children(|parent| {
-                        // parent.spawn((ImageNode::new(icon), button_icon_node.clone()));
                         parent.spawn((
-                            Text::new(print_random_string()),
+                            Text::new(username),
                             username_button_text_font.clone(),
                             TextColor(PRESSED_BUTTON),
                         ));
@@ -311,7 +313,7 @@ pub fn main_menu_setup(mut commands: Commands, asset_server: Res<AssetServer>) {
                     //         ));
                     //     });
             
-
+                    // Play button
                     parent
                         .spawn((
                             Button,
