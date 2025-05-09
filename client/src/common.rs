@@ -439,3 +439,8 @@ pub enum MenuButtonAction {
 
 #[derive(Component)]
 pub struct OnEditScreen;
+
+#[derive(Resource, Default)]
+pub struct Leaderboard {
+    pub scores: Vec<(Entity, i32)>, // (Player Entity, Block Count)
+}
