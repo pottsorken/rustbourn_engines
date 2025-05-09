@@ -7,10 +7,11 @@ use crate::{
         PLAYER_CONFIG, HookHead,
     },
     db_connection::load_obstacles,
-    grid::increment_grid_pos,
+    grid::{increment_grid_pos, get_block_count},
     opponent,
 };
 use bevy::prelude::{Vec2, Vec3};
+use rand::Rng;
 use bevy::{prelude::*, transform};
 use spacetimedb_sdk::{
     credentials, DbContext, Error, Event, Identity, Status, Table, TableWithPrimaryKey,
@@ -275,7 +276,6 @@ pub fn hook_collision_system(
                             nextpos.0,
                             nextpos.1,
                         ).unwrap();
-
                     }
                     grid.block_position.insert(nextpos, block_entity);
                     block_transform.translation.x += 200_000.;
@@ -293,6 +293,24 @@ pub fn hook_collision_system(
         }
     }
 }
+
+fn weighted_combat(
+    player_block_count: i32,
+    opps_block_count: i32,
+) -> bool {
+    
+    let total_block_count = player_block_count + opps_block_count;
+    if total_block_count == 0 {
+        return true; // No blocks, player wins by default
+    }
+
+    let player_weight = player_block_count as f32/ total_block_count as f32;
+
+    let mut rng = rand::rng();
+    rng.random_range(0.0..1.0) // Generate a random number between 0 and 1
+    < player_weight // If the roll is less than the player's weight, they win
+}
+
 pub fn spawn_opponent_hook(
     commands: &mut Commands,
     asset_server: &Res<AssetServer>,
