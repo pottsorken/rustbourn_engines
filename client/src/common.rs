@@ -382,15 +382,15 @@ pub const MAP_CONFIG: MapConfig = MapConfig {
         "sprites/tiles/grass/grass18.png",
         "sprites/tiles/grass/grass19.png",
 
-        "sprites/tiles/water/water20.png",
-        "sprites/tiles/water/water21.png",
-        "sprites/tiles/water/water22.png",
-        "sprites/tiles/water/water23.png",
-        "sprites/tiles/water/water24.png",
-        "sprites/tiles/water/water25.png",
-        "sprites/tiles/water/water26.png",
-        "sprites/tiles/water/water27.png",
-        "sprites/tiles/water/water28.png",
+        "sprites/tiles/water/water30.png",
+        "sprites/tiles/water/water31.png",
+        "sprites/tiles/water/water32.png",
+        "sprites/tiles/water/water33.png",
+        "sprites/tiles/water/water34.png",
+        "sprites/tiles/water/water35.png",
+        "sprites/tiles/water/water36.png",
+        "sprites/tiles/water/water37.png",
+        "sprites/tiles/water/water38.png",
 
 
 
