@@ -71,77 +71,54 @@ pub fn update_block_owner(
         (Without<AttachedBlock>, Without<Player>),
     >,
     mut player_query: Query<(Entity, &mut PlayerGrid), (With<Player>, Without<AttachedBlock>)>,
-
     ctx_wrapper: Res<CtxWrapper>,
     mut spawned_blocks: ResMut<SpawnedBlocks>,
 ) {
     for (block_entity, mut attach_link) in block_query.iter_mut() {
-        let server_block_id = spawned_blocks
-            .entities
-            .get(&block_entity)
-            .expect("Failed to find block_id");
+        let Some(server_block_id) = spawned_blocks.entities.get(&block_entity) else {
+            warn!("Block entity {:?} not found in spawned_blocks", block_entity);
+            continue;
+        };
 
-        let players = ctx_wrapper.ctx.db.player().iter().collect::<Vec<_>>();
-        let block_from_db = ctx_wrapper
+        let Some(block_from_db) = ctx_wrapper
             .ctx
             .db
             .block()
             .id()
             .find(server_block_id)
-            .expect("Failed to find db tuple from blockid");
+        else {
+            warn!("Block with ID {:?} not found in DB", server_block_id);
+            continue;
+        };
+
         let owner_identity_type = block_from_db.owner;
-        let block_pos: (i32, i32) = (block_from_db.offset_x, block_from_db.offset_y);
+        let block_pos = (block_from_db.offset_x, block_from_db.offset_y);
 
         if let OwnerType::Player(owner_identity) = owner_identity_type {
-            let (owner_entity, mut grid) = if owner_identity == ctx_wrapper.ctx.identity() {
-                let (player_entity, player_grid) = player_query
-                    .get_single_mut()
-                    .expect("Failed get single mut for player in update block owner");
-                (player_entity, player_grid)
+            let owner_info = if owner_identity == ctx_wrapper.ctx.identity() {
+                player_query.get_single_mut().ok()
             } else {
-                let mut found = None;
-                for (opp_entity, opponent, mut grid_search) in opponent_query.iter_mut() {
-                    if opponent.id == owner_identity {
-                        found = Some((opp_entity, grid_search));
-                        break;
-                    }
-                }
-                found.expect("No opponent found with matching ID")
+                opponent_query
+                    .iter_mut()
+                    .find(|(_, opponent, _)| opponent.id == owner_identity)
+                    .map(|(e, _, g)| (e, g))
             };
-            //let mut owner_entity: Entity;
-            //let mut grid: &mut PlayerGrid;
-            //
-            //if owner_identity == ctx_wrapper.ctx.identity() {
-            //    if let Ok((new_owner_entity, mut new_new_grid)) = player_query.get_single_mut() {
-            //        owner_entity = new_owner_entity;
-            //        grid = &mut new_new_grid;
-            //    } else {
-            //        panic!("Failed get single mut for player in update block owner");
-            //    }
-            //} else {
-            //    for (opp_entity, opponent, mut grid_search) in opponent_query.iter_mut() {
-            //        if opponent.id == owner_identity {
-            //            owner_entity = opp_entity;
-            //            grid = &mut grid_search;
-            //            //println!(
-            //            //    "updating for block: {} player: {}, entity: {}",
-            //            //    server_block_id, owner_identity, owner_entity,
-            //            //);
-            //        }
-            //    }
-            //}
+
+            let Some((owner_entity, mut grid)) = owner_info else {
+                warn!(
+                    "No matching owner found for block {:?} with owner ID {:?}",
+                    server_block_id, owner_identity
+                );
+                continue;
+            };
 
             attach_link.player_entity = owner_entity;
 
             if !grid.block_position.contains_key(&block_pos) {
-                grid.block_position.insert(block_pos.clone(), block_entity);
+                grid.block_position.insert(block_pos, block_entity);
             }
 
-            // Update block offset to new grid
-            attach_link.grid_offset = block_pos; // NOTE: might be not necessary
-            
-
-            // TODO: Add if bots can take blocks from players
+            attach_link.grid_offset = block_pos;
         }
     }
 }

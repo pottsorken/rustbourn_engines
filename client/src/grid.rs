@@ -98,10 +98,6 @@ pub fn balance_player_grid(
 ) {
     if let Ok((player, player_entity, mut grid)) = player_query.get_single_mut() {
 
-        if let Some(next_pos) = grid.find_next_free_pos() {
-            grid.next_free_pos = next_pos;
-        }
-
         let mut to_detach: Vec<(i32, i32)> = Vec::new();
         let mut to_remove: Vec<(i32, i32)> = Vec::new();
         let player_identity = ctx_wrapper.ctx.identity();
@@ -157,7 +153,7 @@ pub fn balance_player_grid(
                             });
                         }
 
-                        increment_grid_pos(&mut grid);
+                        grid.next_free_pos = grid.find_next_free_pos().unwrap();
                         println!(
                             "Balanced block {:?} to ({}, {}) for player",
                             block_id, next_pos.0, next_pos.1
@@ -230,7 +226,7 @@ pub fn balance_opponents_grid(
                             });
                         }
 
-                        increment_grid_pos(&mut grid);
+                        grid.next_free_pos = grid.find_next_free_pos().unwrap();
                         println!(
                             "Rebalanced: inserted block {:?} at ({}, {})",
                             block_id, next_pos.0, next_pos.1
