@@ -350,14 +350,14 @@ pub struct MapConfig {
     pub map_size: TilemapSize,
     pub tile_size: TilemapTileSize,
     pub noise_scale: f32, 
-    pub tile_textures: [&'static str; 31], // Change this for the number of tiles in the list
+    pub tile_textures: [&'static str; 37], // Change this for the number of tiles in the list
     pub image_path: &'static str,
     pub safe_zone_size: f32,
 }
 
 /// Global constant config for the tilemap
 pub const MAP_CONFIG: MapConfig = MapConfig {
-    map_size: TilemapSize { x: 1024, y: 1024 },
+    map_size: TilemapSize { x: 2048, y: 2048 },
     tile_size: TilemapTileSize { x: 32.0, y: 32.0 }, // Change tile size here
     noise_scale: 0.1,
     tile_textures: [
@@ -391,11 +391,14 @@ pub const MAP_CONFIG: MapConfig = MapConfig {
         "sprites/tiles/water/water36.png",
         "sprites/tiles/water/water37.png",
         "sprites/tiles/water/water38.png",
-
-
-
-        "sprites/tiles/grass/grass01.png",
-        "sprites/tiles/grass/grass01.png",
+        "sprites/tiles/stone.png",
+        "sprites/tiles/dirt.png",
+        "sprites/tiles/lava.png",
+        "sprites/tiles/water-grass.png",
+        "sprites/tiles/water-stone.png",
+        "sprites/tiles/dirt-grass.png",
+        "sprites/tiles/dirt-stone.png",
+        "sprites/tiles/stone-grass.png",
     ],
     image_path: r"assets/testmap.png",
     safe_zone_size: 300.0,
