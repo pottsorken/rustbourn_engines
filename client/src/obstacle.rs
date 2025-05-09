@@ -16,10 +16,6 @@ pub fn setup_obstacle(
     let _window = window_query.get_single().unwrap();
     let obstacles = load_obstacles(&ctx_wrapper);
 
-    let world_map_size = Vec2::new(
-        MAP_CONFIG.map_size.x as f32 * MAP_CONFIG.tile_size.x / 2.0,
-        MAP_CONFIG.map_size.y as f32 * MAP_CONFIG.tile_size.y / 2.0,
-    );
     let mut counter = 0;
 
     for obstacle in obstacles {
@@ -27,9 +23,8 @@ pub fn setup_obstacle(
             break;
         }
         counter += 1;
-
-        let random_x = (random::<f32>() - 0.5) * world_map_size.x; // obstacle.0;
-        let random_y = (random::<f32>() - 0.5) * world_map_size.x; // obstacle.1;
+        let random_x = obstacle.0;
+        let random_y = obstacle.1;
         let obstacle_id = obstacle.2;
         let hp = obstacle.3;
 
