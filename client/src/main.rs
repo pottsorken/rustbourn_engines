@@ -110,7 +110,7 @@ fn main() {
                 despawn_opponents,
                 spawn_bots,
                 spawn_bot_blocks,
-                // update_bots,
+                update_nametags, // update_bots,
             )
                 .run_if(in_game_or_edit),
         )
