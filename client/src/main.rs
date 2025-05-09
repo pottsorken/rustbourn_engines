@@ -70,10 +70,10 @@ fn main() {
         .add_plugins(TilemapPlugin)
         .init_state::<GameState>()
         .insert_resource(DisplayQuality::Medium)
-        .insert_resource(Leaderboard::default())
+        //.insert_resource(Leaderboard::default())
         .insert_resource(Volume(7))
         .add_plugins((splash_plugin, menu_plugin, game_plugin)) //edit_plugin
-        .add_systems(Startup, (setup_camera, setup_scoreboard).chain())
+        .add_systems(Startup, (setup_camera,).chain())
         .add_systems(
             OnEnter(GameState::Game),
             (
@@ -83,36 +83,34 @@ fn main() {
                 setup_block,
                 setup_hook,
                 spawn_tags,
+                spawn_leaderboard,
             )
                 .chain(),
         )
-
-.add_systems(
-    Update,
-    (
-        player_movement,
-        update_block,
-        confine_player_movement,
-        camera_follow,
-        camera_zoom,
-        update_opponent_positions,
-        hook_collision_system,
-        hook_controls,
-        handle_obstacle_hit,
-        track_lifetime_system,
-        render_bots_from_db,
-        attach_objects,
-        attach_items,
-        update_opponent_hooks,
-        spawn_tracks_system,
-        track_lifetime_system,
-        spawn_opponent_tracks_system,
-        update_opponent_tracks,
-        handle_obstacle_hit,
-        check_grid_connectivity,
-    )
-    .run_if(in_game_or_edit), 
-)
+        .add_systems(
+            Update,
+            (
+                player_movement,
+                update_block,
+                confine_player_movement,
+                camera_follow,
+                camera_zoom,
+                update_opponent_positions,
+                hook_collision_system,
+                hook_controls,
+                handle_obstacle_hit,
+                track_lifetime_system,
+                render_bots_from_db,
+                attach_objects,
+                attach_items,
+                update_opponent_hooks,
+                spawn_tracks_system,
+                spawn_opponent_tracks_system,
+                update_opponent_tracks,
+                check_grid_connectivity,
+            )
+                .run_if(in_game_or_edit),
+        )
         .add_systems(
             Update,
             (

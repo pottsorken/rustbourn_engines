@@ -254,6 +254,24 @@ pub fn load_bots(ctx_wrapper: &CtxWrapper) -> Vec<(f32, f32, u64)> {
     bots
 }
 
+pub fn load_leaderboard(ctx_wrapper: &CtxWrapper) -> Vec<(f32, f32, u64)> {
+    println!("[DEBUG] object)",);
+    let bots: Vec<(f32, f32, u64)> = ctx_wrapper
+        .ctx
+        .db
+        .bots()
+        .iter()
+        .map(|bot| {
+            (
+                bot.position.coordinates.x,
+                bot.position.coordinates.y,
+                bot.id,
+            )
+        })
+        .collect();
+    bots
+}
+
 pub fn update_opponent_hooks(
     ctx_wrapper: Res<CtxWrapper>,
     mut commands: Commands,
