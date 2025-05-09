@@ -26,15 +26,15 @@ pub fn setup_block(
         }
         let num = rand::thread_rng().gen_range(0..=3);
 
-        commands.spawn((
-            Sprite {
-                custom_size: Some(BLOCK_CONFIG.size),
-                image: asset_server.load(BLOCK_CONFIG.path[num]),
-                ..default()
-            },
-            Transform::from_xyz(random_x, random_y, 1.0),
-            Block {},
-        ));
+        // commands.spawn((
+        //     Sprite {
+        //         custom_size: Some(BLOCK_CONFIG.size),
+        //         image: asset_server.load(BLOCK_CONFIG.path[num]),
+        //         ..default()
+        //     },
+        //     Transform::from_xyz(random_x, random_y, 1.0),
+        //     Block {},
+        // ));
     }
 }
 
