@@ -16,7 +16,13 @@ pub fn setup_obstacle(
     let _window = window_query.get_single().unwrap();
     let obstacles = load_obstacles(&ctx_wrapper);
 
+    let mut counter = 0;
+
     for obstacle in obstacles {
+        if counter >= OBSTACLE_CONFIG.count {
+            break;
+        }
+        counter += 1;
         let random_x = obstacle.0;
         let random_y = obstacle.1;
         let obstacle_id = obstacle.2;
