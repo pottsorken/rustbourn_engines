@@ -1,5 +1,6 @@
 use crate::module_bindings::*;
 use crate::{
+    block::SpawnedBlocks,
     common::{
         AttachedBlock, Block, CtxWrapper, Hook, HookCharge, HookRange, Obstacle, OpponentHook,
         Player, PlayerAttach, PlayerGrid, BLOCK_CONFIG, HOOK_CONFIG, OBSTACLE_CONFIG,HookAttach,
@@ -55,7 +56,7 @@ pub fn setup_hook(mut commands: Commands, asset_server: Res<AssetServer>) {
     commands.spawn((
         Sprite {
             custom_size: Some(Vec2::new(12.0, 26.0)),
-            color: Color::srgb(0.8, 0.4, 0.2),
+            color: Color::srgba(1.0, 0.0, 0.0, 0.4),
             anchor: bevy::sprite::Anchor::BottomCenter,
             ..default()
         },
@@ -166,7 +167,7 @@ pub fn hook_controls(
         if let Some((base_pos, rotation, length)) = range_update_info {
             range_transform.translation = base_pos;
             range_transform.rotation = rotation;
-            range_sprite.custom_size = Some(Vec2::new(12.0, length));
+            range_sprite.custom_size = Some(Vec2::new(25.0, length));
         } else {
             range_sprite.custom_size = Some(Vec2::ZERO);
         }
@@ -180,8 +181,11 @@ pub fn hook_collision_system(
         (Entity, &Transform, &mut Player, &mut PlayerGrid),
         (Without<Hook>, Without<Block>),
     >,
+    mut grid_query: Query<&mut PlayerGrid, Without<Player>>,
     attachable_blocks: Query<&PlayerAttach>,
     mut commands: Commands,
+    ctx_wrapper: Res<CtxWrapper>,
+    mut spawned_blocks: ResMut<SpawnedBlocks>,
 ) {
     let (hook_transform, sprite) = if let Ok(val) = hook_query.get_single() {
         val
@@ -211,18 +215,67 @@ pub fn hook_collision_system(
                     && attachable_blocks.get(block_entity).is_err()
                     && player.block_count < PLAYER_CONFIG.max_block_count
                 {
-                    let nextpos = grid.next_free_pos.clone();
+                    let nextpos = grid.find_next_free_pos().expect("No position found");
 
                     // NOTE: If block is attached or not. (Option<AttachedBlock>)
                     if let Some(mut attach_link) = attach_link_option {
-                        // TODO: Remove entity from previous owner hashmap
+                        // Remove grid_pos/block entity tuple from target grid
+                        //if let Ok((_target_ent, _target_tran, _target_play, mut target_grid)) =
+                        //    player_query.get(attach_link.player_entity)
+                        //{
+                        //    target_grid.block_position.remove(&attach_link.grid_offset);
+                        //    println!(
+                        //        "Stole block at: ({}, {}) from player",
+                        //        attach_link.grid_offset.0, attach_link.grid_offset.1
+                        //    );
+                        //     } else
+
+                        if let Ok(mut target_grid) = grid_query.get_mut(attach_link.player_entity) {
+                            target_grid.block_position.remove(&attach_link.grid_offset);
+                            println!(
+                                "Stole block at: ({}, {}) from bot or opp",
+                                attach_link.grid_offset.0, attach_link.grid_offset.1
+                            );
+                        }
+
+                        // Add grid_pos/block entity tuple to player grid
+                        grid.block_position.insert(nextpos, block_entity);
+                        println!("Add new block in gridpos: ({}, {})", nextpos.0, nextpos.1);
+
+                        // Update block ownership locally
                         attach_link.player_entity = player_entity;
                         attach_link.grid_offset = nextpos;
+
+                        // Update block ownership on server
+                        let id_block_db = spawned_blocks
+                            .entities
+                            .get(&block_entity)
+                            .expect("Failed lookup for block Entity->ServerID");
+                        ctx_wrapper.ctx.reducers().update_block_owner(
+                            id_block_db.clone(),
+                            OwnerType::Player(ctx_wrapper.ctx.identity()),
+                            nextpos.0,
+                            nextpos.1,
+                        ).unwrap();
                     } else {
                         commands.entity(block_entity).insert(AttachedBlock {
                             grid_offset: nextpos,
                             player_entity: player_entity,
                         });
+
+                        // Update the server as well
+                        let id_block_db = spawned_blocks
+                            .entities
+                            .get(&block_entity)
+                            .expect("Failed lookup for block Entity->ServerID");
+
+                        ctx_wrapper.ctx.reducers().update_block_owner(
+                            id_block_db.clone(),
+                            OwnerType::Player(ctx_wrapper.ctx.identity()),
+                            nextpos.0,
+                            nextpos.1,
+                        ).unwrap();
+
                     }
                     grid.block_position.insert(nextpos, block_entity);
                     block_transform.translation.x += 200_000.;
@@ -231,9 +284,10 @@ pub fn hook_collision_system(
                         grid.next_free_pos.0, grid.next_free_pos.1
                     );
                     // increment grid pos
-                    increment_grid_pos(&mut grid);
+                    //increment_grid_pos(&mut grid);
 
                     player.block_count += 1;
+                    ctx_wrapper.ctx.reducers().update_owner_grid(player.block_count, grid.next_free_pos.0, grid.next_free_pos.1).unwrap();
                 }
             }
         }

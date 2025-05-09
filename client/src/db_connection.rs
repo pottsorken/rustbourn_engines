@@ -57,11 +57,15 @@ pub fn update_bot_position(
     //println!("{}", player_transform.rotation.to_euler(EulerRot::XYZ).2);
 }
 
-pub fn setup_connection(mut commands: Commands, asset_server: Res<AssetServer>) {
-    // Connect to the database
-    let ctx = connect_to_db();
+pub fn db_setup() -> DbConnection{
+    connect_to_db()
+}
 
-    subscribe_to_tables(&ctx);
+pub fn setup_connection(mut commands: Commands, asset_server: Res<AssetServer>, ctx_wrapper: Res<CtxWrapper>) {
+    // Connect to the database
+    //let ctx = connect_to_db();
+
+    subscribe_to_tables(&ctx_wrapper.ctx);
 
     //// Register callbacks to run in re\sponse to database events
     //register_callbacks(&ctx);
@@ -70,9 +74,9 @@ pub fn setup_connection(mut commands: Commands, asset_server: Res<AssetServer>) 
     //subscribe_to_tables(&ctx);
     //
     // Spawn a thread, where the connection will process messages and invoke callbacks.
-    ctx.run_threaded();
+    ctx_wrapper.ctx.run_threaded();
 
-    commands.insert_resource(CtxWrapper { ctx });
+    //commands.insert_resource(CtxWrapper { ctx });
     // Handle CLI input
     //user_input_loop(&ctx);
 }
@@ -86,6 +90,7 @@ fn subscribe_to_tables(ctx: &DbConnection) {
             "SELECT * FROM player WHERE online=true",
             "SELECT * FROM obstacle",
             "SELECT * FROM bots",
+            "SELECT * FROM block",
         ]);
 }
 

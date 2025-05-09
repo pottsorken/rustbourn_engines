@@ -62,7 +62,7 @@ pub const BOT_CONFIG: BotConfig = BotConfig {
     size: Vec2::new(80.0, 80.0),
     path: "sprites/top-view/robot_3Dyellow.png",
     count: 3,
-    movement_speed: 200.0,
+    movement_speed: 20.0,
     rotation_speed: f32::to_radians(180.0),
 };
 
@@ -194,8 +194,8 @@ pub struct GridConfig {
 }
 // Global constant config for the player
 pub const GRID_CONFIG: GridConfig = GridConfig {
-    grid_size: (1, 1),
-    cell_size: 79.,
+    grid_size: (1, 10),
+    cell_size: 84.,
     next_free_pos: (-1, 0),
     capacity: 100,
     load: 0,

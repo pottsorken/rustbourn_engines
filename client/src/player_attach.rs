@@ -1,7 +1,8 @@
 use bevy::prelude::*;
 
+use crate::block::SpawnedBlocks;
 use crate::module_bindings::*;
-use crate::common::{AttachedBlock, Bot, Hook, Player, PlayerAttach, PlayerGrid, PLAYER_CONFIG, CtxWrapper};
+use crate::common::{AttachedBlock, Bot, Hook, Player, PlayerAttach, PlayerGrid, PLAYER_CONFIG, CtxWrapper, Opponent, Block};
 use spacetimedb_sdk::{
     credentials, DbContext, Error, Event, Identity, Status, Table, TableWithPrimaryKey,
 };
@@ -14,7 +15,13 @@ pub fn attach_objects(
         (Entity, &Transform, &PlayerGrid),
         (With<Bot>, (Without<Player>, Without<AttachedBlock>)),
     >,
-    mut param_set: ParamSet<(Query<(&AttachedBlock, &mut Transform), Without<Player>>,)>,
+    opponent_query: Query<
+        (Entity, &Transform, &PlayerGrid),
+        (With<Opponent>, Without<Player>, Without<Bot>),
+    >,
+    mut param_set: ParamSet<(
+        Query<(&AttachedBlock, &mut Transform), (Without<Player>, Without<Bot>, Without<Opponent>)>,
+    )>,
 ) {
     let mut block_query = param_set.p0();
     for (attach, mut transform) in block_query.iter_mut() {
@@ -26,6 +33,11 @@ pub fn attach_objects(
         for (bot_entity, bot_transform, bot_grid) in bot_query.iter() {
             if attach.player_entity == bot_entity {
                 update_slave_pos(&bot_transform, &bot_grid, &mut transform, &attach);
+            }
+        }
+        for (opp_entity, opp_transform, opp_grid) in opponent_query.iter() {
+            if attach.player_entity == opp_entity {
+                update_slave_pos(&opp_transform, &opp_grid, &mut transform, &attach);
             }
         }
     }
@@ -50,6 +62,65 @@ fn update_slave_pos(
     // Update position and rotation
     slave_transform.translation = owner_transform.translation + rotated_offset;
     slave_transform.rotation = owner_transform.rotation;
+}
+
+pub fn update_block_owner(
+    mut block_query: Query<(Entity, &mut AttachedBlock)>,
+    mut opponent_query: Query<
+        (Entity, &Opponent, &mut PlayerGrid),
+        (Without<AttachedBlock>, Without<Player>),
+    >,
+    mut player_query: Query<(Entity, &mut PlayerGrid), (With<Player>, Without<AttachedBlock>)>,
+    ctx_wrapper: Res<CtxWrapper>,
+    mut spawned_blocks: ResMut<SpawnedBlocks>,
+) {
+    for (block_entity, mut attach_link) in block_query.iter_mut() {
+        let Some(server_block_id) = spawned_blocks.entities.get(&block_entity) else {
+            warn!("Block entity {:?} not found in spawned_blocks", block_entity);
+            continue;
+        };
+
+        let Some(block_from_db) = ctx_wrapper
+            .ctx
+            .db
+            .block()
+            .id()
+            .find(server_block_id)
+        else {
+            warn!("Block with ID {:?} not found in DB", server_block_id);
+            continue;
+        };
+
+        let owner_identity_type = block_from_db.owner;
+        let block_pos = (block_from_db.offset_x, block_from_db.offset_y);
+
+        if let OwnerType::Player(owner_identity) = owner_identity_type {
+            let owner_info = if owner_identity == ctx_wrapper.ctx.identity() {
+                player_query.get_single_mut().ok()
+            } else {
+                opponent_query
+                    .iter_mut()
+                    .find(|(_, opponent, _)| opponent.id == owner_identity)
+                    .map(|(e, _, g)| (e, g))
+            };
+
+            let Some((owner_entity, mut grid)) = owner_info else {
+                warn!(
+                    "No matching owner found for block {:?} with owner ID {:?}",
+                    server_block_id, owner_identity
+                );
+                continue;
+            };
+
+            attach_link.player_entity = owner_entity;
+
+            if !grid.block_position.contains_key(&block_pos) {
+                grid.block_position.insert(block_pos, block_entity);
+            }
+
+            attach_link.grid_offset = block_pos;
+        }
+    }
 }
 
 pub fn attach_items(

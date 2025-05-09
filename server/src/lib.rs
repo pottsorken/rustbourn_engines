@@ -1,8 +1,9 @@
 use spacetimedb::{
-    reducer,
-    spacetimedb_lib::{db, identity},
-    table, DbContext, Identity, ReducerContext, SpacetimeType, Table, Timestamp,
+    reducer, spacetimedb_lib::{db, identity}, table, DbContext, Identity, Local, ReducerContext, SpacetimeType, Table, Timestamp
 };
+
+const N_BOTS: u64 = 3;
+const N_OBSTACLES: u64 = 200;
 
 use noise::{NoiseFn, Perlin};
 
@@ -16,6 +17,14 @@ pub struct Player {
     online: bool,
     hook: Hook,
     track: Track,
+    grid: Grid,
+}
+
+#[derive(Debug, SpacetimeType)]
+pub struct Grid {
+    load: i32,
+    next_free_x: i32,
+    next_free_y: i32,
 }
 
 /// Obstacle component data
@@ -60,6 +69,21 @@ pub struct Hook {
     width: f32,
     // Dynamicallt adjusted when extended
     height: f32,
+}
+#[spacetimedb::table(name = block, public)]
+pub struct Block {
+    offset_x: i32,
+    offset_y: i32,
+    #[primary_key]
+    id: u64,
+    owner: OwnerType,
+}
+
+#[derive(SpacetimeType, Clone, Debug, PartialEq)]
+pub enum OwnerType {
+    Bot(u64),
+    Player(Identity),
+    None,
 }
 
 /// Custom struct containing bevy transform data
@@ -195,6 +219,44 @@ pub fn update_player_position(
     }
 }
 
+#[spacetimedb::reducer]
+pub fn update_owner_grid(
+    ctx: &ReducerContext,
+    load: i32,
+    next_free_x: i32,
+    next_free_y: i32,
+) -> Result<(), String> {
+    if let Some(_player) = ctx.db.player().identity().find(ctx.sender) {
+        ctx.db.player().identity().update(Player {
+            grid: Grid {
+                load,
+                next_free_x,
+                next_free_y,
+            },
+            .._player
+        });
+        Ok(())
+    } else {
+        Err("Player not found".to_string())
+    }
+}
+
+#[spacetimedb::reducer]
+pub fn decrease_grid_load(
+    ctx: &ReducerContext,
+    identity: Identity,
+    load: i32,
+)-> Result<(), String>
+{
+    if let Some(mut player) = ctx.db.player().identity().find(identity){
+        player.grid.load = load;
+        ctx.db.player().identity().update(player);
+        Ok(())
+    } else{
+        Err("Player not found".to_string())
+    }
+}
+
 /// Reducer for updating a ("bot_id") specific bot position by sending the entity data contained in a transform. All data is sent in a custom "BevyTransform" struct, except "new_rotate_dir".
 /// Client invokes this reducer in "render_bots_from_db" function when updating the position of the bot sprite.
 #[spacetimedb::reducer]
@@ -293,6 +355,11 @@ pub fn player_connected(ctx: &ReducerContext) {
                 rotation: 0.0,
                 id: 0, 
             },
+            grid: Grid {
+                load: 0,
+                next_free_x: -1,
+                next_free_y: 0,
+            },
         });
     }
 }
@@ -330,6 +397,26 @@ pub fn server_startup(ctx: &ReducerContext) {
     generate_obstacles(ctx);
     // Generate bots in server.
     generate_bots(ctx);
+    generate_blocks(ctx);
+}
+
+#[spacetimedb::reducer]
+pub fn update_block_owner(
+    ctx: &ReducerContext,
+    block_id: u64,
+    new_owner: OwnerType,
+    offset_x: i32,
+    offset_y: i32,
+) -> Result<(), String> {
+    if let Some(mut block) = ctx.db.block().id().find(block_id) {
+        block.owner = new_owner;
+        block.offset_x = offset_x;
+        block.offset_y = offset_y;
+        ctx.db.block().id().update(block);
+        Ok(())
+    } else {
+        Err("Block does not exist".to_string())
+    }
 }
 
 // Function for generating bots in server.
@@ -365,6 +452,43 @@ fn generate_bots(ctx: &ReducerContext) {
 
 /// Function for generating obstacles in server.
 /// Server invokes this function in "server_startup" reducer during server initialization.
+fn generate_blocks(ctx: &ReducerContext) {
+    let blocks_per_bot = 10;
+    let grid_size = (1, 2); // num 2 does not matter
+    let mut block_id = 0;
+
+    for bot in 0..N_BOTS {
+        let mut pos = (-1, 0);
+
+        for block_num in 0..blocks_per_bot {
+            ctx.db.block().insert(Block {
+                id: block_id,
+                offset_x: pos.0,
+                offset_y: pos.1,
+                owner: OwnerType::Bot(bot),
+            });
+            block_id += 1;
+            increment_grid_pos(&mut pos, grid_size);
+        }
+    }
+}
+
+fn increment_grid_pos(grid_pos: &mut (i32, i32), grid_max: (i32, i32)) {
+    // increment grid pos
+    grid_pos.0 += 1;
+    if *grid_pos == (0, 0) {
+        grid_pos.0 += 1;
+    }
+    if grid_pos.0 > grid_max.0 {
+        grid_pos.0 -= 1;
+        grid_pos.0 = -grid_pos.0;
+        grid_pos.1 -= 1;
+    }
+
+    //grid.load += 1;
+    //player.block_count += 1;
+}
+
 fn generate_obstacles(ctx: &ReducerContext) {
     // Initialize 2 noise generators with different seeds.
     let perlin_x = Perlin::new(21);

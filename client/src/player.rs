@@ -1,8 +1,10 @@
+use crate::block::SpawnedBlocks;
 use crate::common::{
     AttachedBlock, Block, Obstacle, Opponent, Player, PlayerGrid, LastTrackPos, CtxWrapper, WaterTiles, DirtTiles, GrassTiles, StoneTiles, BLOCK_CONFIG, GRID_CONFIG,
     MAP_CONFIG, OBSTACLE_CONFIG, PLAYER_CONFIG, TRACK_CONFIG, MODIFIER_CONFIG,
 };
-use crate::db_connection::update_player_position;
+use crate::db_connection::{update_player_position};
+use crate::grid::increment_grid_pos;
 use crate::module_bindings::*;
 use crate::player_attach::*;
 use bevy::pbr::light_consts::lux::DIRECT_SUNLIGHT;
@@ -61,6 +63,45 @@ pub fn setup_player(
     ));
 }
 
+pub fn setup_blocks_player(
+    mut commands: Commands,
+    mut player_query: Query<(Entity, &mut PlayerGrid), With<Player>>,
+    asset_server: Res<AssetServer>,
+    ctx: Res<CtxWrapper>,
+    mut spawned_blocks: ResMut<SpawnedBlocks>,
+) {
+    let mut rng = rand::rng();
+    for (player_entity, mut grid) in player_query.iter_mut() {
+        for block in ctx.ctx.db.block().iter() {
+            if !spawned_blocks.ids.contains(&block.id) {
+                if let OwnerType::Player(owner) = block.owner {
+                    if owner == ctx.ctx.identity() {
+                        //println!("Spawning for Player: {}", player_entity,);
+                        let texture_index = rng.random_range(0..BLOCK_CONFIG.path.len());
+                        let block_entity = commands.spawn((
+                            Sprite {
+                                custom_size: Some(BLOCK_CONFIG.size),
+                                image: asset_server.load(BLOCK_CONFIG.path[texture_index]),
+                                ..default()
+                            },
+                            Transform::from_xyz(0., 0., 1.0),
+                            Block {},
+                            AttachedBlock {
+                                grid_offset: (block.offset_x, block.offset_y), //bot_grid.next_free_pos,
+                                player_entity,
+                            },
+                        ));
+                        // Increase next free position when loading from server
+                        grid.next_free_pos = grid.next_free_pos;
+                        //increment_grid_pos(&mut grid);
+                        spawned_blocks.ids.insert(block.id);
+                        spawned_blocks.entities.insert(block_entity.id(), block.id);
+                    }
+                }
+            }
+        }
+    }
+}
 pub fn player_movement(
     keyboard_input: Res<ButtonInput<KeyCode>>,
     mut block_query: Query<(Entity, &Transform), (With<Block>, Without<AttachedBlock>)>,
