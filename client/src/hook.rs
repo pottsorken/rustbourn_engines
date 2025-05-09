@@ -2,8 +2,8 @@ use crate::module_bindings::*;
 use crate::{
     common::{
         AttachedBlock, Block, CtxWrapper, Hook, HookCharge, HookRange, Obstacle, OpponentHook,
-        Player, PlayerAttach, PlayerGrid, BLOCK_CONFIG, HOOK_CONFIG, OBSTACLE_CONFIG,
-        PLAYER_CONFIG,
+        Player, PlayerAttach, PlayerGrid, BLOCK_CONFIG, HOOK_CONFIG, OBSTACLE_CONFIG,HookAttach,
+        PLAYER_CONFIG, HookHead,
     },
     db_connection::load_obstacles,
     grid::increment_grid_pos,
@@ -39,6 +39,21 @@ pub fn setup_hook(mut commands: Commands, asset_server: Res<AssetServer>) {
 
     commands.spawn((
         Sprite {
+            custom_size: Some(HOOK_CONFIG.hook_head_size),
+            image: asset_server.load(HOOK_CONFIG.hook_head),
+            anchor: bevy::sprite::Anchor::BottomCenter,
+            ..default()
+        },
+        Transform::from_xyz(0.0, 0.0, 0.0),
+        HookHead,
+       
+        HookAttach  {
+            offset: Vec2::new(3.0, -15.0),
+        },
+    ));
+
+    commands.spawn((
+        Sprite {
             custom_size: Some(Vec2::new(12.0, 26.0)),
             color: Color::srgb(0.8, 0.4, 0.2),
             anchor: bevy::sprite::Anchor::BottomCenter,
@@ -54,11 +69,18 @@ pub fn hook_controls(
     mut query: ParamSet<(
         Query<(&mut Sprite, &mut Transform, &Hook, &mut HookCharge)>,
         Query<(&mut Sprite, &mut Transform), With<HookRange>>,
+        Query<(&mut Transform, &HookAttach), With<HookHead>>, 
     )>,
+   
+
+    //mut head_query: Query<(&mut Transform, &HookAttach), With<HookHead>>,
     time: Res<Time>,
     ctx: Res<CtxWrapper>,
 ) {
     let mut range_update_info: Option<(Vec3, Quat, f32)> = None;
+
+    let mut rope_tip_position: Option<(Vec3, Quat, f32)> = None;//new shit
+
 
     for (mut sprite, mut transform, hook, mut charge) in query.p0().iter_mut() {
         if keyboard_input.pressed(KeyCode::Space) && charge.target_length == 0.0 {
@@ -70,6 +92,8 @@ pub fn hook_controls(
             let rotation = transform.rotation;
 
             range_update_info = Some((start_pos, rotation, estimated_range));
+            
+
         }
 
         if keyboard_input.just_released(KeyCode::Space) {
@@ -79,6 +103,7 @@ pub fn hook_controls(
         }
 
         let current_height = sprite.custom_size.unwrap().y;
+        let mut new_height = current_height;
 
         if charge.target_length > 0.0 {
             let next_height = (current_height + HOOK_CONFIG.extend_speed * time.delta_secs())
@@ -114,8 +139,28 @@ pub fn hook_controls(
                 .reducers()
                 .update_hook_movement(ctx.ctx.identity(), old_size.x, next_height)
                 .unwrap();
+
+                rope_tip_position = Some((
+                    transform.translation,
+                    transform.rotation,
+                    sprite.custom_size.unwrap().y,
+                ));
+        }
+        rope_tip_position = Some((
+            transform.translation,
+            transform.rotation,
+            sprite.custom_size.unwrap().y,
+        ));
+    
+    }
+    if let Some((base_pos, rotation, rope_length)) = rope_tip_position {
+        let rope_tip = base_pos + rotation * Vec3::Y * rope_length;
+        for (mut head_transform, attach) in query.p2().iter_mut() {
+            head_transform.translation = rope_tip + rotation * Vec3::from((attach.offset, 0.0));
+            head_transform.rotation = rotation;
         }
     }
+
 
     for (mut range_sprite, mut range_transform) in query.p1().iter_mut() {
         if let Some((base_pos, rotation, length)) = range_update_info {

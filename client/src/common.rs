@@ -83,6 +83,12 @@ pub struct PlayerAttach {
 }
 
 #[derive(Component)]
+pub struct HookAttach {
+    pub offset: Vec2,
+}
+
+
+#[derive(Component)]
 pub struct PlayerGrid {
     pub block_position: HashMap<(i32, i32), Entity>,
     pub grid_size: (i32, i32),
@@ -251,9 +257,15 @@ pub struct HookCharge {
 pub struct HookRange;
 
 #[derive(Component)]
+pub struct HookHead;
+
+
+#[derive(Component)]
 pub struct HookConfig {
     pub hook_size: Vec2,
     pub hook_path: &'static str,
+    pub hook_head_size: Vec2,
+    pub hook_head: &'static str,
     pub hook_speed: f32,
     pub hook_max_range: f32,
     pub extend_speed: f32,
@@ -263,14 +275,16 @@ pub struct HookConfig {
 }
 
 pub const HOOK_CONFIG: HookConfig = HookConfig {
-    hook_size: Vec2::new(25.0, 0.0),
-    hook_path: "sprites/GrapplingHook.png",
+    hook_size: Vec2::new(80.0, 0.0),
+    hook_path: "sprites/rope.png",
+    hook_head: "sprites/head.png",
+    hook_head_size: Vec2::new(50.0, 30.0),
     hook_speed: 500.0,
     hook_max_range: 400.0,
     extend_speed: 500.0,
     retract_speed: 500.0, // Could use hook_speed here too
     hook_radius: 5.0,
-    player_attach_offset: Vec2::new(0.0, 20.0),
+    player_attach_offset: Vec2::new(0.0, 0.0),
 };
 
 //
