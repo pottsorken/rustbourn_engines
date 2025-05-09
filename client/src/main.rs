@@ -44,6 +44,7 @@ use map::setup_tilemap;
 use opponent::despawn_opponents;
 use player::{player_movement, setup_player};
 use common::*;
+use leaderboard::{spawn_leaderboard, update_leaderboard_position};
 
 
 fn main() {
@@ -59,14 +60,14 @@ fn main() {
         .add_plugins(TilemapPlugin)
         .init_state::<GameState>()
         .insert_resource(DisplayQuality::Medium)
-        .insert_resource(Leaderboard::default())
+        //.insert_resource(Leaderboard::default())
         .insert_resource(Volume(7))
         .add_plugins((splash_plugin, menu_plugin, game_plugin, edit_plugin))
         .add_systems(
             Startup,
             (
                 setup_camera,
-                setup_scoreboard,
+                /////setup_scoreboard,
             )
             .chain(),
         )
@@ -78,6 +79,7 @@ fn main() {
                 setup_tilemap,
                 setup_block,
                 setup_hook,
+                spawn_leaderboard,
             )
                 .chain()
         )
@@ -89,6 +91,7 @@ fn main() {
                 confine_player_movement,
                 camera_follow,
                 camera_zoom,
+                //update_leaderboard_position,
                 update_opponent_positions,
                 hook_collision_system,
                 hook_controls,
@@ -97,6 +100,7 @@ fn main() {
                 attach_items,
                 update_opponent_hooks,
                 handle_obstacle_hit,
+                
             ) .run_if(in_game_or_edit),
         )
         .add_systems(
