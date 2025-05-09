@@ -76,39 +76,10 @@ pub fn spawn_tags(mut commands: Commands) {
         });
 }
 
-fn spawn_text(commands: &mut Commands, name: &str) {
-    let box_size = Vec2::new(180.0, 40.0);
-    let box_position = Vec2::new(0.0, -250.0);
-    commands
-        .spawn((
-            Sprite::from_color(Color::rgba(0.25, 0.25, 0.55, 0.5), box_size),
-            Transform::from_translation(box_position.extend(30.0)),
-            PlayerAttach {
-                offset: Vec2::new(0., -40.),
-            },
-        ))
-        .with_children(|builder| {
-            builder.spawn((
-                Text2d::new("Lorem Ipsum"),
-                TextFont {
-                    font_size: 15.0,
-                    //font_color: TextColor::BLACK,
-                    ..default()
-                },
-                TextLayout::new(JustifyText::Left, LineBreak::WordBoundary),
-                // Wrap text in the rectangle
-                TextBounds::from(box_size),
-                TextColor::BLACK,
-                // Ensure the text is drawn on top of the box
-                Transform::from_translation(Vec3::Z),
-            ));
-        });
-}
-
 pub fn spawn_opponent_nametag(
-    commands: &mut Commands,
+    mut commands: &mut Commands,
     asset_server: &Res<AssetServer>,
-    existing_nametags_query: &Query<&OpponentHook>,
+    existing_nametags_query: &Query<&OpponentNametag>,
     opponent_id: &Identity,
     local_player_id: &Identity,
     x: f32,
@@ -125,17 +96,7 @@ pub fn spawn_opponent_nametag(
             return; // Hook already exists
         }
     }
-
-    commands.spawn((
-        Sprite {
-            custom_size: Some(HOOK_CONFIG.hook_size),
-            image: asset_server.load(HOOK_CONFIG.hook_path),
-            anchor: bevy::sprite::Anchor::BottomCenter,
-            ..default()
-        },
-        Transform::from_xyz(x, y, 5.0),
-        OpponentHook { id: *opponent_id },
-    ));
+    spawn_text(&mut commands, "Lorem Ipsum", opponent_id);
 }
 
 pub fn update_nametags(
@@ -143,7 +104,7 @@ pub fn update_nametags(
     mut commands: Commands,
     asset_server: Res<AssetServer>,
     mut query: Query<(&mut Sprite, &mut Transform, &OpponentHook), With<OpponentHook>>,
-    existing_hooks_query: Query<&OpponentHook>,
+    existing_nametags_query: Query<&OpponentNametag>,
     despawn_query: Query<(Entity, &OpponentHook)>,
 ) {
     let players = ctx_wrapper.ctx.db.player().iter().collect::<Vec<_>>();
@@ -155,24 +116,24 @@ pub fn update_nametags(
         spawn_opponent_nametag(
             &mut commands,
             &asset_server,
-            &existing_hooks_query,
+            &existing_nametags_query,
             &player_id,
             &local_player_id,
             player.hook.position.x,
             player.hook.position.y,
         );
 
-        update_opponent_nametag(
-            &mut query,
-            &player_id,
-            player.hook.position.x,
-            player.hook.position.y,
-            player.hook.rotation,
-        );
+        //update_opponent_nametag(
+        //    &mut query,
+        //    &player_id,
+        //    player.hook.position.x,
+        //    player.hook.position.y,
+        //    player.hook.rotation,
+        //);
     }
 }
 
-pub fn update_opponent_nametag(
+fn update_opponent_nametag(
     query: &mut Query<(&mut Sprite, &mut Transform, &OpponentHook), With<OpponentHook>>,
     id: &Identity,
     x: f32,
@@ -186,4 +147,32 @@ pub fn update_opponent_nametag(
             transform.rotation = Quat::from_rotation_z(rotation).normalize();
         }
     }
+}
+fn spawn_text(commands: &mut Commands, name: &str, opponent_id: &Identity) {
+    let box_size = Vec2::new(180.0, 40.0);
+    let box_position = Vec2::new(0.0, -250.0);
+    commands
+        .spawn((
+            Sprite::from_color(Color::rgba(0.85, 0.05, 0.05, 0.5), box_size),
+            Transform::from_translation(box_position.extend(30.0)),
+            PlayerAttach {
+                offset: Vec2::new(0., -40.),
+            },
+        ))
+        .with_children(|builder| {
+            builder.spawn((
+                Text2d::new(name),
+                TextFont {
+                    font_size: 15.0,
+                    ..default()
+                },
+                TextLayout::new(JustifyText::Left, LineBreak::WordBoundary),
+                TextBounds::from(box_size),
+                TextColor::from(Color::srgb(0.99, 0., 0.)),
+                Transform::from_translation(Vec3::Z),
+                OpponentNametag {
+                    id: opponent_id.clone(),
+                }, // To not double spawn
+            ));
+        });
 }

@@ -125,6 +125,7 @@ fn main() {
                 setup_blocks_player,
                 spawn_bot_blocks,
                 setup_blocks_opponent,
+                update_nametags, // update_bots,
             )
                 .run_if(in_game_or_edit),
         )

@@ -231,6 +231,10 @@ pub struct Opponent {
 // === Nametags defined constraints ===
 //
 
+#[derive(Component)]
+pub struct OpponentNametag {
+    pub id: Identity, // Match with the opponent's identity
+}
 //pub const TEXT_TAG_FONT: TextFont = TextFont {
 //    font_size: 50.0,
 //    ..default()
