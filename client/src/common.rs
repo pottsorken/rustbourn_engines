@@ -336,8 +336,8 @@ pub struct ObstacleConfig {
 
 // Global constant config for the player
 pub const OBSTACLE_CONFIG: ObstacleConfig = ObstacleConfig {
-    size: Vec2::new(80.0, 80.0),
-    count: 1000,
+    size: Vec2::new(280.0, 280.0),
+    count: 1,
     path: "sprites/Obstacles/obstacle_rock.png",
 };
 
@@ -349,7 +349,7 @@ pub const OBSTACLE_CONFIG: ObstacleConfig = ObstacleConfig {
 pub struct MapConfig {
     pub map_size: TilemapSize,
     pub tile_size: TilemapTileSize,
-    pub noise_scale: f32, // Grid size == tile size
+    pub noise_scale: f32, 
     pub tile_textures: [&'static str; 22], // Change this for the number of tiles in the list
     pub image_path: &'static str,
     pub safe_zone_size: f32,
