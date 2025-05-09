@@ -1,6 +1,7 @@
 use crate::block::SpawnedBlocks;
 use crate::common::{CtxWrapper, Player, CAMERA_CONFIG};
 use crate::common::{Leaderboard, Player, CAMERA_CONFIG, LEADRERBOARD_CONFIG};
+use crate::common::{Leaderboard, Player, CAMERA_CONFIG, LEADRERBOARD_CONFIG};
 use crate::grid::get_block_count;
 use bevy::prelude::*;
 use spacetimedb_sdk::DbContext;
@@ -45,7 +46,7 @@ pub fn camera_zoom(
     let player_block_count =
         get_block_count(ctx_wrapper.ctx.identity(), &ctx_wrapper, &spawned_blocks);
 
-    if let Ok(player) = player_query.get_single() {
+    if let Ok(player) = param_set.p0().get_single() {
         let target_zoom = CAMERA_CONFIG.zoom_base
             + (player_block_count / CAMERA_CONFIG.zoom_after_blocks) as f32
                 * CAMERA_CONFIG.zoom_per_blocks;

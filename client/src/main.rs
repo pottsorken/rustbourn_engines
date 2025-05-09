@@ -65,6 +65,7 @@ use map::setup_tilemap;
 use opponent::{despawn_opponents, setup_blocks_opponent, spawn_opponent_tracks_system};
 use player::{player_movement, setup_blocks_player, setup_player};
 use track_spawner::{spawn_tracks_system, track_lifetime_system};
+use leaderboard::{spawn_leaderboard, update_leaderboard_position};
 
 fn main() {
     App::new()
