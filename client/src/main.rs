@@ -65,7 +65,7 @@ fn main() {
         .init_state::<GameState>()
         .insert_resource(DisplayQuality::Medium)
         .insert_resource(Volume(7))
-        .add_plugins((splash_plugin, menu_plugin, game_plugin, edit_plugin))
+        .add_plugins((splash_plugin, menu_plugin, game_plugin)) //edit_plugin
         .add_systems(Startup, (setup_camera,).chain())
         .add_systems(
             OnEnter(GameState::Game),
@@ -100,6 +100,7 @@ fn main() {
                 track_lifetime_system,
                 spawn_opponent_tracks_system,
                 update_opponent_tracks,
+                update_nametags_positions,
             )
                 .run_if(in_game_or_edit),
         )
@@ -110,7 +111,7 @@ fn main() {
                 despawn_opponents,
                 spawn_bots,
                 spawn_bot_blocks,
-                update_nametags, // update_bots,
+                update_nametags_content, // update_bots,
             )
                 .run_if(in_game_or_edit),
         )

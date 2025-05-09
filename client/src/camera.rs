@@ -1,11 +1,8 @@
-use bevy::prelude::*;
 use crate::common::{Player, CAMERA_CONFIG};
+use bevy::prelude::*;
 
 pub fn setup_camera(mut commands: Commands) {
-    commands.spawn((
-        Camera2d,
-        Transform::from_xyz(0.0, 0.0, 999.9),
-    ));
+    commands.spawn((Camera2d, Transform::from_xyz(0.0, 0.0, 999.9)));
 }
 
 pub fn camera_follow(
@@ -35,7 +32,9 @@ pub fn camera_zoom(
     time: Res<Time>,
 ) {
     if let Ok(player) = player_query.get_single() {
-        let target_zoom = CAMERA_CONFIG.zoom_base + (player.block_count / CAMERA_CONFIG.zoom_after_blocks) as f32 * CAMERA_CONFIG.zoom_per_blocks;
+        let target_zoom = CAMERA_CONFIG.zoom_base
+            + (player.block_count / CAMERA_CONFIG.zoom_after_blocks) as f32
+                * CAMERA_CONFIG.zoom_per_blocks;
 
         for mut projection in camera_query.iter_mut() {
             projection.scale = projection.scale.lerp(target_zoom, time.delta_secs() * 1.5);

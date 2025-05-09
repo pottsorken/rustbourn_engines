@@ -1,9 +1,9 @@
 // Information from:
 // https://bevyengine.org/examples/games/game-menu/
 
+use crate::common::*;
 use bevy::prelude::*;
 use bevy::{app::AppExit, color::palettes::css::CRIMSON, prelude::*};
-use crate::common::*;
 
 pub const TEXT_COLOR: Color = Color::srgb(0.9, 0.9, 0.9);
 pub const BACKGROUND_COLOR: Color = Color::srgb(0.498, 0.498, 0.498);
@@ -14,13 +14,10 @@ pub const HOVERED_BUTTON: Color = Color::srgb(0.25, 0.25, 0.25);
 pub const HOVERED_PRESSED_BUTTON: Color = Color::srgb(0.25, 0.65, 0.25);
 pub const PRESSED_BUTTON: Color = Color::srgb(0.35, 0.75, 0.35);
 
-
-
 // ###################################### SPLASH ##########################################
 
 pub fn splash_plugin(app: &mut App) {
-    app
-        .add_systems(OnEnter(GameState::Splash), splash_setup)
+    app.add_systems(OnEnter(GameState::Splash), splash_setup)
         .add_systems(Update, countdown.run_if(in_state(GameState::Splash)))
         .add_systems(OnExit(GameState::Splash), despawn_screen::<OnSplashScreen>);
 }
@@ -29,39 +26,39 @@ pub fn splash_setup(mut commands: Commands, asset_server: Res<AssetServer>) {
     let icon = asset_server.load("screens/splashscreen.png");
     // Display the logo on splash screen
     commands
-    .spawn((
-        Node {
-            width: Val::Percent(100.0),
-            height: Val::Percent(100.0),
-            // width: Val::Px(100.0),
-            // height: Val::Px(100.0),
-            align_items: AlignItems::Center,
-            justify_content: JustifyContent::Center,
-            ..default()
-        },
-        OnSplashScreen,
-        BackgroundColor(SPLASH_COLOR),
-    ))
-    .with_children(|parent| {
-        parent
-            .spawn(Node {
-                flex_direction: FlexDirection::Column,
-                align_items: AlignItems::Center,
+        .spawn((
+            Node {
                 width: Val::Percent(100.0),
                 height: Val::Percent(100.0),
+                // width: Val::Px(100.0),
+                // height: Val::Px(100.0),
+                align_items: AlignItems::Center,
+                justify_content: JustifyContent::Center,
                 ..default()
-            })
-            .with_children(|parent| {
-                parent.spawn((
-                    ImageNode::new(icon),
-                    Node {
-                        width: Val::Px(200.0), // Size of splash logo
-                        margin: UiRect::all(Val::Percent(20.0)), // How far from the top the splash logo is placed
-                        ..default()
-                    },
-                ));
-            });
-    });
+            },
+            OnSplashScreen,
+            BackgroundColor(SPLASH_COLOR),
+        ))
+        .with_children(|parent| {
+            parent
+                .spawn(Node {
+                    flex_direction: FlexDirection::Column,
+                    align_items: AlignItems::Center,
+                    width: Val::Percent(100.0),
+                    height: Val::Percent(100.0),
+                    ..default()
+                })
+                .with_children(|parent| {
+                    parent.spawn((
+                        ImageNode::new(icon),
+                        Node {
+                            width: Val::Px(200.0),                   // Size of splash logo
+                            margin: UiRect::all(Val::Percent(20.0)), // How far from the top the splash logo is placed
+                            ..default()
+                        },
+                    ));
+                });
+        });
 
     commands.insert_resource(SplashTimer(Timer::from_seconds(2.0, TimerMode::Once)));
 }
@@ -76,7 +73,6 @@ pub fn countdown(
     }
 }
 
-
 // ###################################### GAME ##########################################
 
 pub fn game_plugin(app: &mut App) {
@@ -85,18 +81,17 @@ pub fn game_plugin(app: &mut App) {
 }
 
 pub fn game_setup(mut commands: Commands) {
-    commands.spawn(Camera2dBundle::default());
-    commands
-        .spawn((
-            Node {
-                width: Val::Percent(100.0),
-                height: Val::Percent(100.0),
-                align_items: AlignItems::Center,
-                justify_content: JustifyContent::Center,
-                ..default()
-            },
-            OnGameScreen,
-        ));
+    //commands.spawn(Camera2dBundle::default());
+    //commands.spawn((
+    //    Node {
+    //        width: Val::Percent(100.0),
+    //        height: Val::Percent(100.0),
+    //        align_items: AlignItems::Center,
+    //        justify_content: JustifyContent::Center,
+    //        ..default()
+    //    },
+    //    OnGameScreen,
+    //));
 }
 
 // ###################################### MENU ##########################################
@@ -397,10 +392,7 @@ pub fn display_settings_menu_setup(mut commands: Commands, display_quality: Res<
                         ))
                         .with_children(|parent| {
                             // Display a label for the current setting
-                            parent.spawn((
-                                Text::new("Display Quality"),
-                                button_text_style.clone(),
-                            ));
+                            parent.spawn((Text::new("Display Quality"), button_text_style.clone()));
                             // Display a button for each possible value
                             for quality_setting in [
                                 DisplayQuality::Low,
@@ -520,45 +512,43 @@ pub fn sound_settings_menu_setup(mut commands: Commands, volume: Res<Volume>) {
         });
 }
 
-    pub fn menu_action(
-        interaction_query: Query<
-            (&Interaction, &MenuButtonAction),
-            (Changed<Interaction>, With<Button>),
-        >,
-        mut app_exit_events: EventWriter<AppExit>,
-        mut menu_state: ResMut<NextState<MenuState>>,
-        mut game_state: ResMut<NextState<GameState>>,
-    ) {
-        for (interaction, menu_button_action) in &interaction_query {
-            if *interaction == Interaction::Pressed {
-                match menu_button_action {
-                    MenuButtonAction::Quit => {
-                        app_exit_events.send(AppExit::Success);
-                    }
-                    MenuButtonAction::Play => {
-                        game_state.set(GameState::Game);
-                        menu_state.set(MenuState::Disabled);
-                    }
-                    MenuButtonAction::Settings => menu_state.set(MenuState::Settings),
-                    MenuButtonAction::SettingsDisplay => {
-                        menu_state.set(MenuState::SettingsDisplay);
-                    }
-                    MenuButtonAction::SettingsSound => {
-                        menu_state.set(MenuState::SettingsSound);
-                    }
-                    MenuButtonAction::BackToMainMenu => menu_state.set(MenuState::Main),
-                    MenuButtonAction::BackToSettings => {
-                        menu_state.set(MenuState::Settings);
-                    }
+pub fn menu_action(
+    interaction_query: Query<
+        (&Interaction, &MenuButtonAction),
+        (Changed<Interaction>, With<Button>),
+    >,
+    mut app_exit_events: EventWriter<AppExit>,
+    mut menu_state: ResMut<NextState<MenuState>>,
+    mut game_state: ResMut<NextState<GameState>>,
+) {
+    for (interaction, menu_button_action) in &interaction_query {
+        if *interaction == Interaction::Pressed {
+            match menu_button_action {
+                MenuButtonAction::Quit => {
+                    app_exit_events.send(AppExit::Success);
+                }
+                MenuButtonAction::Play => {
+                    game_state.set(GameState::Game);
+                    menu_state.set(MenuState::Disabled);
+                }
+                MenuButtonAction::Settings => menu_state.set(MenuState::Settings),
+                MenuButtonAction::SettingsDisplay => {
+                    menu_state.set(MenuState::SettingsDisplay);
+                }
+                MenuButtonAction::SettingsSound => {
+                    menu_state.set(MenuState::SettingsSound);
+                }
+                MenuButtonAction::BackToMainMenu => menu_state.set(MenuState::Main),
+                MenuButtonAction::BackToSettings => {
+                    menu_state.set(MenuState::Settings);
                 }
             }
         }
     }
+}
 
 pub fn despawn_screen<T: Component>(to_despawn: Query<Entity, With<T>>, mut commands: Commands) {
     for entity in &to_despawn {
         commands.entity(entity).despawn_recursive();
     }
 }
-
-
