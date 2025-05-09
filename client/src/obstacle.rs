@@ -64,4 +64,3 @@ pub fn setup_obstacle(
         ));
     }
 }
-

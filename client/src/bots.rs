@@ -10,6 +10,7 @@ use bevy::prelude::*;
 use rand::Rng;
 use spacetimedb_sdk::Identity;
 use std::collections::HashMap;
+use crate::{MAP_CONFIG, WaterTiles};
 
 pub fn spawn_bots(
     mut commands: Commands,
@@ -55,6 +56,7 @@ pub fn spawn_bots(
 pub fn render_bots_from_db(
     mut query: Query<(&mut Transform, &Bot), Without<Obstacle>>,
     ctx_wrapper: Res<CtxWrapper>,
+     water_tiles: Res<WaterTiles>,
     obstacle_query: Query<&Transform, With<Obstacle>>,
     time: Res<Time>, // Time resource for movement speed calculation
 ) {
@@ -81,7 +83,7 @@ pub fn render_bots_from_db(
             let front_direction = transform.rotation * Vec3::new(1.0, 0.0, 0.0);
             let front_pos = transform.translation + front_direction * BOT_CONFIG.size.x; // Adjust distance
 
-            if !will_collide(front_pos.truncate(), &obstacle_query) {
+            if !will_collide(front_pos.truncate(), &obstacle_query, &water_tiles) {
                 // If no collision, update the bot's position
                 transform.translation = new_pos;
                 //println!(
@@ -101,8 +103,8 @@ pub fn render_bots_from_db(
                 let left_pos = transform.translation + left_direction * BOT_CONFIG.size.x;
                 let right_pos = transform.translation + right_direction * BOT_CONFIG.size.x;
 
-                let left_clear = !will_collide(left_pos.truncate(), &obstacle_query);
-                let right_clear = !will_collide(right_pos.truncate(), &obstacle_query);
+                let left_clear = !will_collide(front_pos.truncate(), &obstacle_query, &water_tiles);
+                let right_clear = !will_collide(front_pos.truncate(), &obstacle_query, &water_tiles);
 
                 // Decide which direction to go
                 if left_clear && !right_clear {
@@ -248,12 +250,43 @@ pub fn update_bots(
 pub fn will_collide(
     new_pos: bevy::prelude::Vec2,
     obstacles: &Query<&Transform, With<Obstacle>>,
+    water_tiles: &WaterTiles,
 ) -> bool {
     let player_radius = BOT_CONFIG.size.x.min(BOT_CONFIG.size.y) / 2.0;
     let obstacle_radius = OBSTACLE_CONFIG.size.x.min(OBSTACLE_CONFIG.size.y) / 2.0;
     let collision_distance = player_radius + obstacle_radius;
 
-    obstacles
+    //obstacle collision check
+    if obstacles
         .iter()
         .any(|transform| new_pos.distance(transform.translation.truncate()) < collision_distance)
+    {
+        return true;
+    }
+
+    // water collision check
+    let half_size = BOT_CONFIG.size / 2.0;
+
+    let left = new_pos.x - half_size.x;
+    let right = new_pos.x + half_size.x;
+    let bottom = new_pos.y - half_size.y;
+    let top = new_pos.y + half_size.y;
+
+    let tile_size = MAP_CONFIG.tile_size;
+
+    let tile_x_start = ((left + (MAP_CONFIG.map_size.x as f32 * tile_size.x) / 2.0) / tile_size.x).floor() as u32;
+    let tile_x_end = ((right + (MAP_CONFIG.map_size.x as f32 * tile_size.x) / 2.0) / tile_size.x).floor() as u32;
+    let tile_y_start = ((bottom + (MAP_CONFIG.map_size.y as f32 * tile_size.y) / 2.0) / tile_size.y).floor() as u32;
+    let tile_y_end = ((top + (MAP_CONFIG.map_size.y as f32 * tile_size.y) / 2.0) / tile_size.y).floor() as u32;
+
+    for x in tile_x_start..=tile_x_end {
+        for y in tile_y_start..=tile_y_end {
+            if water_tiles.positions.contains(&(x, y)) {
+                return true;
+            }
+        }
+    }
+
+    false
 }
+
