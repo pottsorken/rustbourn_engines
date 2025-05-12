@@ -250,7 +250,7 @@ pub struct MapConfig {
     pub map_size: TilemapSize,
     pub tile_size: TilemapTileSize,
     pub noise_scale: f32, 
-    pub tile_textures: [&'static str; 37], // Change this for the number of tiles in the list
+    pub tile_textures: [&'static str; 86], // Change this for the number of tiles in the list
     pub image_path: &'static str,
     pub safe_zone_size: f32,
 }
