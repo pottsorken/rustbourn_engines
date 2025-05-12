@@ -74,30 +74,30 @@ pub fn setup_tilemap(
                 rng.gen_range(20..29)
             // STONE
             } else if r <= 20 && g <= 20 && b <= 20  {
-                29
+                rng.gen_range(29..38)
             // DIRT
             } else if r >= 230 && g >= 230 && b >= 230  {
-                30
+                rng.gen_range(38..48)
             // LAVA 
             } else if r >= 230 && g <= 20 && b <= 20  {
-                31
+                rng.gen_range(48..58)
             // WATER-GRASS
             } else if r <= 20 && g >= 230 && b >= 230  {
-                32
+                rng.gen_range(58..62)
             // WATER-STONE
             } else if r >= 230 && g <= 20 && b >= 230 {
-                33
+                rng.gen_range(62..67)
             // DIRT-GRASS
             } else if r >= 230 && g >= 230 && b <= 20  {
-                34
+                rng.gen_range(67..77)
             // DIRT-STONE
             } else if r <= 200 && r >= 100 && g <= 200 && g >= 100 && b <= 200 && b >= 100  {
-                35
+                rng.gen_range(77..81)
             // STONE-GRASS
             } else if r <= 70 && r >= 30 && g <= 70 && g >= 30 && b <= 70 && b >= 30  {
-                36
+                rng.gen_range(81..86)
             } else {
-                31
+                49
             };
 
             // if g == 255 {
