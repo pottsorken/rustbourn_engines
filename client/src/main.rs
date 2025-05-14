@@ -1,14 +1,15 @@
 // Game engine
+use bevy::{app::AppExit, color::palettes::css::CRIMSON, prelude::*};
 use bevy::{prelude::*, ui::update};
 use bevy_ecs_tilemap::prelude::*;
 use noisy_bevy::simplex_noise_2d; // For map generation. May be temporary
-use bevy::{app::AppExit, color::palettes::css::CRIMSON, prelude::*};
 
 mod block;
 mod bots;
 mod camera;
 mod common;
 mod db_connection;
+mod edit_menu;
 mod grid;
 mod hook;
 mod map;
@@ -19,17 +20,20 @@ mod parse;
 mod player;
 mod player_attach;
 mod start_menu;
-mod edit_menu; use edit_menu::*;
+use edit_menu::*;
+mod nametag;
 mod track_spawner;
 
-use track_spawner::*;
 use block::*;
 use camera::*;
+use common::*;
 use hook::*;
+use nametag::*;
 use obstacle::*;
 use player::*;
 use player_attach::*;
 use start_menu::*;
+use track_spawner::*;
 
 //#[cfg(windows)]
 //#[global_allocator]
@@ -38,14 +42,17 @@ use start_menu::*;
 
 use bots::{render_bots_from_db, spawn_bot_blocks, spawn_bots};
 use camera::{camera_follow, setup_camera};
-use db_connection::{update_opponent_positions, setup_connection, update_opponent_hooks, update_opponent_tracks, db_setup};
-use grid::{check_grid_connectivity,  balance_player_grid, balance_opponents_grid};
+use common::*;
+use db_connection::{
+    db_setup, setup_connection, update_opponent_hooks, update_opponent_positions,
+    update_opponent_tracks,
+};
+use grid::{balance_opponents_grid, balance_player_grid, check_grid_connectivity};
 use hook::handle_obstacle_hit;
 use map::setup_tilemap;
-use opponent::{despawn_opponents, spawn_opponent_tracks_system, setup_blocks_opponent};
-use common::*;
-use track_spawner::{spawn_tracks_system, track_lifetime_system};
+use opponent::{despawn_opponents, setup_blocks_opponent, spawn_opponent_tracks_system};
 use player::{player_movement, setup_blocks_player, setup_player};
+use track_spawner::{spawn_tracks_system, track_lifetime_system};
 
 fn main() {
     App::new()
@@ -61,14 +68,8 @@ fn main() {
         .init_state::<GameState>()
         .insert_resource(DisplayQuality::Medium)
         .insert_resource(Volume(7))
-        .add_plugins((splash_plugin, menu_plugin, game_plugin, edit_plugin))
-        .add_systems(
-            Startup,
-            (
-                setup_camera,
-            )
-            .chain(),
-        )
+        .add_plugins((splash_plugin, menu_plugin, game_plugin)) //edit_plugin
+        .add_systems(Startup, (setup_camera,).chain())
         .add_systems(
             OnEnter(GameState::Game),
             (
@@ -77,8 +78,9 @@ fn main() {
                 setup_tilemap,
                 setup_block,
                 setup_hook,
+                spawn_tags,
             )
-                .chain()
+                .chain(),
         )
         .add_systems(
             Update,
@@ -100,21 +102,21 @@ fn main() {
                 spawn_tracks_system,
                 track_lifetime_system,
                 spawn_opponent_tracks_system,
-                update_opponent_tracks, 
+                update_opponent_tracks,
                 handle_obstacle_hit,
                 check_grid_connectivity,
-            ) 
-            .run_if(in_game_or_edit),
+            )
+                .run_if(in_game_or_edit),
         )
         .add_systems(
             Update,
-             (
+            (
                 update_block_owner,
                 balance_player_grid,
                 balance_opponents_grid,
-             )
-             .run_if(in_game_or_edit),
             )
+                .run_if(in_game_or_edit),
+        )
         .add_systems(
             FixedUpdate,
             (
@@ -124,13 +126,13 @@ fn main() {
                 setup_blocks_player,
                 spawn_bot_blocks,
                 setup_blocks_opponent,
+                update_nametags_content, // update_bots,
             )
-            .run_if(in_game_or_edit),
+                .run_if(in_game_or_edit),
         )
         .insert_resource(Time::from_seconds(0.5))
         .insert_resource(SpawnedObstacles::default())
-        .insert_resource(CtxWrapper {
-            ctx: db_setup(),
-        })
+        .insert_resource(CtxWrapper { ctx: db_setup() })
+        .insert_resource(HookTimer(Timer::from_seconds(0.5, TimerMode::Repeating)))
         .run();
 }

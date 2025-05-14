@@ -4,13 +4,14 @@ use crate::{
     common::{
         AttachedBlock, Block, CtxWrapper, Hook, HookCharge, HookRange, Obstacle, OpponentHook,
         Player, PlayerAttach, PlayerGrid, BLOCK_CONFIG, HOOK_CONFIG, OBSTACLE_CONFIG,HookAttach,
-        PLAYER_CONFIG, HookHead,
+        PLAYER_CONFIG, HookHead, HookTimer,
     },
     db_connection::load_obstacles,
-    grid::increment_grid_pos,
+    grid::{increment_grid_pos, get_block_count, get_bot_block_count},
     opponent,
 };
 use bevy::prelude::{Vec2, Vec3};
+use rand::Rng;
 use bevy::{prelude::*, transform};
 use spacetimedb_sdk::{
     credentials, DbContext, Error, Event, Identity, Status, Table, TableWithPrimaryKey,
@@ -186,7 +187,11 @@ pub fn hook_collision_system(
     mut commands: Commands,
     ctx_wrapper: Res<CtxWrapper>,
     mut spawned_blocks: ResMut<SpawnedBlocks>,
+    time: Res<Time>,
+    mut hook_timer: ResMut<HookTimer>,
 ) {
+    // Tick cooldown
+    hook_timer.0.tick(time.delta());
     let (hook_transform, sprite) = if let Ok(val) = hook_query.get_single() {
         val
     } else {
@@ -229,6 +234,36 @@ pub fn hook_collision_system(
                         //        attach_link.grid_offset.0, attach_link.grid_offset.1
                         //    );
                         //     } else
+
+                        // 0.5 second cooldown
+                        if !hook_timer.0.finished(){
+                            return;
+                        }
+
+                        // Weighted combat mechanism
+                        if let Some(block_id) = spawned_blocks.entities.get(&block_entity){
+                            if let Some(block_from_db) = ctx_wrapper.ctx.db.block().id().find(&block_id){
+                                // Get block owner
+                                let block_owner = block_from_db.owner;
+                                // If player
+                                if let OwnerType::Player(owner_identity) = block_owner{
+                                    // Get block counts
+                                    let opp_block_count = get_block_count(owner_identity, &ctx_wrapper, &spawned_blocks);
+                                    let player_block_count = get_block_count(ctx_wrapper.ctx.identity(), &ctx_wrapper, &spawned_blocks);
+                                    if !weighted_combat(player_block_count, opp_block_count){
+                                        continue; // Do not take block
+                                    }
+                                } else if let OwnerType::Bot(bot_id) = block_owner{ // If bot
+                                    // Get block counts
+                                    let bot_block_count = get_bot_block_count(bot_id, &ctx_wrapper, &spawned_blocks);
+                                    let player_block_count = get_block_count(ctx_wrapper.ctx.identity(), &ctx_wrapper, &spawned_blocks);
+                                    if !weighted_combat(player_block_count, bot_block_count){
+                                        continue; // Do not take block
+                                    }
+                                }
+                                hook_timer.0.reset();
+                            }
+                        }
 
                         if let Ok(mut target_grid) = grid_query.get_mut(attach_link.player_entity) {
                             target_grid.block_position.remove(&attach_link.grid_offset);
@@ -275,7 +310,6 @@ pub fn hook_collision_system(
                             nextpos.0,
                             nextpos.1,
                         ).unwrap();
-
                     }
                     grid.block_position.insert(nextpos, block_entity);
                     block_transform.translation.x += 200_000.;
@@ -293,6 +327,24 @@ pub fn hook_collision_system(
         }
     }
 }
+
+fn weighted_combat(
+    player_block_count: i32,
+    opps_block_count: i32,
+) -> bool {
+    
+    let total_block_count = player_block_count + opps_block_count;
+    if total_block_count == 0 {
+        return true; // No blocks, player wins by default
+    }
+
+    let player_weight = (player_block_count + 1) as f32/ (total_block_count + 2) as f32;
+
+    let mut rng = rand::rng();
+    rng.random_range(0.0..1.0) // Generate a random number between 0 and 1
+    < (player_weight + 1 as f32) // If the roll is less than the player's weight, they win
+}
+
 pub fn spawn_opponent_hook(
     commands: &mut Commands,
     asset_server: &Res<AssetServer>,

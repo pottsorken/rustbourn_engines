@@ -20,6 +20,7 @@ pub mod player_connected_reducer;
 pub mod player_disconnected_reducer;
 pub mod player_table;
 pub mod player_type;
+pub mod set_name_reducer;
 pub mod track_table;
 pub mod track_type;
 pub mod update_block_owner_reducer;
@@ -56,6 +57,7 @@ pub use player_disconnected_reducer::{
 };
 pub use player_table::*;
 pub use player_type::Player;
+pub use set_name_reducer::{set_flags_for_set_name, set_name, SetNameCallbackId};
 pub use track_table::*;
 pub use track_type::Track;
 pub use update_block_owner_reducer::{
@@ -100,6 +102,9 @@ pub enum Reducer {
     },
     PlayerConnected,
     PlayerDisconnected,
+    SetName {
+        name: String,
+    },
     UpdateBlockOwner {
         block_id: u64,
         new_owner: OwnerType,
@@ -150,6 +155,7 @@ impl __sdk::Reducer for Reducer {
             Reducer::DecreaseGridLoad { .. } => "decrease_grid_load",
             Reducer::PlayerConnected => "player_connected",
             Reducer::PlayerDisconnected => "player_disconnected",
+            Reducer::SetName { .. } => "set_name",
             Reducer::UpdateBlockOwner { .. } => "update_block_owner",
             Reducer::UpdateBotPosition { .. } => "update_bot_position",
             Reducer::UpdateHookMovement { .. } => "update_hook_movement",
@@ -179,6 +185,11 @@ impl TryFrom<__ws::ReducerCallInfo<__ws::BsatnFormat>> for Reducer {
             "player_disconnected" => Ok(__sdk::parse_reducer_args::<
                 player_disconnected_reducer::PlayerDisconnectedArgs,
             >("player_disconnected", &value.args)?
+            .into()),
+            "set_name" => Ok(__sdk::parse_reducer_args::<set_name_reducer::SetNameArgs>(
+                "set_name",
+                &value.args,
+            )?
             .into()),
             "update_block_owner" => Ok(__sdk::parse_reducer_args::<
                 update_block_owner_reducer::UpdateBlockOwnerArgs,
