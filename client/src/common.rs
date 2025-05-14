@@ -9,6 +9,10 @@ use spacetimedb_sdk::Identity;
 use std::collections::{HashMap, HashSet};
 
 
+#[derive(Resource, Debug)]
+pub struct LavaTiles {
+    pub positions: HashSet<(u32, u32)>,
+}
 
 #[derive(Resource, Debug)]
 pub struct WaterTiles {
@@ -16,12 +20,7 @@ pub struct WaterTiles {
 }
 
 #[derive(Resource, Debug)]
-pub struct DirtTiles {
-    pub positions: HashSet<(u32, u32)>,
-}
-
-#[derive(Resource, Debug)]
-pub struct GrassTiles {
+pub struct RegTiles {
     pub positions: HashSet<(u32, u32)>,
 }
 
@@ -168,15 +167,15 @@ pub struct LastTrackPos(pub Vec2);
 
 #[derive(Component)]
 pub struct ModifierConfig {
-    pub dirt: f32,
-    pub grass: f32,
+    pub water: f32,
+    pub reg: f32,
     pub stone: f32,
 }
 
 pub const MODIFIER_CONFIG: ModifierConfig = ModifierConfig {
-    dirt: 0.5,
-    grass: 0.8,
-    stone: 1.5,
+    water: 0.2,
+    reg: 1.0,
+    stone: 0.7,
 };
 
 
@@ -336,8 +335,8 @@ pub struct ObstacleConfig {
 
 // Global constant config for the player
 pub const OBSTACLE_CONFIG: ObstacleConfig = ObstacleConfig {
-    size: Vec2::new(80.0, 80.0),
-    count: 1000,
+    size: Vec2::new(280.0, 280.0),
+    count: 1,
     path: "sprites/Obstacles/obstacle_rock.png",
 };
 
@@ -348,9 +347,9 @@ pub const OBSTACLE_CONFIG: ObstacleConfig = ObstacleConfig {
 /// Configuration for initlializing the tilemap
 pub struct MapConfig {
     pub map_size: TilemapSize,
-    pub tile_size: TilemapTileSize, // tiles are 16x16 pixels
-    pub noise_scale: f32,           // Grid size == tile size
-    pub tile_textures: [&'static str; 4],
+    pub tile_size: TilemapTileSize,
+    pub noise_scale: f32, 
+    pub tile_textures: [&'static str; 86], // Change this for the number of tiles in the list
     pub image_path: &'static str,
     pub safe_zone_size: f32,
 }
@@ -358,15 +357,97 @@ pub struct MapConfig {
 /// Global constant config for the tilemap
 pub const MAP_CONFIG: MapConfig = MapConfig {
     map_size: TilemapSize { x: 1024, y: 1024 },
-    tile_size: TilemapTileSize { x: 8.0, y: 8.0 }, // tiles are 16x16 pixels
+    tile_size: TilemapTileSize { x: 32.0, y: 32.0 }, // Change tile size here
     noise_scale: 0.1,
     tile_textures: [
-        "sprites/td_tanks/grass8.png",
-        "sprites/td_tanks/water8.png",
-        "sprites/td_tanks/stone8.png",
-        "sprites/td_tanks/dirt8.png",
+        "sprites/tiles/grass/grass00.png",
+        "sprites/tiles/grass/grass01.png",
+        "sprites/tiles/grass/grass02.png",
+        "sprites/tiles/grass/grass03.png",
+        "sprites/tiles/grass/grass04.png",
+        "sprites/tiles/grass/grass05.png",
+        "sprites/tiles/grass/grass06.png",
+        "sprites/tiles/grass/grass07.png",
+        "sprites/tiles/grass/grass08.png",
+        "sprites/tiles/grass/grass09.png",
+        "sprites/tiles/grass/grass10.png",
+        "sprites/tiles/grass/grass11.png",
+        "sprites/tiles/grass/grass12.png",
+        "sprites/tiles/grass/grass13.png",
+        "sprites/tiles/grass/grass14.png",
+        "sprites/tiles/grass/grass15.png",
+        "sprites/tiles/grass/grass16.png",
+        "sprites/tiles/grass/grass17.png",
+        "sprites/tiles/grass/grass18.png",
+        "sprites/tiles/grass/grass19.png",
+        "sprites/tiles/water/water00.png",
+        "sprites/tiles/water/water01.png",
+        "sprites/tiles/water/water02.png",
+        "sprites/tiles/water/water03.png",
+        "sprites/tiles/water/water04.png",
+        "sprites/tiles/water/water05.png",
+        "sprites/tiles/water/water06.png",
+        "sprites/tiles/water/water07.png",
+        "sprites/tiles/water/water08.png",
+        "sprites/tiles/stone/stone00.png",
+        "sprites/tiles/stone/stone01.png",
+        "sprites/tiles/stone/stone02.png",
+        "sprites/tiles/stone/stone03.png",
+        "sprites/tiles/stone/stone04.png",
+        "sprites/tiles/stone/stone05.png",
+        "sprites/tiles/stone/stone06.png",
+        "sprites/tiles/stone/stone07.png",
+        "sprites/tiles/stone/stone08.png",
+        "sprites/tiles/dirt/dirt00.png",
+        "sprites/tiles/dirt/dirt01.png",
+        "sprites/tiles/dirt/dirt02.png",
+        "sprites/tiles/dirt/dirt03.png",
+        "sprites/tiles/dirt/dirt04.png",
+        "sprites/tiles/dirt/dirt05.png",
+        "sprites/tiles/dirt/dirt06.png",
+        "sprites/tiles/dirt/dirt07.png",
+        "sprites/tiles/dirt/dirt08.png",
+        "sprites/tiles/dirt/dirt09.png",
+        "sprites/tiles/lava/lava00.png",
+        "sprites/tiles/lava/lava01.png",
+        "sprites/tiles/lava/lava02.png",
+        "sprites/tiles/lava/lava03.png",
+        "sprites/tiles/lava/lava04.png",
+        "sprites/tiles/lava/lava05.png",
+        "sprites/tiles/lava/lava06.png",
+        "sprites/tiles/lava/lava07.png",
+        "sprites/tiles/lava/lava08.png",
+        "sprites/tiles/lava/lava09.png",
+        "sprites/tiles/water-grass/water-grass00.png",
+        "sprites/tiles/water-grass/water-grass01.png",
+        "sprites/tiles/water-grass/water-grass02.png",
+        "sprites/tiles/water-grass/water-grass03.png",
+        "sprites/tiles/water-stone/water-stone00.png",
+        "sprites/tiles/water-stone/water-stone01.png",
+        "sprites/tiles/water-stone/water-stone02.png",
+        "sprites/tiles/water-stone/water-stone03.png",
+        "sprites/tiles/water-stone/water-stone04.png",
+        "sprites/tiles/dirt-grass/dirt-grass00.png",
+        "sprites/tiles/dirt-grass/dirt-grass01.png",
+        "sprites/tiles/dirt-grass/dirt-grass02.png",
+        "sprites/tiles/dirt-grass/dirt-grass03.png",
+        "sprites/tiles/dirt-grass/dirt-grass04.png",
+        "sprites/tiles/dirt-grass/dirt-grass05.png",
+        "sprites/tiles/dirt-grass/dirt-grass06.png",
+        "sprites/tiles/dirt-grass/dirt-grass07.png",
+        "sprites/tiles/dirt-grass/dirt-grass08.png",
+        "sprites/tiles/dirt-grass/dirt-grass09.png",
+        "sprites/tiles/dirt-stone/dirt-stone00.png",
+        "sprites/tiles/dirt-stone/dirt-stone01.png",
+        "sprites/tiles/dirt-stone/dirt-stone02.png",
+        "sprites/tiles/dirt-stone/dirt-stone03.png",
+        "sprites/tiles/stone-grass/stone-grass00.png",
+        "sprites/tiles/stone-grass/stone-grass01.png",
+        "sprites/tiles/stone-grass/stone-grass02.png",
+        "sprites/tiles/stone-grass/stone-grass03.png",
+        "sprites/tiles/stone-grass/stone-grass04.png",
     ],
-    image_path: r"assets/tribasicmap1024.png",
+    image_path: r"assets/map.png",
     safe_zone_size: 300.0,
 };
 

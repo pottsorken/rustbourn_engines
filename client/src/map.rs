@@ -2,25 +2,33 @@ use bevy::prelude::*;
 use bevy_ecs_tilemap::prelude::*;
 use image::{GenericImageView, ImageReader};
 use std::collections::HashSet;
-use crate::common::{MAP_CONFIG, WaterTiles, DirtTiles, GrassTiles, StoneTiles};
+use crate::common::{MAP_CONFIG, LavaTiles, WaterTiles, RegTiles, StoneTiles};
+// use rand::random;
+use rand::Rng;
 
 // Define the Obstacle component
 #[derive(Component)]
 pub struct Obstacle;
 
-// Define the Obstacle component
-#[derive(Component)]
-pub struct Modifier;
+pub fn setup_tilemap(
+    mut commands: Commands,
+    asset_server: Res<AssetServer>,
+    mut image: ResMut<Assets<Image>>,
 
-pub fn setup_tilemap(mut commands: Commands, asset_server: Res<AssetServer>) {
-    // Load tile textures
+) {
+
+    // Tile images. ORDER IS IMPORTANT!
     let texture_handle: Vec<Handle<Image>> = MAP_CONFIG
         .tile_textures
         .iter()
-        .map(|path| asset_server.load(*path))
+        .map(|path| {
+            let handle = asset_server.load(*path);
+            handle
+        })
         .collect();
 
-    let grid_size = MAP_CONFIG.tile_size.into();
+    // New map with 64x64 chunks being 32x32 tiles
+    let grid_size = MAP_CONFIG.tile_size.into(); // Grid size == tile size
     let map_type = TilemapType::default();
     let mut tile_storage = TileStorage::empty(MAP_CONFIG.map_size);
     let tilemap_entity = commands.spawn_empty().id();
@@ -32,10 +40,13 @@ pub fn setup_tilemap(mut commands: Commands, asset_server: Res<AssetServer>) {
         .expect("Failed to decode image");
 
     let (width, height) = img.dimensions();
+
+    let mut lava_tiles = HashSet::new();
     let mut water_tiles = HashSet::new();
-    let mut dirt_tiles = HashSet::new();
-    let mut grass_tiles = HashSet::new();
+    let mut reg_tiles = HashSet::new();
     let mut stone_tiles = HashSet::new();
+
+    let (width, height) = img.dimensions();
 
     for y in 0..height {
         for x in 0..width {
@@ -46,52 +57,75 @@ pub fn setup_tilemap(mut commands: Commands, asset_server: Res<AssetServer>) {
             let g = pixel[1];
             let b = pixel[2];
 
-            let texture_index = if g == 255 {
-                grass_tiles.insert((x, y)); // Track grass tiles
-                0 // Grass
-            } else if b == 255 {
-                water_tiles.insert((x, y)); // Track water tiles
-                1 // Water
-            } else if r == 255 {
-                stone_tiles.insert((x, y)); // Track stone tiles
-                2 // Stone
+            // let mut start;
+            // let mut stop;
+
+            // let texture_index = if g == 255 {
+            //     0 // Green -> Grass
+            // } else if b == 255 {
+            //     1 // Blue -> Water
+            // } else if r == 255 {
+            //     2 // Red -> Stone
+            // } else {
+            //     3 // Default -> Dirt
+            // };
+
+            let mut rng = rand::thread_rng();
+
+            // GRASS
+            let texture_index = if r <= 20 && g >= 230 && b <= 20 {
+                reg_tiles.insert((x,y));
+                rng.gen_range(0..20)
+            // WATER
+            } else if r <= 20 && g <= 20 && b >= 230  {
+                water_tiles.insert((x, y));
+                rng.gen_range(20..29)
+            // STONE
+            } else if r <= 20 && g <= 20 && b <= 20  {
+                stone_tiles.insert((x,y));
+                rng.gen_range(29..38)
+            // DIRT
+            } else if r >= 230 && g >= 230 && b >= 230  {
+                reg_tiles.insert((x,y));
+                rng.gen_range(38..48)
+            // LAVA 
+            } else if r >= 230 && g <= 20 && b <= 20  {
+                lava_tiles.insert((x,y));
+                rng.gen_range(48..58)
+            // WATER-GRASS
+            } else if r <= 20 && g >= 230 && b >= 230  {
+                water_tiles.insert((x,y));
+                rng.gen_range(58..62)
+            // WATER-STONE
+            } else if r >= 230 && g <= 20 && b >= 230 {
+                water_tiles.insert((x,y));
+                rng.gen_range(62..67)
+            // DIRT-GRASS
+            } else if r >= 230 && g >= 230 && b <= 20  {
+                reg_tiles.insert((x,y));
+                rng.gen_range(67..77)
+            // DIRT-STONE
+            } else if r <= 200 && r >= 100 && g <= 200 && g >= 100 && b <= 200 && b >= 100  {
+                reg_tiles.insert((x,y));
+                rng.gen_range(77..81)
+            // STONE-GRASS
+            } else if r <= 70 && r >= 30 && g <= 70 && g >= 30 && b <= 70 && b >= 30  {
+                reg_tiles.insert((x,y));
+                rng.gen_range(81..86)
             } else {
-                dirt_tiles.insert((x, y)); // Track dirt tiles
-                3 // Dirt (default)
+                lava_tiles.insert((x,y));
+                49
             };
 
-            let tile_bundle = TileBundle {
-                position: tile_pos,
-                tilemap_id: TilemapId(tilemap_entity),
-                texture_index: TileTextureIndex(texture_index),
-                ..Default::default()
-            };
 
-            let tile_entity = if texture_index == 1 {
-                // For water tiles, add the Obstacle component
-                commands.spawn(tile_bundle)
-                    .insert(Obstacle) // Add the Obstacle component for water tiles
-                    .id()
-            } else if texture_index == 2 {
-                // For stone tiles, add the Modifier component
-                commands.spawn(tile_bundle)
-                    .insert(Modifier) // Add the Modifier component for stone tiles
-                    .id()
-            } else if texture_index == 0 {
-                // For grass tiles, add the GrassTiles component
-                commands.spawn(tile_bundle)
-                    .insert(Modifier) // Add the GrassTiles component for grass tiles
-                    .id()
-            } else if texture_index == 3 {
-                // For dirt tiles, add the DirtTiles component
-                commands.spawn(tile_bundle)
-                    .insert(Modifier) // Add the DirtTiles component for dirt tiles
-                    .id()
-            } else {
-                // For other tiles, spawn without Obstacle
-                commands.spawn(tile_bundle)
-                    .id()
-            };
+            let tile_entity = commands
+                .spawn(TileBundle {
+                    position: tile_pos,
+                    tilemap_id: TilemapId(tilemap_entity),
+                    texture_index: TileTextureIndex(texture_index),
+                    ..Default::default()
+                })
+                .id();
 
             tile_storage.set(&tile_pos, tile_entity);
         }
@@ -109,19 +143,19 @@ pub fn setup_tilemap(mut commands: Commands, asset_server: Res<AssetServer>) {
         ..Default::default()
     });
 
+    // Insert lava tile data as a resource
+    commands.insert_resource(LavaTiles {
+        positions: lava_tiles,
+    });
+
     // Insert water tile data as a resource
     commands.insert_resource(WaterTiles {
         positions: water_tiles,
     });
 
-    // Insert water tile data as a resource
-    commands.insert_resource(DirtTiles {
-        positions: dirt_tiles,
-    });
-
     // Insert grass tile data as a resource
-    commands.insert_resource(GrassTiles {
-        positions: grass_tiles,
+    commands.insert_resource(RegTiles {
+        positions: reg_tiles,
     });
 
     // Insert stone tile data as a resource
