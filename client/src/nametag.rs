@@ -106,6 +106,11 @@ pub fn spawn_opponent_nametag(
         return;
     }
 
+    // If name is unset
+    if player_name == "Lorem Ipsum" {
+        return;
+    }
+
     // Don't spawn already existing hooks
     for hook in existing_nametags_query.iter() {
         if hook.id == *opponent_id {
