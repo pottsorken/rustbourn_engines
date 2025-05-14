@@ -1,6 +1,6 @@
 use crate::block::SpawnedBlocks;
 use crate::common::{
-    AttachedBlock, Block, Obstacle, Opponent, Player, PlayerGrid, LastTrackPos, CtxWrapper, WaterTiles, DirtTiles, GrassTiles, StoneTiles, BLOCK_CONFIG, GRID_CONFIG,
+    AttachedBlock, Block, Obstacle, Opponent, Player, PlayerGrid, LastTrackPos, CtxWrapper, LavaTiles, WaterTiles, RegTiles, StoneTiles, BLOCK_CONFIG, GRID_CONFIG,
     MAP_CONFIG, OBSTACLE_CONFIG, PLAYER_CONFIG, TRACK_CONFIG, MODIFIER_CONFIG,
 };
 use crate::db_connection::{update_player_position};
@@ -116,10 +116,9 @@ pub fn player_movement(
     mut _commands: Commands,
     time: Res<Time>,
     ctx: Res<CtxWrapper>,
-    mut spawned_blocks: ResMut<SpawnedBlocks>,
+    lava_tiles: Res<LavaTiles>,
     water_tiles: Res<WaterTiles>,
-    dirt_tiles: Res<DirtTiles>,
-    grass_tiles: Res<GrassTiles>,
+    reg_tiles: Res<RegTiles>,
     stone_tiles: Res<StoneTiles>,
 ) {
     //if let Ok((mut transform, _player)) = query.get_single_mut() { // NOTE: merge conflict
@@ -128,9 +127,9 @@ pub fn player_movement(
     let opponent_transforms: Vec<Transform> = opponent_query.iter().cloned().collect();
     for (player_entity, mut transform, player, grid) in &mut player_query {
         // Scale player speed and rotation depending on n blocks
-        let speed_scale = 1.0 / (1.0 + get_block_count(ctx_wrapper.ctx.identity(), &ctx_wrapper, &spawned_blocks) as f32 * 0.1);
-        let rotation_scale = 1.0 / (1.0 + get_block_count(ctx_wrapper.ctx.identity(), &ctx_wrapper, &spawned_blocks) as f32 * 0.1);
-        let speed_modifier = speed_modifer(transform.translation.truncate(), &dirt_tiles, &grass_tiles, &stone_tiles, get_block_count(ctx_wrapper.ctx.identity(), &ctx_wrapper, &spawned_blocks));
+        let speed_scale = 1.0 / (1.0 + player.block_count as f32 * 0.1);
+        let rotation_scale = 1.0 / (1.0 + player.block_count as f32 * 0.1);
+        let speed_modifier = speed_modifer(transform.translation.truncate(), &water_tiles, &reg_tiles, &stone_tiles, player.block_count);
         let move_speed = PLAYER_CONFIG.movement_speed * speed_scale * speed_modifier;
         let rot_speed = PLAYER_CONFIG.rotation_speed * rotation_scale;
 
@@ -250,7 +249,7 @@ pub fn player_movement(
                 && !blocks_collided_obstacles
                 && !will_collide(new_pos.truncate(), &obstacle_query)
                 && !will_collide_with_opponent(new_pos.truncate(), &opponent_transforms)
-                && !will_collide_with_water_tiles(new_pos.truncate(), &water_tiles)
+                && !will_collide_with_lava_tiles(new_pos.truncate(), &lava_tiles)
             {
                 // Apply tanslation
                 transform.translation = new_pos;
@@ -268,8 +267,8 @@ pub fn player_movement(
 
 fn speed_modifer(
     player_pos: bevy::prelude::Vec2, 
-    dirt_tiles: &DirtTiles,
-    grass_tiles: &GrassTiles,
+    water_tiles: &WaterTiles,
+    reg_tiles: &RegTiles,
     stone_tiles: &StoneTiles,
     block_count: i32,
 ) -> f32 {    
@@ -291,10 +290,10 @@ fn speed_modifer(
 
      for x in tile_x_start..=tile_x_end {
         for y in tile_y_start..=tile_y_end {
-            if dirt_tiles.positions.contains(&(x, y)) {
-                speed_modifier = MODIFIER_CONFIG.dirt; // Slow down on dirt tiles
-            } else if grass_tiles.positions.contains(&(x, y)) {
-                speed_modifier = MODIFIER_CONFIG.grass; // Speed up on grass tiles
+            if water_tiles.positions.contains(&(x, y)) {
+                speed_modifier = MODIFIER_CONFIG.water; // Slow down on water tiles
+            } else if reg_tiles.positions.contains(&(x, y)) {
+                speed_modifier = MODIFIER_CONFIG.reg; // Speed up on grass and dirt tiles
             } else if stone_tiles.positions.contains(&(x, y)) {
                 speed_modifier = MODIFIER_CONFIG.stone; // Speed up on stone tiles
             }
@@ -304,9 +303,9 @@ fn speed_modifer(
     return speed_modifier;
 }
 
-fn will_collide_with_water_tiles(
+fn will_collide_with_lava_tiles(
     player_pos: bevy::prelude::Vec2, 
-    water_tiles: &WaterTiles
+    lava_tiles: &LavaTiles
 ) -> bool {
     let half_size = PLAYER_CONFIG.size / 2.0;
 
@@ -325,7 +324,7 @@ fn will_collide_with_water_tiles(
 
     for x in tile_x_start..=tile_x_end {
         for y in tile_y_start..=tile_y_end {
-            if water_tiles.positions.contains(&(x, y)) {
+            if lava_tiles.positions.contains(&(x, y)) {
                 return true;
             }
         }
