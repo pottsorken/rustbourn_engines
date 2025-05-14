@@ -1,8 +1,10 @@
+use bevy::ecs::system::ParamSet;
+
 use crate::module_bindings::*;
 use crate::{
     block::SpawnedBlocks,
     common::{
-        AttachedBlock, Block, CtxWrapper, Hook, HookCharge, HookRange, Obstacle, OpponentHook,
+        AttachedBlock, Block, CtxWrapper, Hook, HookCharge, HookRange, Obstacle, OpponentHook,OpponentHookHead,
         Player, PlayerAttach, PlayerGrid, BLOCK_CONFIG, HOOK_CONFIG, OBSTACLE_CONFIG,HookAttach,
         PLAYER_CONFIG, HookHead, HookTimer,
     },
@@ -349,6 +351,7 @@ pub fn spawn_opponent_hook(
     commands: &mut Commands,
     asset_server: &Res<AssetServer>,
     existing_hooks_query: &Query<&OpponentHook>,
+    existing_heads_query: &Query<&OpponentHookHead>,
     opponent_id: &Identity,
     local_player_id: &Identity,
     x: f32,
@@ -366,6 +369,12 @@ pub fn spawn_opponent_hook(
         }
     }
 
+    for head in existing_heads_query.iter() {
+    if head.id == *opponent_id {
+        return;
+    }
+}
+
     commands.spawn((
         Sprite {
             custom_size: Some(HOOK_CONFIG.hook_size),
@@ -376,8 +385,20 @@ pub fn spawn_opponent_hook(
         Transform::from_xyz(x, y, 5.0),
         OpponentHook { id: *opponent_id },
     ));
-}
 
+    commands.spawn((
+    Sprite {
+        custom_size: Some(HOOK_CONFIG.hook_head_size),
+        image: asset_server.load(HOOK_CONFIG.hook_head),
+        anchor: bevy::sprite::Anchor::BottomCenter,
+        ..default()
+    },
+    Transform::from_xyz(x, y, 4.9),
+    OpponentHookHead { id: *opponent_id }, 
+    HookAttach { offset: Vec2::new(3.0, -15.0) },
+));
+}
+/* 
 pub fn update_opponent_hook(
     query: &mut Query<(&mut Sprite, &mut Transform, &OpponentHook), With<OpponentHook>>,
     id: &Identity,
@@ -395,7 +416,46 @@ pub fn update_opponent_hook(
             sprite.custom_size = Some(bevy::prelude::Vec2::new(width, height));
         }
     }
+}*/
+pub fn update_opponent_hook(
+    /*hook_query: &mut Query<(&mut Sprite, &mut Transform, &OpponentHook), With<OpponentHook>>,
+    head_query: &mut Query<(&mut Transform, &HookAttach, &OpponentHookHead)>,
+    */
+    queries: &mut ParamSet<(
+        Query<(&mut Sprite, &mut Transform, &OpponentHook), With<OpponentHook>>,
+        Query<(&mut Transform, &HookAttach, &OpponentHookHead)>,
+    )>,
+    id: &Identity,
+    x: f32,
+    y: f32,
+    rotation: f32,
+    width: f32,
+    height: f32,
+) {
+    let mut matched_rotation = None;
+
+    for (mut sprite, mut transform, hook) in queries.p0().iter_mut() {
+        if hook.id == *id {
+            transform.translation.x = x;
+            transform.translation.y = y;
+            let rot = Quat::from_rotation_z(rotation).normalize();
+            transform.rotation = rot;
+            sprite.custom_size = Some(Vec2::new(width, height));
+            matched_rotation = Some((transform.translation, rot, height));
+        }
+    }
+
+    if let Some((base_pos, rot, hook_length)) = matched_rotation {
+        let hook_tip = base_pos + rot * Vec3::Y * hook_length;
+        for (mut head_transform, attach, head) in queries.p1().iter_mut() {
+            if head.id == *id {
+                head_transform.translation = hook_tip + rot * Vec3::from((attach.offset, 0.0));
+                head_transform.rotation = rot;
+            }
+        }
+    }
 }
+
 
 pub fn despawn_opponent_hooks(
     mut commands: Commands,

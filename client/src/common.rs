@@ -262,6 +262,12 @@ pub struct OpponentHook {
 }
 
 #[derive(Component)]
+pub struct OpponentHookHead {
+    pub id: Identity,
+}
+
+
+#[derive(Component)]
 pub struct Hook {
     pub hook_speed: f32,
     pub hook_max_range: f32,
