@@ -285,7 +285,7 @@ pub fn will_collide(
         return true;
     }
 
-    // water collision check
+    // lava collision check
     let half_size = BOT_CONFIG.size / 2.0;
 
     let left = new_pos.x - half_size.x;
