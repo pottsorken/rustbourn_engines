@@ -46,8 +46,8 @@ pub fn spawn_leaderboard(
             ..default()
         };
 
-        let leaderboard_size = Vec2::new(200.0, 300.0);
-        let leaderboard_offset = Vec2::new(-800.0, 300.0);
+        let leaderboard_size = Vec2::new(250.0, 300.0);
+        let leaderboard_offset = Vec2::new(-900.0, 300.0);
 
         if let Ok(player_transform) = player_query.get_single() {
             let player_position = player_transform.translation.xy();
@@ -65,7 +65,7 @@ pub fn spawn_leaderboard(
                         size: leaderboard_size,         // Store size
                         offset: leaderboard_offset,
                     },
-                    Sprite::from_color(Color::rgba(0.25, 0.25, 0.55, 0.5), leaderboard_size),
+                    Sprite::from_color(Color::rgba(0.75, 0.75, 0.85, 0.7), leaderboard_size),
                     Transform {
                         translation: leaderboard_position.extend(30.0),
                         scale: Vec3::ONE,
@@ -117,13 +117,13 @@ pub fn spawn_leaderboard(
                     //}
 
                     // If we have fewer than 3 players, display this ---
-                    for index in 0..3 {
-                        let empty_text = format!("{}. -----", index + 1);
+                    for index in 1..=5 {
+                        let empty_text = format!("{}. -----------", index);
 
                         builder.spawn((
                             Text2d::new(empty_text.clone()),
                             LeaderboardEntry {
-                                rank: (index + 1) as i32,
+                                rank: (index) as i32,
                                 player_name: empty_text.clone(),
                                 score: 0 as i32,
                             },
@@ -137,7 +137,7 @@ pub fn spawn_leaderboard(
                             // Move the undertext slightly lower than the main text
                             Transform::from_translation(Vec3::new(
                                 -10.0,
-                                leaderboard_size.y / 2.0 - 80.0 - (index as f32 * 40.0),
+                                leaderboard_size.y / 2.0 - 80.0 - ((index - 1) as f32 * 40.0),
                                 30.0,
                             )),
                         ));
@@ -170,17 +170,14 @@ pub fn update_leaderboard_from_db(
         let mut new_entry_temp = None;
 
         // find stuff
-        for entry_temp in leaderboard.iter() {
-            if entry_component.rank == *(entry_temp.0) {
+        for (i, entry_temp) in leaderboard.iter().rev().enumerate() {
+            if entry_component.rank == (i + 1) as i32 {
                 new_entry_temp = Some(entry_temp);
             }
         }
 
         if let Some(new_entry) = new_entry_temp {
-            let player_text = format!(
-                "{}. Player: {} - Score: {}",
-                entry_component.rank, new_entry.1, new_entry.0
-            );
+            let player_text = format!("{}. {}: {}", entry_component.rank, new_entry.1, new_entry.0);
 
             commands.entity(entry_entity).insert(LeaderboardEntry {
                 rank: entry_component.rank,
@@ -191,7 +188,7 @@ pub fn update_leaderboard_from_db(
                 .entity(entry_entity)
                 .insert(Text2d::new(player_text));
         } else {
-            let empty_text = format!("{}. -----", entry_component.rank + 1);
+            let empty_text = format!("{}. -----------", entry_component.rank);
             commands
                 .entity(entry_entity)
                 .insert(Text2d::new(empty_text.clone()));

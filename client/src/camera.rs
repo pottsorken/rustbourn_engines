@@ -64,7 +64,7 @@ pub fn camera_zoom(
                 leaderboard_transform.scale = Vec3::splat(target_zoom);
 
                 // Calculate the new position relative to the player
-                let offset = Vec2::new(-800.0, 300.0) * target_zoom;
+                let offset = Vec2::new(-700.0, 300.0) * target_zoom;
                 let new_position = player_position + offset;
 
                 // Update leaderboard position
