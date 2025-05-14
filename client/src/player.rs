@@ -116,6 +116,7 @@ pub fn player_movement(
     mut _commands: Commands,
     time: Res<Time>,
     ctx: Res<CtxWrapper>,
+    mut spawned_blocks: ResMut<SpawnedBlocks>,
     lava_tiles: Res<LavaTiles>,
     water_tiles: Res<WaterTiles>,
     reg_tiles: Res<RegTiles>,
@@ -125,10 +126,11 @@ pub fn player_movement(
     let ctx_wrapper = &ctx.into_inner();
 
     let opponent_transforms: Vec<Transform> = opponent_query.iter().cloned().collect();
+
     for (player_entity, mut transform, player, grid) in &mut player_query {
         // Scale player speed and rotation depending on n blocks
-        let speed_scale = 1.0 / (1.0 + player.block_count as f32 * 0.1);
-        let rotation_scale = 1.0 / (1.0 + player.block_count as f32 * 0.1);
+        let speed_scale = 1.0 / (1.0 + get_block_count(ctx_wrapper.ctx.identity(), &ctx_wrapper, &spawned_blocks) as f32  * 0.1);
+        let rotation_scale = 1.0 / (1.0 + get_block_count(ctx_wrapper.ctx.identity(), &ctx_wrapper, &spawned_blocks) as f32 * 0.1);
         let speed_modifier = speed_modifer(
             transform.translation.truncate(),
             &water_tiles,
