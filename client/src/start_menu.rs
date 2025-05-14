@@ -302,7 +302,7 @@ pub fn main_menu_setup(
                             Button,
                             button_node.clone(),
                             BackgroundColor(PRESSED_BUTTON),
-                            username = get_username(),
+                            username = name.clone(),
                             // MenuButtonAction::Settings,
                         ))
                         .with_children(|parent| {
