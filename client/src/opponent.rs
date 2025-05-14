@@ -1,16 +1,18 @@
 use std::any::Any;
 
-use bevy::prelude::{*, Vec3, Vec2};
+use bevy::prelude::{Vec2, Vec3, *};
 
-use crate::{common::{LastTrackPos, Opponent, OpponentTrack, Track, CtxWrapper, TRACK_CONFIG}, module_bindings::*};
 use crate::{
-    block::SpawnedBlocks, common::AttachedBlock, common::Block as BevyBlock,
-    common::PlayerGrid, common::BLOCK_CONFIG, common::GRID_CONFIG,
-    grid::increment_grid_pos, module_bindings::*,
+    block::SpawnedBlocks, common::AttachedBlock, common::Block as BevyBlock, common::PlayerGrid,
+    common::BLOCK_CONFIG, common::GRID_CONFIG, grid::increment_grid_pos, module_bindings::*,
 };
+use crate::{
+    common::{CtxWrapper, LastTrackPos, Opponent, OpponentTrack, Track, TRACK_CONFIG},
+    module_bindings::*,
+};
+use rand::Rng;
 use spacetimedb_sdk::{Identity, Table};
 use std::collections::HashMap;
-use rand::Rng;
 
 pub fn spawn_opponent(
     commands: &mut Commands,
@@ -99,7 +101,7 @@ pub fn despawn_opponents(
 
     for (entity, opponent) in query.iter() {
         if !online_players.contains(&opponent.id) {
-            commands.entity(entity).despawn();
+            commands.entity(entity).despawn_recursive();
         }
     }
 }
@@ -210,7 +212,6 @@ pub fn spawn_opponent_tracks_system(
         }
     }
 }
-
 
 pub fn update_opponent_track(
     query: &mut Query<(&mut Sprite, &mut Transform, &OpponentTrack), With<OpponentTrack>>,

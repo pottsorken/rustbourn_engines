@@ -13,7 +13,11 @@ use spacetimedb_sdk::{credentials, DbContext, Error, Identity, Table};
 #[derive(Component)]
 struct AnimateScale;
 
-pub fn spawn_tags(mut commands: Commands) {
+pub fn spawn_tags(
+    mut commands: Commands,
+    player_query: Query<Entity, With<Player>>,
+    ctx_wrapper: Res<CtxWrapper>,
+) {
     //commands.spawn((
     //    Text2d::new("Lorem Ipsum Dolor"),
     //    TextFont {
@@ -43,24 +47,27 @@ pub fn spawn_tags(mut commands: Commands) {
     //    },
     //));
 
+    let player_id = ctx_wrapper.ctx.identity();
+
+    // Find player entity to spawn a child with
+    let player_entity = player_query.get_single();
+
     // Demonstrate text wrapping
     let slightly_smaller_text_font = TextFont {
         font_size: 35.0,
         ..default()
     };
     let box_size = Vec2::new(150.0, 40.0);
-    let box_position = Vec2::new(0.0, -250.0);
-    commands
+    let box_position = Vec2::new(0.0, -50.0);
+
+    let binding = commands
         .spawn((
             Sprite::from_color(Color::rgba(0.25, 0.25, 0.55, 0.5), box_size),
             Transform::from_translation(box_position.extend(30.0)),
-            PlayerAttach {
-                offset: Vec2::new(0., -40.),
-            },
         ))
         .with_children(|builder| {
             builder.spawn((
-                Text2d::new("Lorem Ipsum Dolor"),
+                Text2d::new(player_id.to_string()),
                 TextFont {
                     font_size: 15.0,
                     //font_color: TextColor::BLACK,
@@ -73,13 +80,20 @@ pub fn spawn_tags(mut commands: Commands) {
                 // Ensure the text is drawn on top of the box
                 Transform::from_translation(Vec3::Z),
             ));
-        });
+        })
+        .id();
+    let nametag = binding;
+
+    commands
+        .entity(player_entity.expect("Could not find player entity"))
+        .add_children(&[nametag]);
 }
 
 pub fn spawn_opponent_nametag(
     mut commands: &mut Commands,
     asset_server: &Res<AssetServer>,
     existing_nametags_query: &Query<&OpponentNametag>,
+    opponent_query: &Query<(Entity, &Opponent)>,
     opponent_id: &Identity,
     local_player_id: &Identity,
     x: f32,
@@ -93,16 +107,19 @@ pub fn spawn_opponent_nametag(
     // Don't spawn already existing hooks
     for hook in existing_nametags_query.iter() {
         if hook.id == *opponent_id {
-            return; // Hook already exists
+            return; // Nametag already exists
         }
     }
-    spawn_text(&mut commands, "Lorem Ipsum", opponent_id);
+    spawn_text(&mut commands, "Lorem Ipsum", opponent_id, &opponent_query);
 }
 
 pub fn update_nametags_content(
     ctx_wrapper: Res<CtxWrapper>,
     mut commands: Commands,
     asset_server: Res<AssetServer>,
+    // TODO: Add query for opponents, with their server ids, and
+    // search for opponentid->entity
+    mut opponent_query: Query<(Entity, &Opponent)>,
     mut query: Query<(&mut Sprite, &mut Transform, &OpponentNametag), With<OpponentNametag>>,
     existing_nametags_query: Query<&OpponentNametag>,
     despawn_query: Query<(Entity, &OpponentNametag)>,
@@ -117,6 +134,7 @@ pub fn update_nametags_content(
             &mut commands,
             &asset_server,
             &existing_nametags_query,
+            &opponent_query,
             &player_id,
             &local_player_id,
             player.hook.position.x,
@@ -146,21 +164,38 @@ pub fn update_nametags_positions(
 
     let local_player_id = ctx_wrapper.ctx.identity(); //Get local player's ID
 
-    for player in players {
-        let player_id = player.identity;
-        for (mut sprite, mut transform, hook) in query.iter_mut() {
-            if hook.id == player_id {
-                transform.translation.x = player.hook.position.x; //x;
-                transform.translation.y = player.hook.position.y; //y;
-                transform.rotation = Quat::from_rotation_z(player.hook.rotation).normalize();
-            }
+    //for player in players {
+    //    let player_id = player.identity;
+    //    for (mut sprite, mut transform, hook) in query.iter_mut() {
+    //        if hook.id == player_id {
+    //            transform.translation.x = player.hook.position.x; //x;
+    //            transform.translation.y = player.hook.position.y; //y;
+    //            transform.rotation = Quat::from_rotation_z(player.hook.rotation).normalize();
+    //        }
+    //    }
+    //}
+}
+fn spawn_text(
+    commands: &mut Commands,
+    name: &str,
+    opponent_id: &Identity,
+    opponent_query: &Query<(Entity, &Opponent)>,
+) {
+    // Find opponent entity to spawn a child with
+    let mut opponent_entity = None;
+    //let mut opponent_name = None;
+    for (entity, opponent) in opponent_query.iter() {
+        if opponent.id == *opponent_id {
+            opponent_entity = Some(entity);
+            //opponent_name = Some(opponent.id());
         }
     }
-}
-fn spawn_text(commands: &mut Commands, name: &str, opponent_id: &Identity) {
+
+    // Specify size of box
     let box_size = Vec2::new(180.0, 40.0);
-    let box_position = Vec2::new(0.0, -250.0);
-    commands
+    let box_position = Vec2::new(0.0, -50.0);
+
+    let binding = commands
         .spawn((
             Sprite::from_color(Color::rgba(0.85, 0.05, 0.05, 0.5), box_size),
             Transform::from_translation(box_position.extend(30.0)),
@@ -174,7 +209,8 @@ fn spawn_text(commands: &mut Commands, name: &str, opponent_id: &Identity) {
         ))
         .with_children(|builder| {
             builder.spawn((
-                Text2d::new(name),
+                //Text2d::new(name),
+                Text2d::new(opponent_id.to_string()),
                 TextFont {
                     font_size: 15.0,
                     ..default()
@@ -184,5 +220,11 @@ fn spawn_text(commands: &mut Commands, name: &str, opponent_id: &Identity) {
                 TextColor::from(Color::srgb(0.99, 0., 0.)),
                 Transform::from_translation(Vec3::Z),
             ));
-        });
+        })
+        .id();
+    let nametag = binding;
+
+    commands
+        .entity(opponent_entity.expect("Did not find opponent entity from online id"))
+        .add_children(&[nametag]);
 }

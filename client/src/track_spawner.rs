@@ -69,8 +69,9 @@ pub fn track_lifetime_system(
     mut commands: Commands,
     time: Res<Time>,
     player_query: Query<&Player>,
-    mut query: Query<(Entity, &mut Track)>,
+    mut query: Query<(Entity, &mut Track), Without<Despawned>>,
     track_query: Query<Entity, With<Track>>,
+    despawn_queue: Query<(Entity, &Despawned), With<Despawned>>,
 ) {
     let block_count = if let Ok(player) = player_query.get_single() {
         player.block_count
@@ -78,7 +79,13 @@ pub fn track_lifetime_system(
         0
     };
 
-    let lifetime_modifier = 5.0; // seconds per block
+    // Despawn from queue
+    //for (entity, _despawned) in despawn_queue.iter() {
+    //    //commands.entity(entity).remove::<Despawned>();
+    //    commands.entity(entity).despawn();
+    //}
+
+    let lifetime_modifier = 2.0; // seconds per block
 
     for (entity, mut track) in query.iter_mut() {
         track.timer.tick(time.delta());
@@ -95,13 +102,10 @@ pub fn track_lifetime_system(
                 track.timer.reset();
                 track.has_extended = true; // <-- Mark as extended
             } else {
-                if track_query.get(entity).is_ok() {
-                    // fix for despawning non-existent entity
-                    commands.entity(entity).insert(Despawned);
-                    commands.entity(entity).despawn();
-                } else {
-                    //println!(" deleting entity track here ");
-                }
+                // fix for despawning non-existent entity
+                // Add to despawn queue
+                //commands.entity(entity).insert(Despawned);
+                commands.entity(entity).despawn_recursive();
             }
         }
     }

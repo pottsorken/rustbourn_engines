@@ -129,7 +129,7 @@ pub const PLAYER_CONFIG: PlayerConfig = PlayerConfig {
 // Track specific component
 
 #[derive(Component)]
-struct Despawned;
+pub struct Despawned;
 
 #[derive(Component)]
 pub struct TrackConfig {
