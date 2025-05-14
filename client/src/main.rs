@@ -44,7 +44,7 @@ use bots::{render_bots_from_db, spawn_bot_blocks, spawn_bots};
 use camera::{camera_follow, setup_camera};
 use common::*;
 use db_connection::{
-    db_setup, setup_connection, update_opponent_hooks, update_opponent_positions,
+    db_setup, setup_connection, update_opponent_hooks, despawn_opponent_hooks, update_opponent_positions,
     update_opponent_tracks,
 };
 use grid::{balance_opponents_grid, balance_player_grid, check_grid_connectivity};
@@ -117,6 +117,7 @@ fn main() {
                 balance_player_grid,
                 balance_opponents_grid,
                 hook_cooldown_system,
+                despawn_opponent_hooks,
             )
                 .run_if(in_game_or_edit),
         )

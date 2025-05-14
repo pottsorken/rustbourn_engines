@@ -494,6 +494,37 @@ pub fn despawn_opponent_hooks(
     }
 }
 
+
+pub fn despawn_opponent_hook_entities(
+    mut commands: Commands,
+    ctx_wrapper: Res<CtxWrapper>,
+    mut queries: ParamSet<(
+        Query<(Entity, &OpponentHook)>,
+        Query<(Entity, &OpponentHookHead)>,
+    )>,
+) {
+    let online_players: Vec<Identity> = ctx_wrapper
+        .ctx
+        .db
+        .player()
+        .iter()
+        .map(|p| p.identity)
+        .collect();
+
+    for (entity, hook) in queries.p0().iter() {
+        if !online_players.contains(&hook.id) {
+            commands.entity(entity).despawn();
+        }
+    }
+
+    for (entity, head) in queries.p1().iter() {
+        if !online_players.contains(&head.id) {
+            commands.entity(entity).despawn();
+        }
+    }
+}
+
+
 pub fn handle_obstacle_hit(
     ctx_wrapper: Res<CtxWrapper>,
     hook_query: Query<(&Transform, &Sprite), With<Hook>>,

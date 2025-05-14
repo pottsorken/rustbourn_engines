@@ -1,6 +1,7 @@
 use bevy::prelude::*;
 use bevy::ecs::system::ParamSet;
 
+
 // Spacetime dependencies
 use crate::common::{CtxWrapper, Opponent, OpponentTrack};
 use crate::module_bindings::*;
@@ -339,3 +340,16 @@ pub fn update_opponent_tracks(
         );
     }
 }
+
+
+pub fn despawn_opponent_hooks(
+    ctx_wrapper: Res<CtxWrapper>,
+    mut commands: Commands,
+    mut queries: ParamSet<(
+        Query<(Entity, &OpponentHook)>,
+        Query<(Entity, &OpponentHookHead)>,
+    )>,
+) {
+crate::hook::despawn_opponent_hook_entities(commands, ctx_wrapper, queries);
+}
+
