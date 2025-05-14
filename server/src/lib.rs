@@ -4,7 +4,7 @@ use spacetimedb::{
     table, DbContext, Identity, Local, ReducerContext, SpacetimeType, Table, Timestamp,
 };
 
-const N_BOTS: u64 = 3;
+const N_BOTS: u64 = 30;
 const N_OBSTACLES: u64 = 200;
 
 use noise::{NoiseFn, Perlin};
@@ -316,7 +316,40 @@ pub fn reset_bots_if_no_players_online(ctx: &ReducerContext) -> Result<(), Strin
     }
 
     // Original bot spawn points. Three bots are spawned.
-    let bot_spawn_positions = vec![(200.0, 20.0), (-200.0, -20.0), (200.0, -250.0)];
+    let bot_spawn_positions = vec![  
+        (-15432.0, 12340.0),  
+        (12984.0, -11324.0),  
+        (-8764.0, -13240.0),  
+        (5432.0, 10876.0),  
+        (12098.0, -2345.0),  
+        (-4321.0, 5432.0),  
+        (8234.0, -9321.0),  
+        (-14230.0, 8391.0),  
+        (987.0, 1234.0),  
+        (16000.0, -16000.0),  
+        (-16384.0, 16384.0),  
+        (0.0, 0.0),  
+        (10234.0, 9423.0),  
+        (-9382.0, -12083.0),  
+        (8745.0, 9843.0),  
+        (-4321.0, -6789.0),  
+        (14230.0, -5432.0),  
+        (-10987.0, 10342.0),  
+        (11234.0, -7890.0),  
+        (-12345.0, -12345.0),  
+        (3198.0, 8754.0),  
+        (-6543.0, 14982.0),  
+        (4321.0, -9321.0),  
+        (-15432.0, -1324.0),  
+        (13842.0, 15843.0),  
+        (-12983.0, 2342.0),  
+        (7654.0, -7654.0),  
+        (-8432.0, 7654.0),  
+        (15678.0, -13245.0),  
+        (-12874.0, 8234.0),  
+    ];
+
+
 
     // Reset each bot (e.g., set them to some default positions).
     for (i, mut bot) in ctx.db.bots().iter().enumerate() {
@@ -449,7 +482,39 @@ pub fn update_block_owner(
 // Server invokes this function in "server_startup" reducer during server intialization.
 fn generate_bots(ctx: &ReducerContext) {
     // Example bot generation logic, spawn three bots.
-    let bot_spawn_positions = vec![(200.0, 20.0), (-200.0, -20.0), (200.0, -250.0)];
+    let bot_spawn_positions = vec![  
+        (-15432.0, 12340.0),  
+        (12984.0, -11324.0),  
+        (-8764.0, -13240.0),  
+        (5432.0, 10876.0),  
+        (12098.0, -2345.0),  
+        (-4321.0, 5432.0),  
+        (8234.0, -9321.0),  
+        (-14230.0, 8391.0),  
+        (987.0, 1234.0),  
+        (16000.0, -16000.0),  
+        (-16384.0, 16384.0),  
+        (0.0, 0.0),  
+        (10234.0, 9423.0),  
+        (-9382.0, -12083.0),  
+        (8745.0, 9843.0),  
+        (-4321.0, -6789.0),  
+        (14230.0, -5432.0),  
+        (-10987.0, 10342.0),  
+        (11234.0, -7890.0),  
+        (-12345.0, -12345.0),  
+        (3198.0, 8754.0),  
+        (-6543.0, 14982.0),  
+        (4321.0, -9321.0),  
+        (-15432.0, -1324.0),  
+        (13842.0, 15843.0),  
+        (-12983.0, 2342.0),  
+        (7654.0, -7654.0),  
+        (-8432.0, 7654.0),  
+        (15678.0, -13245.0),  
+        (-12874.0, 8234.0),  
+    ];
+
 
     // Generate and insert bots into the database.
     for (i, (x, y)) in bot_spawn_positions.into_iter().enumerate() {

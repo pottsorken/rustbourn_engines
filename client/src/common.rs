@@ -122,7 +122,7 @@ pub struct PlayerConfig {
 /// Global constant config for the player
 pub const PLAYER_CONFIG: PlayerConfig = PlayerConfig {
     size: Vec2::new(80.0, 160.0),
-    movement_speed: 300.0,
+    movement_speed: 3000.0,
     rotation_speed: f32::to_radians(180.0),
     path: "sprites/top-view/core_long.png",
     max_block_count: 100,
