@@ -71,6 +71,12 @@ pub const BOT_CONFIG: BotConfig = BotConfig {
 // === Player defined constraints ===
 //
 
+//#[derive(Component)]
+#[derive(Resource)]
+pub struct Username {
+    pub name: String,
+}
+
 #[derive(Component)]
 pub struct Player {
     pub movement_speed: f32,

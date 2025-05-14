@@ -17,6 +17,7 @@ pub fn spawn_tags(
     mut commands: Commands,
     player_query: Query<Entity, With<Player>>,
     ctx_wrapper: Res<CtxWrapper>,
+    username: Res<Username>,
 ) {
     //commands.spawn((
     //    Text2d::new("Lorem Ipsum Dolor"),
@@ -67,7 +68,7 @@ pub fn spawn_tags(
         ))
         .with_children(|builder| {
             builder.spawn((
-                Text2d::new(player_id.to_string()),
+                Text2d::new(username.into_inner().name.clone()),
                 TextFont {
                     font_size: 15.0,
                     //font_color: TextColor::BLACK,
@@ -96,6 +97,7 @@ pub fn spawn_opponent_nametag(
     opponent_query: &Query<(Entity, &Opponent)>,
     opponent_id: &Identity,
     local_player_id: &Identity,
+    player_name: String,
     x: f32,
     y: f32,
 ) {
@@ -110,7 +112,7 @@ pub fn spawn_opponent_nametag(
             return; // Nametag already exists
         }
     }
-    spawn_text(&mut commands, "Lorem Ipsum", opponent_id, &opponent_query);
+    spawn_text(&mut commands, &player_name, opponent_id, &opponent_query);
 }
 
 pub fn update_nametags_content(
@@ -130,6 +132,7 @@ pub fn update_nametags_content(
 
     for player in players {
         let player_id = player.identity;
+        let player_name = player.name.clone();
         spawn_opponent_nametag(
             &mut commands,
             &asset_server,
@@ -137,6 +140,7 @@ pub fn update_nametags_content(
             &opponent_query,
             &player_id,
             &local_player_id,
+            player_name,
             player.hook.position.x,
             player.hook.position.y,
         );
@@ -210,7 +214,7 @@ fn spawn_text(
         .with_children(|builder| {
             builder.spawn((
                 //Text2d::new(name),
-                Text2d::new(opponent_id.to_string()),
+                Text2d::new(name),
                 TextFont {
                     font_size: 15.0,
                     ..default()

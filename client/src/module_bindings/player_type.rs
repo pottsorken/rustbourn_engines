@@ -13,6 +13,7 @@ use super::track_type::Track;
 #[sats(crate = __lib)]
 pub struct Player {
     pub identity: __sdk::Identity,
+    pub name: String,
     pub position: BevyTransform,
     pub online: bool,
     pub hook: Hook,

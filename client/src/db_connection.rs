@@ -1,14 +1,14 @@
 use bevy::prelude::*;
 
 // Spacetime dependencies
-use crate::common::{Opponent, CtxWrapper, OpponentTrack};
+use crate::common::{CtxWrapper, Opponent, OpponentTrack};
 use crate::module_bindings::*;
 use crate::opponent::*;
 use spacetimedb_sdk::{credentials, DbContext, Error, Identity, Table};
 
 use crate::parse::*;
 
-use crate::common::OpponentHook;
+use crate::common::{OpponentHook, Username};
 use crate::hook::*;
 
 /// The database name we chose when we published our module.
@@ -57,11 +57,16 @@ pub fn update_bot_position(
     //println!("{}", player_transform.rotation.to_euler(EulerRot::XYZ).2);
 }
 
-pub fn db_setup() -> DbConnection{
+pub fn db_setup() -> DbConnection {
     connect_to_db()
 }
 
-pub fn setup_connection(mut commands: Commands, asset_server: Res<AssetServer>, ctx_wrapper: Res<CtxWrapper>) {
+pub fn setup_connection(
+    mut commands: Commands,
+    asset_server: Res<AssetServer>,
+    ctx_wrapper: Res<CtxWrapper>,
+    username: Res<Username>,
+) {
     // Connect to the database
     //let ctx = connect_to_db();
 
@@ -79,6 +84,12 @@ pub fn setup_connection(mut commands: Commands, asset_server: Res<AssetServer>, 
     //commands.insert_resource(CtxWrapper { ctx });
     // Handle CLI input
     //user_input_loop(&ctx);
+
+    // Set username
+    ctx_wrapper
+        .ctx
+        .reducers()
+        .set_name(username.into_inner().name.clone());
 }
 
 /// Register subscriptions for all rows of the player tables.

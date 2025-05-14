@@ -1,5 +1,7 @@
 use spacetimedb::{
-    reducer, spacetimedb_lib::{db, identity}, table, DbContext, Identity, Local, ReducerContext, SpacetimeType, Table, Timestamp
+    reducer,
+    spacetimedb_lib::{db, identity},
+    table, DbContext, Identity, Local, ReducerContext, SpacetimeType, Table, Timestamp,
 };
 
 const N_BOTS: u64 = 3;
@@ -12,6 +14,7 @@ use noise::{NoiseFn, Perlin};
 pub struct Player {
     #[primary_key]
     identity: Identity,
+    name: String,
     // Position stored in custom bevy transform struct
     position: BevyTransform,
     online: bool,
@@ -111,6 +114,28 @@ pub struct Vec3 {
 
 /// Reducer for decreasing a ("id") specific obstacle's HP by "damage" points.
 /// Client invokes this reducer in "handle_obstacle_hit" function when dealing damage to an obstacle with their hook.
+
+#[spacetimedb::reducer]
+/// Clients invoke this reducer to set their user names.
+pub fn set_name(ctx: &ReducerContext, name: String) -> Result<(), String> {
+    let name = validate_name(name)?;
+    if let Some(user) = ctx.db.player().identity().find(ctx.sender) {
+        ctx.db.player().identity().update(Player { name, ..user });
+        Ok(())
+    } else {
+        Err("Cannot set name for unknown user".to_string())
+    }
+}
+
+/// Takes a name and checks if it's acceptable as a user's name.
+fn validate_name(name: String) -> Result<String, String> {
+    if name.is_empty() {
+        Err("Names must not be empty".to_string())
+    } else {
+        Ok(name)
+    }
+}
+
 #[spacetimedb::reducer]
 pub fn damage_obstacle(ctx: &ReducerContext, id: u64, damage: u32) -> Result<(), String> {
     if let Some(mut obstacle) = ctx.db.obstacle().id().find(id) {
@@ -172,7 +197,6 @@ pub fn update_tracks_system(
         Err("Player not found".to_string())
     }
 }
-
 
 /// Reducer for updating a ("identity") specific hook's movement in extension and retraction through it's "width" and "height".
 /// Client invokes this reducer in "hook_controls" function when player extends and retracs hook.
@@ -246,13 +270,12 @@ pub fn decrease_grid_load(
     ctx: &ReducerContext,
     identity: Identity,
     load: i32,
-)-> Result<(), String>
-{
-    if let Some(mut player) = ctx.db.player().identity().find(identity){
+) -> Result<(), String> {
+    if let Some(mut player) = ctx.db.player().identity().find(identity) {
         player.grid.load = load;
         ctx.db.player().identity().update(player);
         Ok(())
-    } else{
+    } else {
         Err("Player not found".to_string())
     }
 }
@@ -323,11 +346,14 @@ pub fn player_connected(ctx: &ReducerContext) {
             online: true,
             .._player
         });
-    } else { // If first time connecting to server.
+    } else {
+        // If first time connecting to server.
         // Insert new column in "player" table.
         ctx.db.player().insert(Player {
             // Set player Identity to connecting client.
             identity: ctx.sender,
+            name: "Lorem Ipsum".to_string(),
+            //name,
             // Set default position data.
             position: BevyTransform {
                 coordinates: Vec2 { x: 0.0, y: 0.0 },
@@ -353,7 +379,7 @@ pub fn player_connected(ctx: &ReducerContext) {
                 width: 0.0,
                 height: 0.0,
                 rotation: 0.0,
-                id: 0, 
+                id: 0,
             },
             grid: Grid {
                 load: 0,

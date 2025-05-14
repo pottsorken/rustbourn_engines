@@ -189,7 +189,11 @@ pub fn menu_setup(mut menu_state: ResMut<NextState<MenuState>>) {
     menu_state.set(MenuState::Main);
 }
 
-pub fn main_menu_setup(mut commands: Commands, asset_server: Res<AssetServer>) {
+pub fn main_menu_setup(
+    mut commands: Commands,
+    asset_server: Res<AssetServer>,
+    //username: Res<Username>,
+) {
     // Common style for all buttons on the screen
     let button_node = Node {
         width: Val::Px(300.0),
@@ -224,7 +228,7 @@ pub fn main_menu_setup(mut commands: Commands, asset_server: Res<AssetServer>) {
         ..default()
     };
 
-    pub fn get_username() -> String {
+    pub fn print_random_string(commands: &mut Commands) -> String {
         let usernames_first = [
             "cool", "lazy", "brisk", "sneaky", "quirky", "noisy", "zany", "clever", "sleepy",
             "rowdy", "nimble", "grumpy", "shady", "peppy", "twitchy", "mellow", "spunky", "clumsy",
@@ -248,11 +252,17 @@ pub fn main_menu_setup(mut commands: Commands, asset_server: Res<AssetServer>) {
         };
         let random_username = format!("{}-{}", random_username_first, random_username_second);
 
+        //commands.insert_resource(Username {
+        //    name: random_username.clone().to_string(),
+        //});
+
         // println!("{}", random_username);
         return random_username.to_string();
     }
 
-    let mut username = get_username();
+    let name = print_random_string(&mut commands);
+    let mut username = name.clone();
+    commands.insert_resource(Username { name: name.clone() });
 
     commands
         .spawn((
@@ -297,7 +307,7 @@ pub fn main_menu_setup(mut commands: Commands, asset_server: Res<AssetServer>) {
                         ))
                         .with_children(|parent| {
                             parent.spawn((
-                                Text::new(username),
+                                Text::new(name.clone()),
                                 username_button_text_font.clone(),
                                 TextColor(PRESSED_BUTTON),
                             ));
