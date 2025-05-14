@@ -2,7 +2,7 @@ use bevy::prelude::*;
 use bevy_ecs_tilemap::prelude::*;
 use image::{GenericImageView, ImageReader};
 use std::collections::HashSet;
-use crate::common::{MAP_CONFIG, WaterTiles, DirtTiles, GrassTiles, StoneTiles};
+use crate::common::{MAP_CONFIG, LavaTiles, WaterTiles, RegTiles, StoneTiles};
 // use rand::random;
 use rand::Rng;
 
@@ -40,14 +40,10 @@ pub fn setup_tilemap(
         .expect("Failed to decode image");
 
     let (width, height) = img.dimensions();
-    // let mut water_tiles: std::collections::HashSet<T> = HashSet::new();
-    // let mut dirt_tiles: std::collections::HashSet<T> = HashSet::new();
-    // let mut grass_tiles: std::collections::HashSet<T> = HashSet::new();
-    // let mut stone_tiles: std::collections::HashSet<T> = HashSet::new();   
 
+    let mut lava_tiles = HashSet::new();
     let mut water_tiles = HashSet::new();
-    let mut dirt_tiles = HashSet::new();
-    let mut grass_tiles = HashSet::new();
+    let mut reg_tiles = HashSet::new();
     let mut stone_tiles = HashSet::new();
 
     let (width, height) = img.dimensions();
@@ -78,43 +74,49 @@ pub fn setup_tilemap(
 
             // GRASS
             let texture_index = if r <= 20 && g >= 230 && b <= 20 {
+                reg_tiles.insert((x,y));
                 rng.gen_range(0..20)
             // WATER
             } else if r <= 20 && g <= 20 && b >= 230  {
+                water_tiles.insert((x, y));
                 rng.gen_range(20..29)
             // STONE
             } else if r <= 20 && g <= 20 && b <= 20  {
+                stone_tiles.insert((x,y));
                 rng.gen_range(29..38)
             // DIRT
             } else if r >= 230 && g >= 230 && b >= 230  {
+                reg_tiles.insert((x,y));
                 rng.gen_range(38..48)
             // LAVA 
             } else if r >= 230 && g <= 20 && b <= 20  {
+                lava_tiles.insert((x,y));
                 rng.gen_range(48..58)
             // WATER-GRASS
             } else if r <= 20 && g >= 230 && b >= 230  {
+                water_tiles.insert((x,y));
                 rng.gen_range(58..62)
             // WATER-STONE
             } else if r >= 230 && g <= 20 && b >= 230 {
+                water_tiles.insert((x,y));
                 rng.gen_range(62..67)
             // DIRT-GRASS
             } else if r >= 230 && g >= 230 && b <= 20  {
+                reg_tiles.insert((x,y));
                 rng.gen_range(67..77)
             // DIRT-STONE
             } else if r <= 200 && r >= 100 && g <= 200 && g >= 100 && b <= 200 && b >= 100  {
+                reg_tiles.insert((x,y));
                 rng.gen_range(77..81)
             // STONE-GRASS
             } else if r <= 70 && r >= 30 && g <= 70 && g >= 30 && b <= 70 && b >= 30  {
+                reg_tiles.insert((x,y));
                 rng.gen_range(81..86)
             } else {
+                lava_tiles.insert((x,y));
                 49
             };
 
-            // if g == 255 {
-            //     start = 0;
-            //     stop = 16;
-            //     texture
-            // }
 
             let tile_entity = commands
                 .spawn(TileBundle {
@@ -141,19 +143,19 @@ pub fn setup_tilemap(
         ..Default::default()
     });
 
+    // Insert lava tile data as a resource
+    commands.insert_resource(LavaTiles {
+        positions: lava_tiles,
+    });
+
     // Insert water tile data as a resource
     commands.insert_resource(WaterTiles {
         positions: water_tiles,
     });
 
-    // Insert water tile data as a resource
-    commands.insert_resource(DirtTiles {
-        positions: dirt_tiles,
-    });
-
     // Insert grass tile data as a resource
-    commands.insert_resource(GrassTiles {
-        positions: grass_tiles,
+    commands.insert_resource(RegTiles {
+        positions: reg_tiles,
     });
 
     // Insert stone tile data as a resource

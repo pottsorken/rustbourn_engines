@@ -9,6 +9,10 @@ use spacetimedb_sdk::Identity;
 use std::collections::{HashMap, HashSet};
 
 
+#[derive(Resource, Debug)]
+pub struct LavaTiles {
+    pub positions: HashSet<(u32, u32)>,
+}
 
 #[derive(Resource, Debug)]
 pub struct WaterTiles {
@@ -16,12 +20,7 @@ pub struct WaterTiles {
 }
 
 #[derive(Resource, Debug)]
-pub struct DirtTiles {
-    pub positions: HashSet<(u32, u32)>,
-}
-
-#[derive(Resource, Debug)]
-pub struct GrassTiles {
+pub struct RegTiles {
     pub positions: HashSet<(u32, u32)>,
 }
 
@@ -168,15 +167,15 @@ pub struct LastTrackPos(pub Vec2);
 
 #[derive(Component)]
 pub struct ModifierConfig {
-    pub dirt: f32,
-    pub grass: f32,
+    pub water: f32,
+    pub reg: f32,
     pub stone: f32,
 }
 
 pub const MODIFIER_CONFIG: ModifierConfig = ModifierConfig {
-    dirt: 0.5,
-    grass: 0.8,
-    stone: 1.5,
+    water: 0.1,
+    reg: 1.0,
+    stone: 0.7,
 };
 
 
