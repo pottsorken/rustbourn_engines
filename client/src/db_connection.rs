@@ -1,17 +1,17 @@
-use bevy::prelude::*;
 use bevy::ecs::system::ParamSet;
+use bevy::prelude::*;
 
 // Spacetime dependencies
 use crate::common::{CtxWrapper, Opponent, OpponentTrack};
-use crate::module_bindings::*;
 use crate::opponent::*;
+use crate::{module_bindings::*, player};
 use spacetimedb_sdk::{credentials, DbContext, Error, Identity, Table};
 
 use crate::parse::*;
 
-use crate::common::{OpponentHook, Username};
-use crate::common::OpponentHookHead;
 use crate::common::HookAttach;
+use crate::common::OpponentHookHead;
+use crate::common::{OpponentHook, Username};
 use crate::hook::*;
 
 /// The database name we chose when we published our module.
@@ -254,22 +254,49 @@ pub fn load_bots(ctx_wrapper: &CtxWrapper) -> Vec<(f32, f32, u64)> {
     bots
 }
 
-pub fn load_leaderboard(ctx_wrapper: &CtxWrapper) -> Vec<(f32, f32, u64)> {
-    println!("[DEBUG] object)",);
-    let bots: Vec<(f32, f32, u64)> = ctx_wrapper
+pub fn load_leaderboard(ctx_wrapper: &CtxWrapper) -> Vec<(Identity, u64)> {
+    println!("[DEBUG] Loading leaderboard");
+
+    // Attempt to get the leaderboard with ID 1
+    if let Some(leaderboard) = ctx_wrapper.ctx.db.leaderboard().id().find(&1) {
+        // Map the top player identities to their position and score
+        leaderboard
+            .top_players
+            .iter()
+            .filter_map(|&identity| {
+                // Fetch the player by identity
+                ctx_wrapper
+                    .ctx
+                    .db
+                    .player()
+                    .identity()
+                    .find(&identity)
+                    .map(|player| {
+                        let name = player.identity;
+                        let blocks = player.grid.load as u64;
+                        (name, blocks) // Return the tuple
+                    })
+            })
+            .collect() // Collect the result into a Vec
+    } else {
+        println!("[ERROR] Leaderboard not found");
+        Vec::new() // Return an empty vector if the leaderboard does not exist
+    }
+}
+
+// db_connection
+pub fn update_leaderboard(
+    ctx_wrapper: &CtxWrapper,
+    //bot_transform: &Transform,
+    player_id: Identity,
+    leaderboard_id: u64,
+    //new_rotate_dir: f32,
+) {
+    ctx_wrapper
         .ctx
-        .db
-        .bots()
-        .iter()
-        .map(|bot| {
-            (
-                bot.position.coordinates.x,
-                bot.position.coordinates.y,
-                bot.id,
-            )
-        })
-        .collect();
-    bots
+        .reducers()
+        .update_leaderboard(player_id, leaderboard_id)
+        .unwrap();
 }
 
 pub fn update_opponent_hooks(
@@ -278,14 +305,14 @@ pub fn update_opponent_hooks(
     asset_server: Res<AssetServer>,
     //mut query: Query<(&mut Sprite, &mut Transform, &OpponentHook), With<OpponentHook>>,
     /*mut hook_query: Query<(&mut Sprite, &mut Transform, &OpponentHook), With<OpponentHook>>,
-    mut head_query: Query<(&mut Transform, &HookAttach, &OpponentHookHead)>,
-   */
+     mut head_query: Query<(&mut Transform, &HookAttach, &OpponentHookHead)>,
+    */
     mut queries: ParamSet<(
         Query<(&mut Sprite, &mut Transform, &OpponentHook), With<OpponentHook>>,
         Query<(&mut Transform, &HookAttach, &OpponentHookHead)>,
     )>,
     existing_hooks_query: Query<&OpponentHook>,
-    existing_heads_query: Query<&OpponentHookHead>, 
+    existing_heads_query: Query<&OpponentHookHead>,
     despawn_query: Query<(Entity, &OpponentHook)>,
 ) {
     let players = ctx_wrapper.ctx.db.player().iter().collect::<Vec<_>>();

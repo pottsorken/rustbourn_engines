@@ -11,8 +11,11 @@ pub mod bot_type;
 pub mod bots_table;
 pub mod damage_obstacle_reducer;
 pub mod decrease_grid_load_reducer;
+pub mod generate_leaderboard_reducer;
 pub mod grid_type;
 pub mod hook_type;
+pub mod leaderboard_table;
+pub mod leaderboard_type;
 pub mod obstacle_table;
 pub mod obstacle_type;
 pub mod owner_type_type;
@@ -27,6 +30,7 @@ pub mod update_block_owner_reducer;
 pub mod update_bot_position_reducer;
 pub mod update_hook_movement_reducer;
 pub mod update_hook_position_reducer;
+pub mod update_leaderboard_reducer;
 pub mod update_owner_grid_reducer;
 pub mod update_player_position_reducer;
 pub mod update_tracks_system_reducer;
@@ -44,8 +48,13 @@ pub use damage_obstacle_reducer::{
 pub use decrease_grid_load_reducer::{
     decrease_grid_load, set_flags_for_decrease_grid_load, DecreaseGridLoadCallbackId,
 };
+pub use generate_leaderboard_reducer::{
+    generate_leaderboard, set_flags_for_generate_leaderboard, GenerateLeaderboardCallbackId,
+};
 pub use grid_type::Grid;
 pub use hook_type::Hook;
+pub use leaderboard_table::*;
+pub use leaderboard_type::Leaderboard;
 pub use obstacle_table::*;
 pub use obstacle_type::Obstacle;
 pub use owner_type_type::OwnerType;
@@ -71,6 +80,9 @@ pub use update_hook_movement_reducer::{
 };
 pub use update_hook_position_reducer::{
     set_flags_for_update_hook_position, update_hook_position, UpdateHookPositionCallbackId,
+};
+pub use update_leaderboard_reducer::{
+    set_flags_for_update_leaderboard, update_leaderboard, UpdateLeaderboardCallbackId,
 };
 pub use update_owner_grid_reducer::{
     set_flags_for_update_owner_grid, update_owner_grid, UpdateOwnerGridCallbackId,
@@ -100,6 +112,7 @@ pub enum Reducer {
         identity: __sdk::Identity,
         load: i32,
     },
+    GenerateLeaderboard,
     PlayerConnected,
     PlayerDisconnected,
     SetName {
@@ -125,6 +138,10 @@ pub enum Reducer {
         identity: __sdk::Identity,
         position: Vec2,
         rotation: f32,
+    },
+    UpdateLeaderboard {
+        player_identity: __sdk::Identity,
+        id_leaderboard: u64,
     },
     UpdateOwnerGrid {
         load: i32,
@@ -153,6 +170,7 @@ impl __sdk::Reducer for Reducer {
         match self {
             Reducer::DamageObstacle { .. } => "damage_obstacle",
             Reducer::DecreaseGridLoad { .. } => "decrease_grid_load",
+            Reducer::GenerateLeaderboard => "generate_leaderboard",
             Reducer::PlayerConnected => "player_connected",
             Reducer::PlayerDisconnected => "player_disconnected",
             Reducer::SetName { .. } => "set_name",
@@ -160,6 +178,7 @@ impl __sdk::Reducer for Reducer {
             Reducer::UpdateBotPosition { .. } => "update_bot_position",
             Reducer::UpdateHookMovement { .. } => "update_hook_movement",
             Reducer::UpdateHookPosition { .. } => "update_hook_position",
+            Reducer::UpdateLeaderboard { .. } => "update_leaderboard",
             Reducer::UpdateOwnerGrid { .. } => "update_owner_grid",
             Reducer::UpdatePlayerPosition { .. } => "update_player_position",
             Reducer::UpdateTracksSystem { .. } => "update_tracks_system",
@@ -177,6 +196,10 @@ impl TryFrom<__ws::ReducerCallInfo<__ws::BsatnFormat>> for Reducer {
             "decrease_grid_load" => Ok(__sdk::parse_reducer_args::<
                 decrease_grid_load_reducer::DecreaseGridLoadArgs,
             >("decrease_grid_load", &value.args)?
+            .into()),
+            "generate_leaderboard" => Ok(__sdk::parse_reducer_args::<
+                generate_leaderboard_reducer::GenerateLeaderboardArgs,
+            >("generate_leaderboard", &value.args)?
             .into()),
             "player_connected" => Ok(__sdk::parse_reducer_args::<
                 player_connected_reducer::PlayerConnectedArgs,
@@ -207,6 +230,10 @@ impl TryFrom<__ws::ReducerCallInfo<__ws::BsatnFormat>> for Reducer {
                 update_hook_position_reducer::UpdateHookPositionArgs,
             >("update_hook_position", &value.args)?
             .into()),
+            "update_leaderboard" => Ok(__sdk::parse_reducer_args::<
+                update_leaderboard_reducer::UpdateLeaderboardArgs,
+            >("update_leaderboard", &value.args)?
+            .into()),
             "update_owner_grid" => Ok(__sdk::parse_reducer_args::<
                 update_owner_grid_reducer::UpdateOwnerGridArgs,
             >("update_owner_grid", &value.args)?
@@ -235,6 +262,7 @@ impl TryFrom<__ws::ReducerCallInfo<__ws::BsatnFormat>> for Reducer {
 pub struct DbUpdate {
     block: __sdk::TableUpdate<Block>,
     bots: __sdk::TableUpdate<Bot>,
+    leaderboard: __sdk::TableUpdate<Leaderboard>,
     obstacle: __sdk::TableUpdate<Obstacle>,
     player: __sdk::TableUpdate<Player>,
     track: __sdk::TableUpdate<Track>,
@@ -248,6 +276,9 @@ impl TryFrom<__ws::DatabaseUpdate<__ws::BsatnFormat>> for DbUpdate {
             match &table_update.table_name[..] {
                 "block" => db_update.block = block_table::parse_table_update(table_update)?,
                 "bots" => db_update.bots = bots_table::parse_table_update(table_update)?,
+                "leaderboard" => {
+                    db_update.leaderboard = leaderboard_table::parse_table_update(table_update)?
+                }
                 "obstacle" => {
                     db_update.obstacle = obstacle_table::parse_table_update(table_update)?
                 }
@@ -285,6 +316,9 @@ impl __sdk::DbUpdate for DbUpdate {
         diff.bots = cache
             .apply_diff_to_table::<Bot>("bots", &self.bots)
             .with_updates_by_pk(|row| &row.id);
+        diff.leaderboard = cache
+            .apply_diff_to_table::<Leaderboard>("leaderboard", &self.leaderboard)
+            .with_updates_by_pk(|row| &row.id);
         diff.obstacle = cache
             .apply_diff_to_table::<Obstacle>("obstacle", &self.obstacle)
             .with_updates_by_pk(|row| &row.id);
@@ -305,6 +339,7 @@ impl __sdk::DbUpdate for DbUpdate {
 pub struct AppliedDiff<'r> {
     block: __sdk::TableAppliedDiff<'r, Block>,
     bots: __sdk::TableAppliedDiff<'r, Bot>,
+    leaderboard: __sdk::TableAppliedDiff<'r, Leaderboard>,
     obstacle: __sdk::TableAppliedDiff<'r, Obstacle>,
     player: __sdk::TableAppliedDiff<'r, Player>,
     track: __sdk::TableAppliedDiff<'r, Track>,
@@ -322,6 +357,11 @@ impl<'r> __sdk::AppliedDiff<'r> for AppliedDiff<'r> {
     ) {
         callbacks.invoke_table_row_callbacks::<Block>("block", &self.block, event);
         callbacks.invoke_table_row_callbacks::<Bot>("bots", &self.bots, event);
+        callbacks.invoke_table_row_callbacks::<Leaderboard>(
+            "leaderboard",
+            &self.leaderboard,
+            event,
+        );
         callbacks.invoke_table_row_callbacks::<Obstacle>("obstacle", &self.obstacle, event);
         callbacks.invoke_table_row_callbacks::<Player>("player", &self.player, event);
         callbacks.invoke_table_row_callbacks::<Track>("track", &self.track, event);
@@ -902,6 +942,7 @@ impl __sdk::SpacetimeModule for RemoteModule {
     fn register_tables(client_cache: &mut __sdk::ClientCache<Self>) {
         block_table::register_table(client_cache);
         bots_table::register_table(client_cache);
+        leaderboard_table::register_table(client_cache);
         obstacle_table::register_table(client_cache);
         player_table::register_table(client_cache);
         track_table::register_table(client_cache);

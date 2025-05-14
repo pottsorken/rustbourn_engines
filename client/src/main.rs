@@ -12,39 +12,31 @@ mod db_connection;
 mod edit_menu;
 mod grid;
 mod hook;
+mod leaderboard;
 mod map;
 mod module_bindings;
+mod nametag;
 mod obstacle;
 mod opponent;
 mod parse;
 mod player;
 mod player_attach;
 mod start_menu;
-<<<<<<< HEAD
-use edit_menu::*;
-mod leaderboard;
-mod nametag;
 mod track_spawner;
-=======
-mod edit_menu; use edit_menu::*;
-mod leaderboard;
->>>>>>> 9e0e757 (leaderboard first try)
 
 use block::*;
 use camera::*;
 use common::*;
+use edit_menu::*;
 use hook::*;
+use leaderboard::*;
 use leaderboard::*;
 use nametag::*;
 use obstacle::*;
 use player::*;
 use player_attach::*;
 use start_menu::*;
-<<<<<<< HEAD
 use track_spawner::*;
-=======
-use leaderboard::*;
->>>>>>> 9e0e757 (leaderboard first try)
 
 //#[cfg(windows)]
 //#[global_allocator]
@@ -61,11 +53,11 @@ use db_connection::{
 use grid::{balance_opponents_grid, balance_player_grid, check_grid_connectivity};
 
 use hook::{handle_obstacle_hit, hook_cooldown_system};
+use leaderboard::{spawn_leaderboard, update_leaderboard_from_db};
 use map::setup_tilemap;
 use opponent::{despawn_opponents, setup_blocks_opponent, spawn_opponent_tracks_system};
 use player::{player_movement, setup_blocks_player, setup_player};
 use track_spawner::{spawn_tracks_system, track_lifetime_system};
-use leaderboard::{spawn_leaderboard, update_leaderboard_position};
 
 fn main() {
     App::new()
