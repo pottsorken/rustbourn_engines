@@ -131,52 +131,50 @@ pub fn render_bots_from_db(
 }
 
 pub fn spawn_bot_blocks(
-    mut bots_query: Query<(Entity, &mut PlayerGrid), With<Bot>>,
+    mut bots_query: Query<(&Bot, Entity, &mut PlayerGrid)>,
     mut commands: Commands,
     ctx_wrapper: Res<CtxWrapper>,
     asset_server: Res<AssetServer>,
     mut spawned_blocks: ResMut<SpawnedBlocks>,
 ) {
     let mut rng = rand::rng();
-    //println§!("spawn_bot_blocks run here --------------");
+
     for block in ctx_wrapper.ctx.db.block().iter() {
-        let mut i = 0;
-        for (bot_entity, mut bot_grid) in bots_query.iter_mut() {
-            if !spawned_blocks.ids.contains(&block.id) {
-                if let OwnerType::Bot(owner) = block.owner {
-                    if owner == i {
-                        println!("Spawning for bot: {}, blockid: {}", bot_entity, i);
-                        // Pick a random texture index
-                        let texture_index = rng.random_range(0..BLOCK_CONFIG.path.len());
-                        let block_entity = commands.spawn((
-                            Sprite {
-                                custom_size: Some(BLOCK_CONFIG.size),
-                                image: asset_server.load(BLOCK_CONFIG.path[texture_index]),
-                                ..default()
-                            },
-                            Transform::from_xyz(0., 0., 1.0),
-                            Block {},
-                            AttachedBlock {
-                                grid_offset: (block.offset_x, block.offset_y), //bot_grid.next_free_pos,
-                                player_entity: bot_entity,
-                            },
-                        ));
+        if spawned_blocks.ids.contains(&block.id) {
+            continue;
+        }
 
-                        // Insert spawned block to the bot's grid
-                        bot_grid
-                            .block_position
-                            .insert((block.offset_x, block.offset_y), block_entity.id());
+        if let OwnerType::Bot(owner) = block.owner {
+            for (bot, bot_entity, mut bot_grid) in bots_query.iter_mut() {
+                if owner == bot.id {
+                    println!("Spawning for bot: {}, blockid: {}", bot_entity, block.id);
 
-                        increment_grid_pos(&mut bot_grid);
-                        spawned_blocks.ids.insert(block.id);
-                        spawned_blocks.entities.insert(block_entity.id(), block.id);
-                    }
+                    let texture_index = rng.random_range(0..BLOCK_CONFIG.path.len());
+                    let block_entity = commands.spawn((
+                        Sprite {
+                            custom_size: Some(BLOCK_CONFIG.size),
+                            image: asset_server.load(BLOCK_CONFIG.path[texture_index]),
+                            ..default()
+                        },
+                        Transform::from_xyz(0., 0., 1.0),
+                        Block {},
+                        AttachedBlock {
+                            grid_offset: (block.offset_x, block.offset_y),
+                            player_entity: bot_entity,
+                        },
+                    ));
+
+                    bot_grid.block_position.insert((block.offset_x, block.offset_y), block_entity.id());
+                    increment_grid_pos(&mut bot_grid);
+                    spawned_blocks.ids.insert(block.id);
+                    spawned_blocks.entities.insert(block_entity.id(), block.id);
+                    break; // done with this block
                 }
             }
-            i += 1;
         }
     }
 }
+
 
 /*
 pub fn update_bots(
