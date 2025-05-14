@@ -365,8 +365,8 @@ pub struct ObstacleConfig {
 
 // Global constant config for the player
 pub const OBSTACLE_CONFIG: ObstacleConfig = ObstacleConfig {
-    size: Vec2::new(400.0, 400.0),
-    count: 1,
+    size: Vec2::new(400.0, 400.0),      // Change obstacle size here
+    count: 1,                           // Change number of obstacles on the map
     path: "sprites/Obstacles/volcano.png",
 };
 
