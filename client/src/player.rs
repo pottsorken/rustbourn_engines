@@ -4,7 +4,7 @@ use crate::common::{
     MAP_CONFIG, OBSTACLE_CONFIG, PLAYER_CONFIG, TRACK_CONFIG, MODIFIER_CONFIG,
 };
 use crate::db_connection::{update_player_position};
-use crate::grid::increment_grid_pos;
+use crate::grid::{get_block_count, increment_grid_pos};
 use crate::module_bindings::*;
 use crate::player_attach::*;
 use bevy::pbr::light_consts::lux::DIRECT_SUNLIGHT;
@@ -116,6 +116,7 @@ pub fn player_movement(
     mut _commands: Commands,
     time: Res<Time>,
     ctx: Res<CtxWrapper>,
+    mut spawned_blocks: ResMut<SpawnedBlocks>,
     water_tiles: Res<WaterTiles>,
     dirt_tiles: Res<DirtTiles>,
     grass_tiles: Res<GrassTiles>,
@@ -127,9 +128,9 @@ pub fn player_movement(
     let opponent_transforms: Vec<Transform> = opponent_query.iter().cloned().collect();
     for (player_entity, mut transform, player, grid) in &mut player_query {
         // Scale player speed and rotation depending on n blocks
-        let speed_scale = 1.0 / (1.0 + player.block_count as f32 * 0.1);
-        let rotation_scale = 1.0 / (1.0 + player.block_count as f32 * 0.1);
-        let speed_modifier = speed_modifer(transform.translation.truncate(), &dirt_tiles, &grass_tiles, &stone_tiles, player.block_count);
+        let speed_scale = 1.0 / (1.0 + get_block_count(ctx_wrapper.ctx.identity(), &ctx_wrapper, &spawned_blocks) as f32 * 0.1);
+        let rotation_scale = 1.0 / (1.0 + get_block_count(ctx_wrapper.ctx.identity(), &ctx_wrapper, &spawned_blocks) as f32 * 0.1);
+        let speed_modifier = speed_modifer(transform.translation.truncate(), &dirt_tiles, &grass_tiles, &stone_tiles, get_block_count(ctx_wrapper.ctx.identity(), &ctx_wrapper, &spawned_blocks));
         let move_speed = PLAYER_CONFIG.movement_speed * speed_scale * speed_modifier;
         let rot_speed = PLAYER_CONFIG.rotation_speed * rotation_scale;
 

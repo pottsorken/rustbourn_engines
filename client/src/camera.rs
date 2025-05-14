@@ -1,5 +1,8 @@
 use bevy::prelude::*;
-use crate::common::{Player, CAMERA_CONFIG};
+use crate::common::{CtxWrapper, Player, CAMERA_CONFIG};
+use crate::block::SpawnedBlocks;
+use spacetimedb_sdk::DbContext;
+use crate::grid::get_block_count;
 
 pub fn setup_camera(mut commands: Commands) {
     commands.spawn((
@@ -33,9 +36,13 @@ pub fn camera_zoom(
     player_query: Query<&Player>,
     mut camera_query: Query<&mut OrthographicProjection, With<Camera2d>>,
     time: Res<Time>,
-) {
+    ctx_wrapper: Res<CtxWrapper>,
+    mut spawned_blocks: ResMut<SpawnedBlocks>,
+) { //Get local player's ID
+    let player_block_count = get_block_count(ctx_wrapper.ctx.identity(), &ctx_wrapper, &spawned_blocks);
+
     if let Ok(player) = player_query.get_single() {
-        let target_zoom = CAMERA_CONFIG.zoom_base + (player.block_count / CAMERA_CONFIG.zoom_after_blocks) as f32 * CAMERA_CONFIG.zoom_per_blocks;
+        let target_zoom = CAMERA_CONFIG.zoom_base + (player_block_count / CAMERA_CONFIG.zoom_after_blocks) as f32 * CAMERA_CONFIG.zoom_per_blocks;
 
         for mut projection in camera_query.iter_mut() {
             projection.scale = projection.scale.lerp(target_zoom, time.delta_secs() * 1.5);
