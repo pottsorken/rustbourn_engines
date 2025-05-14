@@ -128,7 +128,7 @@ pub struct PlayerConfig {
 pub const PLAYER_CONFIG: PlayerConfig = PlayerConfig {
     size: Vec2::new(80.0, 160.0),
     movement_speed: 300.0,
-    rotation_speed: f32::to_radians(180.0),
+    rotation_speed: f32::to_radians(120.0),
     path: "sprites/top-view/core_long.png",
     max_block_count: 100,
 };
@@ -365,8 +365,8 @@ pub struct ObstacleConfig {
 
 // Global constant config for the player
 pub const OBSTACLE_CONFIG: ObstacleConfig = ObstacleConfig {
-    size: Vec2::new(400.0, 400.0),      // Change obstacle size here
-    count: 1,                           // Change number of obstacles on the map
+    size: Vec2::new(400.0, 400.0), // Change obstacle size here
+    count: 1,                      // Change number of obstacles on the map
     path: "sprites/Obstacles/volcano.png",
 };
 
