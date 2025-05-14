@@ -47,7 +47,7 @@ use db_connection::{
     db_setup, setup_connection, update_opponent_hooks, update_opponent_positions,
     update_opponent_tracks,
 };
-use grid::{balance_opponents_grid, balance_player_grid, check_grid_connectivity, balance_bots_grid};
+use grid::{balance_opponents_grid, balance_player_grid, check_grid_connectivity};
 
 use hook::{handle_obstacle_hit, hook_cooldown_system};
 use map::setup_tilemap;
@@ -77,7 +77,6 @@ fn main() {
                 setup_connection,
                 setup_player,
                 setup_tilemap,
-                setup_block,
                 setup_hook,
                 spawn_tags,
             )
@@ -117,7 +116,6 @@ fn main() {
                 balance_player_grid,
                 balance_opponents_grid,
                 hook_cooldown_system,
-                balance_bots_grid,
             )
                 .run_if(in_game_or_edit),
         )
@@ -138,5 +136,6 @@ fn main() {
         .insert_resource(SpawnedObstacles::default())
         .insert_resource(CtxWrapper { ctx: db_setup() })
         .insert_resource(HookTimer(Timer::from_seconds(0.5, TimerMode::Repeating)))
+        .insert_resource(SpawnedBlocks::default())
         .run();
 }
