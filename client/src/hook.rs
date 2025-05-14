@@ -6,7 +6,7 @@ use crate::{
     common::{
         AttachedBlock, Block, CtxWrapper, Hook, HookCharge, HookRange, Obstacle, OpponentHook,OpponentHookHead,
         Player, PlayerAttach, PlayerGrid, BLOCK_CONFIG, HOOK_CONFIG, OBSTACLE_CONFIG,HookAttach,
-        PLAYER_CONFIG, HookHead, HookTimer,
+        PLAYER_CONFIG, HookHead, HookTimer, HookCooldown
     },
     db_connection::load_obstacles,
     grid::{increment_grid_pos, get_block_count, get_bot_block_count},
@@ -39,6 +39,13 @@ pub fn setup_hook(mut commands: Commands, asset_server: Res<AssetServer>) {
         PlayerAttach {
             offset: HOOK_CONFIG.player_attach_offset,
         },
+        HookCooldown {
+    timer: {
+        let mut t = Timer::from_seconds(5.0, TimerMode::Once);
+        t.set_elapsed(t.duration()); 
+        t
+    },
+},
     ));
 
     commands.spawn((
@@ -71,92 +78,93 @@ pub fn setup_hook(mut commands: Commands, asset_server: Res<AssetServer>) {
 pub fn hook_controls(
     keyboard_input: Res<ButtonInput<KeyCode>>,
     mut query: ParamSet<(
-        Query<(&mut Sprite, &mut Transform, &Hook, &mut HookCharge)>,
+        Query<(
+            &mut Sprite,
+            &mut Transform,
+            &Hook,
+            &mut HookCharge,
+            &mut HookCooldown,
+        )>,
         Query<(&mut Sprite, &mut Transform), With<HookRange>>,
-        Query<(&mut Transform, &HookAttach), With<HookHead>>, 
+        Query<(&mut Transform, &HookAttach), With<HookHead>>,
     )>,
-   
-
-    //mut head_query: Query<(&mut Transform, &HookAttach), With<HookHead>>,
     time: Res<Time>,
     ctx: Res<CtxWrapper>,
 ) {
     let mut range_update_info: Option<(Vec3, Quat, f32)> = None;
+    let mut rope_tip_position: Option<(Vec3, Quat, f32)> = None;
 
-    let mut rope_tip_position: Option<(Vec3, Quat, f32)> = None;//new shit
-
-
-    for (mut sprite, mut transform, hook, mut charge) in query.p0().iter_mut() {
-        if keyboard_input.pressed(KeyCode::Space) && charge.target_length == 0.0 {
-            charge.time_held += time.delta_secs();
-            let estimated_range =
-                (charge.time_held / 2.0 * hook.hook_speed).min(hook.hook_max_range);
-
-            let start_pos = transform.translation;
-            let rotation = transform.rotation;
-
-            range_update_info = Some((start_pos, rotation, estimated_range));
-            
-
-        }
-
-        if keyboard_input.just_released(KeyCode::Space) {
-            charge.target_length =
-                (charge.time_held / 2.0 * hook.hook_speed).min(hook.hook_max_range);
-            charge.time_held = 0.0;
-        }
+    for (mut sprite, mut transform, hook, mut charge, mut cooldown) in query.p0().iter_mut() {
+        cooldown.timer.tick(time.delta());
 
         let current_height = sprite.custom_size.unwrap().y;
-        let mut new_height = current_height;
 
+        // === Hook Charging & Firing Logic (Cooldown-aware) ===
+        if cooldown.timer.finished() {
+            if keyboard_input.pressed(KeyCode::Space) && charge.target_length == 0.0 {
+                charge.time_held += time.delta_secs();
+
+                // For visualization
+                let estimated_range =
+                    (charge.time_held / 2.0 * hook.hook_speed).min(hook.hook_max_range);
+                let start_pos = transform.translation;
+                let rotation = transform.rotation;
+                range_update_info = Some((start_pos, rotation, estimated_range));
+            }
+
+            if keyboard_input.just_released(KeyCode::Space) {
+                charge.target_length =
+                    (charge.time_held / 2.0 * hook.hook_speed).min(hook.hook_max_range);
+                charge.time_held = 0.0;
+                cooldown.timer.reset();
+            }
+        }
+
+        // === Hook Extension ===
         if charge.target_length > 0.0 {
             let next_height = (current_height + HOOK_CONFIG.extend_speed * time.delta_secs())
                 .min(charge.target_length);
-
             let rotation = transform.rotation;
             let offset = rotation * Vec3::Y * ((next_height - current_height) / 2.0);
             transform.translation += offset;
 
             sprite.custom_size = Some(Vec2::new(sprite.custom_size.unwrap().x, next_height));
 
-            let old_size = sprite.custom_size.unwrap();
             ctx.ctx
                 .reducers()
-                .update_hook_movement(ctx.ctx.identity(), old_size.x, next_height)
+                .update_hook_movement(ctx.ctx.identity(), sprite.custom_size.unwrap().x, next_height)
                 .unwrap();
 
             if (next_height - charge.target_length).abs() < 0.1 {
                 charge.target_length = 0.0;
             }
-        } else if current_height > 0.0 && !keyboard_input.pressed(KeyCode::Space) {
+        }
+
+        // === Hook Retraction ===
+        if charge.target_length == 0.0 && current_height > 0.0 && !keyboard_input.pressed(KeyCode::Space) {
             let next_height =
                 (current_height - HOOK_CONFIG.retract_speed * time.delta_secs()).max(0.0);
-
             let rotation = transform.rotation;
             let offset = rotation * Vec3::Y * ((current_height - next_height) / 2.0);
             transform.translation -= offset;
 
             sprite.custom_size = Some(Vec2::new(sprite.custom_size.unwrap().x, next_height));
 
-            let old_size = sprite.custom_size.unwrap();
             ctx.ctx
                 .reducers()
-                .update_hook_movement(ctx.ctx.identity(), old_size.x, next_height)
+                .update_hook_movement(ctx.ctx.identity(), sprite.custom_size.unwrap().x, next_height)
                 .unwrap();
-
-                rope_tip_position = Some((
-                    transform.translation,
-                    transform.rotation,
-                    sprite.custom_size.unwrap().y,
-                ));
         }
+
+        // Final tip position for HookHead sync
         rope_tip_position = Some((
             transform.translation,
             transform.rotation,
             sprite.custom_size.unwrap().y,
         ));
-    
     }
+
+    // === HookHead (tip) Sync ===
     if let Some((base_pos, rotation, rope_length)) = rope_tip_position {
         let rope_tip = base_pos + rotation * Vec3::Y * rope_length;
         for (mut head_transform, attach) in query.p2().iter_mut() {
@@ -165,7 +173,7 @@ pub fn hook_controls(
         }
     }
 
-
+    // === Hook Range Visual Sync ===
     for (mut range_sprite, mut range_transform) in query.p1().iter_mut() {
         if let Some((base_pos, rotation, length)) = range_update_info {
             range_transform.translation = base_pos;
@@ -174,6 +182,14 @@ pub fn hook_controls(
         } else {
             range_sprite.custom_size = Some(Vec2::ZERO);
         }
+    }
+}
+pub fn hook_cooldown_system(
+    time: Res<Time>,
+    mut query: Query<&mut HookCooldown>,
+) {
+    for mut cooldown in query.iter_mut() {
+        cooldown.timer.tick(time.delta());
     }
 }
 
@@ -507,4 +523,3 @@ pub fn handle_obstacle_hit(
         }
     }
 }
-

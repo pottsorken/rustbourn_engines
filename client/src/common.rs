@@ -9,6 +9,11 @@ use bevy_ecs_tilemap::prelude::*;
 use spacetimedb_sdk::Identity;
 use std::collections::{HashMap, HashSet};
 
+#[derive(Component)]
+pub struct HookCooldown {
+    pub timer: Timer,
+}
+
 #[derive(Resource, Debug)]
 pub struct LavaTiles {
     pub positions: HashSet<(u32, u32)>,

@@ -48,7 +48,8 @@ use db_connection::{
     update_opponent_tracks,
 };
 use grid::{balance_opponents_grid, balance_player_grid, check_grid_connectivity};
-use hook::handle_obstacle_hit;
+
+use hook::{handle_obstacle_hit, hook_cooldown_system};
 use map::setup_tilemap;
 use opponent::{despawn_opponents, setup_blocks_opponent, spawn_opponent_tracks_system};
 use player::{player_movement, setup_blocks_player, setup_player};
@@ -82,38 +83,40 @@ fn main() {
             )
                 .chain(),
         )
-        .add_systems(
-            Update,
-            (
-                player_movement,
-                update_block,
-                confine_player_movement,
-                camera_follow,
-                camera_zoom,
-                update_opponent_positions,
-                hook_collision_system,
-                hook_controls,
-                handle_obstacle_hit,
-                track_lifetime_system,
-                render_bots_from_db,
-                attach_objects,
-                attach_items,
-                update_opponent_hooks,
-                spawn_tracks_system,
-                track_lifetime_system,
-                spawn_opponent_tracks_system,
-                update_opponent_tracks,
-                handle_obstacle_hit,
-                check_grid_connectivity,
-            )
-                .run_if(in_game_or_edit),
-        )
+
+.add_systems(
+    Update,
+    (
+        player_movement,
+        update_block,
+        confine_player_movement,
+        camera_follow,
+        camera_zoom,
+        update_opponent_positions,
+        hook_collision_system,
+        hook_controls,
+        handle_obstacle_hit,
+        track_lifetime_system,
+        render_bots_from_db,
+        attach_objects,
+        attach_items,
+        update_opponent_hooks,
+        spawn_tracks_system,
+        track_lifetime_system,
+        spawn_opponent_tracks_system,
+        update_opponent_tracks,
+        handle_obstacle_hit,
+        check_grid_connectivity,
+    )
+    .run_if(in_game_or_edit), 
+)
         .add_systems(
             Update,
             (
                 update_block_owner,
                 balance_player_grid,
                 balance_opponents_grid,
+                hook_cooldown_system,
             )
                 .run_if(in_game_or_edit),
         )
