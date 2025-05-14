@@ -30,6 +30,7 @@ use obstacle::*;
 use player::*;
 use player_attach::*;
 use start_menu::*;
+use common::*;
 
 //#[cfg(windows)]
 //#[global_allocator]
@@ -132,5 +133,6 @@ fn main() {
         .insert_resource(CtxWrapper {
             ctx: db_setup(),
         })
+        .insert_resource(HookTimer(Timer::from_seconds(1.0, TimerMode::Repeating)))
         .run();
 }

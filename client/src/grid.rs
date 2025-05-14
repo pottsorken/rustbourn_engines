@@ -260,6 +260,22 @@ pub fn get_block_count(
     count 
 }
 
+pub fn get_bot_block_count(
+    bot_id: u64,
+    ctx_wrapper: &CtxWrapper,
+    spawned_blocks: &SpawnedBlocks,
+) -> i32{
+    let mut count = 0;
+    for block_id in spawned_blocks.ids.clone(){
+        if let Some(block_from_db) = ctx_wrapper.ctx.db().block().id().find(&block_id){
+            if block_from_db.owner == OwnerType::Bot(bot_id){
+                count += 1;
+            }
+        }
+    }
+    count
+}
+
 impl PlayerGrid {
     pub fn find_next_free_pos(&self) -> Option<(i32, i32)> {
         println!(

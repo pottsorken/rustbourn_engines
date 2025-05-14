@@ -13,6 +13,7 @@ use std::collections::{HashMap, HashSet};
 pub struct LavaTiles {
     pub positions: HashSet<(u32, u32)>,
 }
+pub struct HookTimer(pub Timer);
 
 #[derive(Resource, Debug)]
 pub struct WaterTiles {
