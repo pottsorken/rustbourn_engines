@@ -69,13 +69,13 @@ pub fn spawn_leaderboard(
                 builder.spawn((
                     Text2d::new("Leaderboard"),
                     TextFont {
-                        font_size: 15.0,
+                        font_size: 20.0,
                         ..default()
                     },
                     TextColor::BLACK,
                     TextLayout::new(JustifyText::Left, LineBreak::WordBoundary),
                     TextBounds::from(leaderboard_size),
-                    Transform::from_translation(Vec3::new(0.0, leaderboard_size.y / 2.0 - 20.0, 30.0)),
+                    Transform::from_translation(Vec3::new(0.0, leaderboard_size.y / 2.0 - 30.0, 30.0)),
 
                 ));
 
@@ -83,42 +83,42 @@ pub fn spawn_leaderboard(
                 builder.spawn((
                     Text2d::new("1. Jarvis"),
                     TextFont {
-                        font_size: 12.0,  // Slightly smaller font size
+                        font_size: 15.0,  // Slightly smaller font size
                         ..default()
                     },
                     TextColor::BLACK,  // Different color for distinction
                     TextLayout::new(JustifyText::Left, LineBreak::WordBoundary),
                     TextBounds::from(leaderboard_size),
                     // Move the undertext slightly lower than the main text
-                    Transform::from_translation(Vec3::new(0.0, leaderboard_size.y / 2.0 - 70.0, 30.0)),
+                    Transform::from_translation(Vec3::new(-10.0, leaderboard_size.y / 2.0 - 80.0, 30.0)),
                 ));
 
                 // Undertext (Subtitle or additional info)
                 builder.spawn((
                     Text2d::new("2. Player"),
                     TextFont {
-                        font_size: 12.0,  // Slightly smaller font size
+                        font_size: 15.0,  // Slightly smaller font size
                         ..default()
                     },
                     TextColor::BLACK,  // Different color for distinction
                     TextLayout::new(JustifyText::Left, LineBreak::WordBoundary),
                     TextBounds::from(leaderboard_size),
                     // Move the undertext slightly lower than the main text
-                    Transform::from_translation(Vec3::new(0.0, leaderboard_size.y / 2.0 - 100.0, 30.0)),
+                    Transform::from_translation(Vec3::new(-10.0, leaderboard_size.y / 2.0 - 120.0, 30.0)),
                 ));
 
                 // Undertext (Subtitle or additional info)
                 builder.spawn((
                     Text2d::new("3. Player"),
                     TextFont {
-                        font_size: 12.0,  // Slightly smaller font size
+                        font_size: 15.0,  // Slightly smaller font size
                         ..default()
                     },
                     TextColor::BLACK,  // Different color for distinction
                     TextLayout::new(JustifyText::Left, LineBreak::WordBoundary),
                     TextBounds::from(leaderboard_size),
                     // Move the undertext slightly lower than the main text
-                    Transform::from_translation(Vec3::new(0.0, leaderboard_size.y / 2.0 - 130.0, 30.0)),
+                    Transform::from_translation(Vec3::new(-10.0, leaderboard_size.y / 2.0 - 160.0, 30.0)),
                 ));
 
 
