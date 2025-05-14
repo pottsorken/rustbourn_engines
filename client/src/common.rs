@@ -356,7 +356,7 @@ pub struct MapConfig {
 
 /// Global constant config for the tilemap
 pub const MAP_CONFIG: MapConfig = MapConfig {
-    map_size: TilemapSize { x: 2048, y: 2048 },
+    map_size: TilemapSize { x: 1024, y: 1024 },
     tile_size: TilemapTileSize { x: 32.0, y: 32.0 }, // Change tile size here
     noise_scale: 0.1,
     tile_textures: [
