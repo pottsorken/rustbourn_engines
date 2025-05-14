@@ -230,15 +230,16 @@ pub fn main_menu_setup(
 
     pub fn print_random_string(commands: &mut Commands) -> String {
         let usernames_first = [
-            "cool", "lazy", "brisk", "sneaky", "quirky", "noisy", "zany", "clever", "sleepy",
-            "rowdy", "nimble", "grumpy", "shady", "peppy", "twitchy", "mellow", "spunky", "clumsy",
-            "perky", "brainy",
+            "cool", "lazy", "sneaky", "noisy", "rusty", "clever", "sleepy", "simple", "nuclear",
+            "rowdy", "grumpy", "shady", "quick", "twitchy", "silent", "spunky", "clumsy", "ugly",
+            "mighty", "smart", "trusty", "wild", "scrummy", "loud", "howling", "boring", "slow",
         ];
 
         let usernames_second = [
-            "gear", "cog", "motor", "circuit", "valve", "bot", "servo", "engine", "module",
-            "piston", "drone", "terminal", "chip", "sensor", "actuator", "pump", "turbine",
-            "switch", "matrix", "relay",
+            "gear", "cog", "motor", "circuit", "valve", "bot", "servo", "engine", "module", "chain",
+            "piston", "drone", "terminal", "chip", "sensor", "wheel", "pump", "turbine", "rope", "link",
+            "switch", "coal", "hook", "fire", "city", "town", "gate", "platoon", "monster", "castle",
+            "pipe", "screw", "bolt",
         ];
 
         let mut rng_first = thread_rng();
