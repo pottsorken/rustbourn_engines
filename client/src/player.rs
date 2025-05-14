@@ -4,7 +4,7 @@ use crate::common::{
     MAP_CONFIG, OBSTACLE_CONFIG, PLAYER_CONFIG, TRACK_CONFIG, MODIFIER_CONFIG,
 };
 use crate::db_connection::{update_player_position};
-use crate::grid::increment_grid_pos;
+use crate::grid::{get_block_count, increment_grid_pos};
 use crate::module_bindings::*;
 use crate::player_attach::*;
 use bevy::pbr::light_consts::lux::DIRECT_SUNLIGHT;
