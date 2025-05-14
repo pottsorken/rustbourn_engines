@@ -133,6 +133,7 @@ fn main() {
                 spawn_bot_blocks,
                 setup_blocks_opponent,
                 update_nametags_content, // update_bots,
+                update_leaderboard_from_db,
             )
                 .run_if(in_game_or_edit),
         )

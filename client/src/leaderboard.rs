@@ -55,7 +55,7 @@ pub fn spawn_leaderboard(
             let leaderboard_position = player_position + leaderboard_offset;
 
             // Fetch the leaderboard from the server
-            let leaderboard = load_leaderboard(&ctx_wrapper);
+            //let leaderboard = load_leaderboard(&ctx_wrapper);
 
             commands
                 .spawn((
@@ -89,35 +89,35 @@ pub fn spawn_leaderboard(
                         )),
                     ));
 
-                    for (index, (id, blocks)) in leaderboard.iter().enumerate() {
-                        let player_text =
-                            format!("{}. Player: {} - Score: {}", index + 1, id, blocks);
-
-                        builder.spawn((
-                            Text2d::new(player_text.clone()),
-                            LeaderboardEntry {
-                                rank: (index + 1) as i32,
-                                player_name: player_text.clone(),
-                                score: *(blocks) as i32,
-                            },
-                            TextFont {
-                                font_size: 15.0, // Slightly smaller font size
-                                ..default()
-                            },
-                            TextColor::BLACK, // Different color for distinction
-                            TextLayout::new(JustifyText::Left, LineBreak::WordBoundary),
-                            TextBounds::from(leaderboard_size),
-                            // Move the undertext slightly lower than the main text
-                            Transform::from_translation(Vec3::new(
-                                -10.0,
-                                leaderboard_size.y / 2.0 - 80.0 - (index as f32 * 40.0),
-                                30.0,
-                            )),
-                        ));
-                    }
+                    //for (index, (id, blocks)) in leaderboard.iter().enumerate() {
+                    //    let player_text =
+                    //        format!("{}. Player: {} - Score: {}", index + 1, id, blocks);
+                    //
+                    //    builder.spawn((
+                    //        Text2d::new(player_text.clone()),
+                    //        LeaderboardEntry {
+                    //            rank: (index + 1) as i32,
+                    //            player_name: player_text.clone(),
+                    //            score: *(blocks) as i32,
+                    //        },
+                    //        TextFont {
+                    //            font_size: 15.0, // Slightly smaller font size
+                    //            ..default()
+                    //        },
+                    //        TextColor::BLACK, // Different color for distinction
+                    //        TextLayout::new(JustifyText::Left, LineBreak::WordBoundary),
+                    //        TextBounds::from(leaderboard_size),
+                    //        // Move the undertext slightly lower than the main text
+                    //        Transform::from_translation(Vec3::new(
+                    //            -10.0,
+                    //            leaderboard_size.y / 2.0 - 80.0 - (index as f32 * 40.0),
+                    //            30.0,
+                    //        )),
+                    //    ));
+                    //}
 
                     // If we have fewer than 3 players, display this ---
-                    for index in leaderboard.len()..3 {
+                    for index in 0..3 {
                         let empty_text = format!("{}. -----", index + 1);
 
                         builder.spawn((
@@ -148,7 +148,7 @@ pub fn spawn_leaderboard(
 }
 
 pub fn update_leaderboard_from_db(
-    commands: Commands,
+    mut commands: Commands,
     mut param_set: ParamSet<(
         Query<&Transform, With<Player>>,       // Read-only player transform
         Query<(&mut Transform, &Leaderboard)>, // Mutable leaderboard transform
@@ -167,7 +167,16 @@ pub fn update_leaderboard_from_db(
     }
 
     for (entry_entity, entry_component) in entry_query.iter() {
-        if let Some(new_entry) = leaderboard.get(entry_component.rank) {
+        let mut new_entry_temp = None;
+
+        // find stuff
+        for entry_temp in leaderboard.iter() {
+            if entry_component.rank == *(entry_temp.0) {
+                new_entry_temp = Some(entry_temp);
+            }
+        }
+
+        if let Some(new_entry) = new_entry_temp {
             let player_text = format!(
                 "{}. Player: {} - Score: {}",
                 entry_component.rank, new_entry.1, new_entry.0
@@ -175,17 +184,17 @@ pub fn update_leaderboard_from_db(
 
             commands.entity(entry_entity).insert(LeaderboardEntry {
                 rank: entry_component.rank,
-                player_name: new_entry.1,
-                score: new_entry.0,
+                player_name: new_entry.1.clone(),
+                score: *(new_entry.0),
             });
             commands
                 .entity(entry_entity)
                 .insert(Text2d::new(player_text));
         } else {
-            println!(
-                "[DEBUG] could not find new entry in leaderboard pos: {}",
-                entry_component.rank
-            );
+            let empty_text = format!("{}. -----", entry_component.rank + 1);
+            commands
+                .entity(entry_entity)
+                .insert(Text2d::new(empty_text.clone()));
         }
     }
 
