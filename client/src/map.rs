@@ -6,11 +6,17 @@ use crate::common::{MAP_CONFIG, WaterTiles, DirtTiles, GrassTiles, StoneTiles};
 // use rand::random;
 use rand::Rng;
 
+// Define the Obstacle component
+#[derive(Component)]
+pub struct Obstacle;
+
 pub fn setup_tilemap(
     mut commands: Commands,
     asset_server: Res<AssetServer>,
     mut image: ResMut<Assets<Image>>,
+
 ) {
+
     // Tile images. ORDER IS IMPORTANT!
     let texture_handle: Vec<Handle<Image>> = MAP_CONFIG
         .tile_textures
@@ -24,9 +30,6 @@ pub fn setup_tilemap(
     // New map with 64x64 chunks being 32x32 tiles
     let grid_size = MAP_CONFIG.tile_size.into(); // Grid size == tile size
     let map_type = TilemapType::default();
-
-    let grid_size = MAP_CONFIG.tile_size.into();
-    let map_type = TilemapType::default();
     let mut tile_storage = TileStorage::empty(MAP_CONFIG.map_size);
     let tilemap_entity = commands.spawn_empty().id();
 
@@ -37,10 +40,17 @@ pub fn setup_tilemap(
         .expect("Failed to decode image");
 
     let (width, height) = img.dimensions();
+    // let mut water_tiles: std::collections::HashSet<T> = HashSet::new();
+    // let mut dirt_tiles: std::collections::HashSet<T> = HashSet::new();
+    // let mut grass_tiles: std::collections::HashSet<T> = HashSet::new();
+    // let mut stone_tiles: std::collections::HashSet<T> = HashSet::new();   
+
     let mut water_tiles = HashSet::new();
     let mut dirt_tiles = HashSet::new();
     let mut grass_tiles = HashSet::new();
     let mut stone_tiles = HashSet::new();
+
+    let (width, height) = img.dimensions();
 
     for y in 0..height {
         for x in 0..width {
