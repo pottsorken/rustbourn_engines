@@ -1,4 +1,5 @@
 use bevy::prelude::*;
+use bevy::ecs::system::ParamSet;
 
 // Spacetime dependencies
 use crate::common::{CtxWrapper, Opponent, OpponentTrack};
@@ -9,6 +10,8 @@ use spacetimedb_sdk::{credentials, DbContext, Error, Identity, Table};
 use crate::parse::*;
 
 use crate::common::{OpponentHook, Username};
+use crate::common::OpponentHookHead;
+use crate::common::HookAttach;
 use crate::hook::*;
 
 /// The database name we chose when we published our module.
@@ -74,7 +77,7 @@ pub fn setup_connection(
 
     //// Register callbacks to run in re\sponse to database events
     //register_callbacks(&ctx);
-    //
+    //use crate::common::OpponentHook;
     //// Subscribe to SQL queries in order to construct a local partial replica of the database
     //subscribe_to_tables(&ctx);
     //
@@ -255,8 +258,16 @@ pub fn update_opponent_hooks(
     ctx_wrapper: Res<CtxWrapper>,
     mut commands: Commands,
     asset_server: Res<AssetServer>,
-    mut query: Query<(&mut Sprite, &mut Transform, &OpponentHook), With<OpponentHook>>,
+    //mut query: Query<(&mut Sprite, &mut Transform, &OpponentHook), With<OpponentHook>>,
+    /*mut hook_query: Query<(&mut Sprite, &mut Transform, &OpponentHook), With<OpponentHook>>,
+    mut head_query: Query<(&mut Transform, &HookAttach, &OpponentHookHead)>,
+   */
+    mut queries: ParamSet<(
+        Query<(&mut Sprite, &mut Transform, &OpponentHook), With<OpponentHook>>,
+        Query<(&mut Transform, &HookAttach, &OpponentHookHead)>,
+    )>,
     existing_hooks_query: Query<&OpponentHook>,
+    existing_heads_query: Query<&OpponentHookHead>, 
     despawn_query: Query<(Entity, &OpponentHook)>,
 ) {
     let players = ctx_wrapper.ctx.db.player().iter().collect::<Vec<_>>();
@@ -269,6 +280,7 @@ pub fn update_opponent_hooks(
             &mut commands,
             &asset_server,
             &existing_hooks_query,
+            &existing_heads_query,
             &player_id,
             &local_player_id,
             player.hook.position.x,
@@ -276,7 +288,9 @@ pub fn update_opponent_hooks(
         );
 
         update_opponent_hook(
-            &mut query,
+            /*&mut hook_query,
+            &mut head_query,*/
+            &mut queries,
             &player_id,
             player.hook.position.x,
             player.hook.position.y,
