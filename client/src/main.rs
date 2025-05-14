@@ -12,22 +12,25 @@ mod db_connection;
 mod edit_menu;
 mod grid;
 mod hook;
+mod leaderboard;
 mod map;
 mod module_bindings;
+mod nametag;
 mod obstacle;
 mod opponent;
 mod parse;
 mod player;
 mod player_attach;
 mod start_menu;
-use edit_menu::*;
-mod nametag;
 mod track_spawner;
 
 use block::*;
 use camera::*;
 use common::*;
+use edit_menu::*;
 use hook::*;
+use leaderboard::*;
+use leaderboard::*;
 use nametag::*;
 use obstacle::*;
 use player::*;
@@ -50,6 +53,7 @@ use db_connection::{
 use grid::{balance_opponents_grid, balance_player_grid, check_grid_connectivity};
 
 use hook::{handle_obstacle_hit, hook_cooldown_system};
+use leaderboard::{spawn_leaderboard, update_leaderboard_from_db};
 use map::setup_tilemap;
 use opponent::{despawn_opponents, setup_blocks_opponent, spawn_opponent_tracks_system};
 use player::{player_movement, setup_blocks_player, setup_player};
@@ -68,6 +72,7 @@ fn main() {
         .add_plugins(TilemapPlugin)
         .init_state::<GameState>()
         .insert_resource(DisplayQuality::Medium)
+        //.insert_resource(Leaderboard::default())
         .insert_resource(Volume(7))
         .add_plugins((splash_plugin, menu_plugin, game_plugin)) //edit_plugin
         .add_systems(Startup, (setup_camera,).chain())
@@ -80,36 +85,34 @@ fn main() {
                 setup_block,
                 setup_hook,
                 spawn_tags,
+                spawn_leaderboard,
             )
                 .chain(),
         )
-
-.add_systems(
-    Update,
-    (
-        player_movement,
-        update_block,
-        confine_player_movement,
-        camera_follow,
-        camera_zoom,
-        update_opponent_positions,
-        hook_collision_system,
-        hook_controls,
-        handle_obstacle_hit,
-        track_lifetime_system,
-        render_bots_from_db,
-        attach_objects,
-        attach_items,
-        update_opponent_hooks,
-        spawn_tracks_system,
-        track_lifetime_system,
-        spawn_opponent_tracks_system,
-        update_opponent_tracks,
-        handle_obstacle_hit,
-        check_grid_connectivity,
-    )
-    .run_if(in_game_or_edit), 
-)
+        .add_systems(
+            Update,
+            (
+                player_movement,
+                update_block,
+                confine_player_movement,
+                camera_follow,
+                camera_zoom,
+                update_opponent_positions,
+                hook_collision_system,
+                hook_controls,
+                handle_obstacle_hit,
+                track_lifetime_system,
+                render_bots_from_db,
+                attach_objects,
+                attach_items,
+                update_opponent_hooks,
+                spawn_tracks_system,
+                spawn_opponent_tracks_system,
+                update_opponent_tracks,
+                check_grid_connectivity,
+            )
+                .run_if(in_game_or_edit),
+        )
         .add_systems(
             Update,
             (
@@ -131,6 +134,7 @@ fn main() {
                 spawn_bot_blocks,
                 setup_blocks_opponent,
                 update_nametags_content, // update_bots,
+                update_leaderboard_from_db,
             )
                 .run_if(in_game_or_edit),
         )

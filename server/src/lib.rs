@@ -112,6 +112,14 @@ pub struct Vec3 {
     z: f32,
 }
 
+#[spacetimedb::table(name = leaderboard, public)]
+pub struct Leaderboard {
+    #[primary_key]
+    id: u64,
+    top_players: Vec<Identity>,  // Array of the top three players
+}
+
+
 /// Reducer for decreasing a ("id") specific obstacle's HP by "damage" points.
 /// Client invokes this reducer in "handle_obstacle_hit" function when dealing damage to an obstacle with their hook.
 
@@ -457,6 +465,7 @@ pub fn server_startup(ctx: &ReducerContext) {
     // Generate bots in server.
     generate_bots(ctx);
     generate_blocks(ctx);
+    generate_leaderboard(ctx);
 }
 
 #[spacetimedb::reducer]
@@ -616,4 +625,17 @@ fn generate_obstacles(ctx: &ReducerContext) {
             hp: 100,
         });
     }
+}
+
+
+#[spacetimedb::reducer]
+pub fn generate_leaderboard(ctx: &ReducerContext){
+	// Create a new leaderboard entry with an empty top players list
+    let leaderboard = Leaderboard {
+        id: 1, // id är 1
+        top_players: Vec::new(),
+    };
+
+    // Insert the leaderboard into the database
+    ctx.db.leaderboard().insert(leaderboard);
 }

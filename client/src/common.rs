@@ -271,7 +271,6 @@ pub struct OpponentHookHead {
     pub id: Identity,
 }
 
-
 #[derive(Component)]
 pub struct Hook {
     pub hook_speed: f32,
@@ -551,3 +550,34 @@ pub enum MenuButtonAction {
 
 #[derive(Component)]
 pub struct OnEditScreen;
+
+/*
+#[derive(Resource, Default)]
+pub struct Leaderboard {
+    pub scores: Vec<(Entity, i32)>, // (Player Entity, Block Count)
+}*/
+
+#[derive(Component)]
+pub struct Leaderboard {
+    pub players: Vec<LeaderboardEntry>,
+    pub position: Vec2, // Store the position of the leaderboard
+    pub size: Vec2,
+    pub offset: Vec2,
+}
+
+#[derive(Component)]
+pub struct LeaderboardEntry {
+    pub rank: i32,
+    pub player_name: String,
+    pub score: i32,
+}
+
+// Configuration for spawning bots
+pub struct LeaderboardConfig {
+    pub size: Vec2,
+}
+
+// Global bot config
+pub const LEADRERBOARD_CONFIG: LeaderboardConfig = LeaderboardConfig {
+    size: Vec2::new(80.0, 80.0),
+};
