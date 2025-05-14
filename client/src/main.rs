@@ -133,6 +133,6 @@ fn main() {
         .insert_resource(CtxWrapper {
             ctx: db_setup(),
         })
-        .insert_resource(HookTimer(Timer::from_seconds(1.0, TimerMode::Repeating)))
+        .insert_resource(HookTimer(Timer::from_seconds(0.5, TimerMode::Repeating)))
         .run();
 }

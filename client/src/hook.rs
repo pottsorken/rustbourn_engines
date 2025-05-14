@@ -235,7 +235,7 @@ pub fn hook_collision_system(
                         //    );
                         //     } else
 
-                        // 1 second cooldown
+                        // 0.5 second cooldown
                         if !hook_timer.0.finished(){
                             return;
                         }
