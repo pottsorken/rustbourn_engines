@@ -167,6 +167,7 @@ pub fn spawn_bot_blocks(
                         increment_grid_pos(&mut bot_grid);
                         spawned_blocks.ids.insert(block.id);
                         spawned_blocks.entities.insert(block_entity.id(), block.id);
+                        spawned_blocks.identities.insert(block.id, block_entity.id());
                     }
                 }
             }

@@ -1,4 +1,4 @@
-use crate::{block::SpawnedBlocks, common::{AttachedBlock, Opponent, Player, PlayerGrid, CtxWrapper}, module_bindings::{update_block_owner, BlockTableAccess, OwnerType}, player};
+use crate::{block::SpawnedBlocks, common::{AttachedBlock, CtxWrapper, Opponent, Player, PlayerGrid}, module_bindings::{update_block_owner, BlockTableAccess, OwnerType, PlayerTableAccess}, player};
 use bevy::prelude::*;
 use spacetimedb_sdk::{DbContext, Identity};
 use std::collections::{HashSet, VecDeque};
@@ -179,6 +179,32 @@ pub fn balance_opponents_grid(
 ){
     for (opp, opp_entity, mut grid) in opp_query.iter_mut(){
         let player_identity = opp.id;
+
+        if let Some(player) = ctx_wrapper.ctx.db.player().identity().find(&player_identity) {
+            if !player.online {
+                // Collect block entities owned by this offline player from their grid
+                let block_entities: Vec<_> = grid.block_position.values().cloned().collect();
+        
+                for block_entity in block_entities {
+                    let block_id_opt = spawned_blocks.entities.get(&block_entity).cloned();
+                    if let Some(block_id) = block_id_opt {
+                        if let Some(block) = ctx_wrapper.ctx.db.block().id().find(&block_id) {
+                            if block.owner == OwnerType::Player(player_identity) {
+                                spawned_blocks.entities.remove(&block_entity);
+                                spawned_blocks.ids.remove(&block_id);
+                                commands.entity(block_entity).despawn();
+                            }
+                        }
+                    }
+                }
+        
+                // Also clear the grid data structure itself
+                grid.block_position.clear();
+                grid.load = 0;
+            }
+        }
+        
+
         let mut to_remove: Vec<(i32, i32)> = Vec::new();
         for (grid_pos, block_ent) in grid.block_position.iter_mut() {
             if let Some(block_id) = spawned_blocks.entities.get(block_ent) {

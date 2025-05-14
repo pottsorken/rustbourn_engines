@@ -76,7 +76,6 @@ fn main() {
                 setup_connection,
                 setup_player,
                 setup_tilemap,
-                setup_block,
                 setup_hook,
                 spawn_tags,
             )
@@ -127,6 +126,7 @@ fn main() {
                 spawn_bot_blocks,
                 setup_blocks_opponent,
                 update_nametags_content, // update_bots,
+                //despawn_opponents_blocks,
             )
                 .run_if(in_game_or_edit),
         )
@@ -134,5 +134,6 @@ fn main() {
         .insert_resource(SpawnedObstacles::default())
         .insert_resource(CtxWrapper { ctx: db_setup() })
         .insert_resource(HookTimer(Timer::from_seconds(0.5, TimerMode::Repeating)))
+        .insert_resource(SpawnedBlocks::default())
         .run();
 }
