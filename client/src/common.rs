@@ -567,6 +567,7 @@ pub struct Leaderboard {
 
 #[derive(Component)]
 pub struct LeaderboardEntry {
+    pub rank: i32,
     pub player_name: String,
     pub score: i32,
 }

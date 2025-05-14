@@ -285,19 +285,24 @@ pub fn load_leaderboard(ctx_wrapper: &CtxWrapper) -> Vec<(Identity, u64)> {
 }
 
 // db_connection
-pub fn update_leaderboard(
-    ctx_wrapper: &CtxWrapper,
-    //bot_transform: &Transform,
-    player_id: Identity,
-    leaderboard_id: u64,
-    //new_rotate_dir: f32,
-) {
-    ctx_wrapper
-        .ctx
-        .reducers()
-        .update_leaderboard(player_id, leaderboard_id)
-        .unwrap();
-}
+
+//pub fn update_leaderboard(
+//    ctx_wrapper: &CtxWrapper,
+//    //bot_transform: &Transform,
+//    player_id: Identity,
+//    leaderboard_id: u64,
+//    //new_rotate_dir: f32,
+//) {
+//    ctx_wrapper
+//        .ctx
+//        .reducers()
+//        .update_leaderboard(
+//            player_id,
+//            leaderboard_id
+//
+//        )
+//        .unwrap();
+//}
 
 pub fn update_opponent_hooks(
     ctx_wrapper: Res<CtxWrapper>,

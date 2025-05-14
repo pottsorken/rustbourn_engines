@@ -1,12 +1,13 @@
-use crate::module_bindings::PlayerTableAccess;
 use crate::start_menu::*;
 use crate::{
+    block::SpawnedBlocks,
     common::{
         CtxWrapper, Leaderboard, LeaderboardEntry, OnMainMenuScreen, Opponent, Player,
         PlayerAttach, LEADRERBOARD_CONFIG,
     },
+    grid::get_block_count,
     leaderboard,
-    module_bindings::LeaderboardTableAccess,
+    module_bindings::{LeaderboardTableAccess, PlayerTableAccess, PlayerTableHandle},
 };
 use bevy::prelude::*;
 use bevy::render::view::window;
@@ -18,8 +19,10 @@ use bevy::{
     text::{FontSmoothing, LineBreak, TextBounds},
 };
 use clap::builder::styling::Style;
+use sorted_list::SortedList;
+use spacetimedb_sdk::{credentials, DbContext, Error, Identity, Table};
 
-use crate::db_connection::{load_leaderboard, update_leaderboard};
+use crate::db_connection::load_leaderboard;
 
 const SCOREBOARD_FONT_SIZE: f32 = 40.0;
 const SCOREBOARD_TEXT_PADDING: Val = Val::Px(5.0);
@@ -91,7 +94,12 @@ pub fn spawn_leaderboard(
                             format!("{}. Player: {} - Score: {}", index + 1, id, blocks);
 
                         builder.spawn((
-                            Text2d::new(player_text),
+                            Text2d::new(player_text.clone()),
+                            LeaderboardEntry {
+                                rank: (index + 1) as i32,
+                                player_name: player_text.clone(),
+                                score: *(blocks) as i32,
+                            },
                             TextFont {
                                 font_size: 15.0, // Slightly smaller font size
                                 ..default()
@@ -113,7 +121,12 @@ pub fn spawn_leaderboard(
                         let empty_text = format!("{}. -----", index + 1);
 
                         builder.spawn((
-                            Text2d::new(empty_text),
+                            Text2d::new(empty_text.clone()),
+                            LeaderboardEntry {
+                                rank: (index + 1) as i32,
+                                player_name: empty_text.clone(),
+                                score: 0 as i32,
+                            },
                             TextFont {
                                 font_size: 15.0, // Slightly smaller font size
                                 ..default()
@@ -135,18 +148,52 @@ pub fn spawn_leaderboard(
 }
 
 pub fn update_leaderboard_from_db(
+    commands: Commands,
     mut param_set: ParamSet<(
         Query<&Transform, With<Player>>,       // Read-only player transform
         Query<(&mut Transform, &Leaderboard)>, // Mutable leaderboard transform
         Query<(&Opponent)>,
     )>,
     ctx_wrapper: Res<CtxWrapper>,
-) {
-    if let Ok(opponent) = param_set.p2().get_single() {
-        let player_id = opponent.id;
-        let leaderboard_id = 1;
-        println!("[DEBUG] Local player identity: {:?}", player_id);
 
-        update_leaderboard(&ctx_wrapper, player_id, leaderboard_id);
+    spawned_blocks: Res<SpawnedBlocks>,
+    entry_query: Query<(Entity, &LeaderboardEntry)>,
+) {
+    let players = ctx_wrapper.ctx.db.player().iter().collect::<Vec<_>>();
+    let mut leaderboard: SortedList<i32, String> = SortedList::new();
+    for player in players {
+        let n_blocks = get_block_count(player.identity, &ctx_wrapper, &spawned_blocks);
+        leaderboard.insert(n_blocks, player.name.clone());
     }
+
+    for (entry_entity, entry_component) in entry_query.iter() {
+        if let Some(new_entry) = leaderboard.get(entry_component.rank) {
+            let player_text = format!(
+                "{}. Player: {} - Score: {}",
+                entry_component.rank, new_entry.1, new_entry.0
+            );
+
+            commands.entity(entry_entity).insert(LeaderboardEntry {
+                rank: entry_component.rank,
+                player_name: new_entry.1,
+                score: new_entry.0,
+            });
+            commands
+                .entity(entry_entity)
+                .insert(Text2d::new(player_text));
+        } else {
+            println!(
+                "[DEBUG] could not find new entry in leaderboard pos: {}",
+                entry_component.rank
+            );
+        }
+    }
+
+    //if let Ok(opponent) = param_set.p2().get_single() {
+    //    let player_id = opponent.id;
+    //    let leaderboard_id = 1;
+    //    println!("[DEBUG] Local player identity: {:?}", player_id);
+    //
+    //    update_leaderboard(&ctx_wrapper, player_id, leaderboard_id);
+    //}
 }
