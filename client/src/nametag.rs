@@ -63,7 +63,7 @@ pub fn spawn_tags(
 
     let binding = commands
         .spawn((
-            Sprite::from_color(Color::rgba(0.25, 0.25, 0.55, 0.5), box_size),
+            Sprite::from_color(Color::rgba(0.55, 0.55, 0.55, 0.5), box_size),
             Transform::from_translation(box_position.extend(30.0)),
         ))
         .with_children(|builder| {

@@ -124,7 +124,7 @@ pub const PLAYER_CONFIG: PlayerConfig = PlayerConfig {
     size: Vec2::new(80.0, 160.0),
     movement_speed: 300.0,
     rotation_speed: f32::to_radians(180.0),
-    path: "sprites/top-view/newcore.png",
+    path: "sprites/top-view/core_long.png",
     max_block_count: 100,
 };
 
@@ -201,7 +201,7 @@ pub struct GridConfig {
 // Global constant config for the player
 pub const GRID_CONFIG: GridConfig = GridConfig {
     grid_size: (1, 10),
-    cell_size: 84.,
+    cell_size: 79.,
     next_free_pos: (-1, 0),
     capacity: 100,
     load: 0,
@@ -323,10 +323,10 @@ pub const BLOCK_CONFIG: BlockConfig = BlockConfig {
     size: Vec2::new(80.0, 80.0),
     rotation_speed: f32::to_radians(90.0),
     path: [
-        "sprites/top-view/newblock1.png",
-        "sprites/top-view/newblock2.png",
-        "sprites/top-view/newblock3.png",
-        "sprites/top-view/newblock4.png",
+        "sprites/top-view/block_filled1.png",
+        "sprites/top-view/block_filled2.png",
+        "sprites/top-view/block_filled3.png",
+        "sprites/top-view/block_filled4.png",
     ],
     count: 100,
 };

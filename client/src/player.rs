@@ -1,26 +1,26 @@
 use crate::block::SpawnedBlocks;
 use crate::common::{
-    AttachedBlock, Block, Obstacle, Opponent, Player, PlayerGrid, LastTrackPos, CtxWrapper, LavaTiles, WaterTiles, RegTiles, StoneTiles, BLOCK_CONFIG, GRID_CONFIG,
-    MAP_CONFIG, OBSTACLE_CONFIG, PLAYER_CONFIG, TRACK_CONFIG, MODIFIER_CONFIG,
+    AttachedBlock, Block, CtxWrapper, LastTrackPos, LavaTiles, Obstacle, Opponent, Player,
+    PlayerGrid, RegTiles, StoneTiles, WaterTiles, BLOCK_CONFIG, GRID_CONFIG, MAP_CONFIG,
+    MODIFIER_CONFIG, OBSTACLE_CONFIG, PLAYER_CONFIG, TRACK_CONFIG,
 };
-use crate::db_connection::{update_player_position};
+use crate::db_connection::update_player_position;
 use crate::grid::{get_block_count, increment_grid_pos};
 use crate::module_bindings::*;
 use crate::player_attach::*;
+use bevy::math::*;
 use bevy::pbr::light_consts::lux::DIRECT_SUNLIGHT;
-use bevy::prelude::{*, Vec2};
+use bevy::prelude::{Vec2, *};
 use bevy::text::cosmic_text::rustybuzz::script::MODI;
 use bevy::window::PrimaryWindow;
 use std::collections::HashMap;
-use bevy::math::*; 
-
 
 use rand::Rng;
 
 // server
 use spacetimedb_sdk::{
-    credentials, DbContext, Error, Event, Identity, Status, Table, TableWithPrimaryKey,
-    ReducerEvent,
+    credentials, DbContext, Error, Event, Identity, ReducerEvent, Status, Table,
+    TableWithPrimaryKey,
 };
 
 pub fn setup_player(
@@ -45,7 +45,7 @@ pub fn setup_player(
         //    layout: asset_server.load("sprites/top-view/robot_3Dblue.png"),
         //    index: 0,
         //}, -- NOTE: If asset-chart is ever used
-        Transform::from_xyz(random_position.0, random_position.1, 2.0),
+        Transform::from_xyz(random_position.0, random_position.1, 25.0),
         Player {
             movement_speed: PLAYER_CONFIG.movement_speed, // meters per second
             rotation_speed: PLAYER_CONFIG.rotation_speed, // degrees per second
@@ -129,7 +129,13 @@ pub fn player_movement(
         // Scale player speed and rotation depending on n blocks
         let speed_scale = 1.0 / (1.0 + player.block_count as f32 * 0.1);
         let rotation_scale = 1.0 / (1.0 + player.block_count as f32 * 0.1);
-        let speed_modifier = speed_modifer(transform.translation.truncate(), &water_tiles, &reg_tiles, &stone_tiles, player.block_count);
+        let speed_modifier = speed_modifer(
+            transform.translation.truncate(),
+            &water_tiles,
+            &reg_tiles,
+            &stone_tiles,
+            player.block_count,
+        );
         let move_speed = PLAYER_CONFIG.movement_speed * speed_scale * speed_modifier;
         let rot_speed = PLAYER_CONFIG.rotation_speed * rotation_scale;
 
@@ -266,29 +272,33 @@ pub fn player_movement(
 }
 
 fn speed_modifer(
-    player_pos: bevy::prelude::Vec2, 
+    player_pos: bevy::prelude::Vec2,
     water_tiles: &WaterTiles,
     reg_tiles: &RegTiles,
     stone_tiles: &StoneTiles,
     block_count: i32,
-) -> f32 {    
+) -> f32 {
     let mut speed_modifier = 1.0;
     let half_size = PLAYER_CONFIG.size / 2.0;
 
-     // Compute tile bounds the player overlaps
-     let left = player_pos.x - half_size.x;
-     let right = player_pos.x + half_size.x;
-     let bottom = player_pos.y - half_size.y;
-     let top = player_pos.y + half_size.y;
- 
-     let tile_size = MAP_CONFIG.tile_size;
- 
-     let tile_x_start = ((left + (MAP_CONFIG.map_size.x as f32 * tile_size.x) / 2.0) / tile_size.x).floor() as u32;
-     let tile_x_end = ((right + (MAP_CONFIG.map_size.x as f32 * tile_size.x) / 2.0) / tile_size.x).floor() as u32;
-     let tile_y_start = ((bottom + (MAP_CONFIG.map_size.y as f32 * tile_size.y) / 2.0) / tile_size.y).floor() as u32;
-     let tile_y_end = ((top + (MAP_CONFIG.map_size.y as f32 * tile_size.y) / 2.0) / tile_size.y).floor() as u32;
+    // Compute tile bounds the player overlaps
+    let left = player_pos.x - half_size.x;
+    let right = player_pos.x + half_size.x;
+    let bottom = player_pos.y - half_size.y;
+    let top = player_pos.y + half_size.y;
 
-     for x in tile_x_start..=tile_x_end {
+    let tile_size = MAP_CONFIG.tile_size;
+
+    let tile_x_start =
+        ((left + (MAP_CONFIG.map_size.x as f32 * tile_size.x) / 2.0) / tile_size.x).floor() as u32;
+    let tile_x_end =
+        ((right + (MAP_CONFIG.map_size.x as f32 * tile_size.x) / 2.0) / tile_size.x).floor() as u32;
+    let tile_y_start = ((bottom + (MAP_CONFIG.map_size.y as f32 * tile_size.y) / 2.0) / tile_size.y)
+        .floor() as u32;
+    let tile_y_end =
+        ((top + (MAP_CONFIG.map_size.y as f32 * tile_size.y) / 2.0) / tile_size.y).floor() as u32;
+
+    for x in tile_x_start..=tile_x_end {
         for y in tile_y_start..=tile_y_end {
             if water_tiles.positions.contains(&(x, y)) {
                 speed_modifier = MODIFIER_CONFIG.water; // Slow down on water tiles
@@ -303,10 +313,7 @@ fn speed_modifer(
     return speed_modifier;
 }
 
-fn will_collide_with_lava_tiles(
-    player_pos: bevy::prelude::Vec2, 
-    lava_tiles: &LavaTiles
-) -> bool {
+fn will_collide_with_lava_tiles(player_pos: bevy::prelude::Vec2, lava_tiles: &LavaTiles) -> bool {
     let half_size = PLAYER_CONFIG.size / 2.0;
 
     // Compute tile bounds the player overlaps
@@ -317,10 +324,14 @@ fn will_collide_with_lava_tiles(
 
     let tile_size = MAP_CONFIG.tile_size;
 
-    let tile_x_start = ((left + (MAP_CONFIG.map_size.x as f32 * tile_size.x) / 2.0) / tile_size.x).floor() as u32;
-    let tile_x_end = ((right + (MAP_CONFIG.map_size.x as f32 * tile_size.x) / 2.0) / tile_size.x).floor() as u32;
-    let tile_y_start = ((bottom + (MAP_CONFIG.map_size.y as f32 * tile_size.y) / 2.0) / tile_size.y).floor() as u32;
-    let tile_y_end = ((top + (MAP_CONFIG.map_size.y as f32 * tile_size.y) / 2.0) / tile_size.y).floor() as u32;
+    let tile_x_start =
+        ((left + (MAP_CONFIG.map_size.x as f32 * tile_size.x) / 2.0) / tile_size.x).floor() as u32;
+    let tile_x_end =
+        ((right + (MAP_CONFIG.map_size.x as f32 * tile_size.x) / 2.0) / tile_size.x).floor() as u32;
+    let tile_y_start = ((bottom + (MAP_CONFIG.map_size.y as f32 * tile_size.y) / 2.0) / tile_size.y)
+        .floor() as u32;
+    let tile_y_end =
+        ((top + (MAP_CONFIG.map_size.y as f32 * tile_size.y) / 2.0) / tile_size.y).floor() as u32;
 
     for x in tile_x_start..=tile_x_end {
         for y in tile_y_start..=tile_y_end {
@@ -470,3 +481,4 @@ fn generate_random_spawnpoint(ctx_wrapper: &CtxWrapper) -> (f32, f32) {
     }
     (random_x, random_y)
 }
+
