@@ -447,7 +447,7 @@ pub const MAP_CONFIG: MapConfig = MapConfig {
         "sprites/tiles/stone-grass/stone-grass03.png",
         "sprites/tiles/stone-grass/stone-grass04.png",
     ],
-    image_path: r"assets/map.png",
+    image_path: r"assets/map-flipped.png",
     safe_zone_size: 300.0,
 };
 
