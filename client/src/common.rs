@@ -173,7 +173,7 @@ pub struct ModifierConfig {
 }
 
 pub const MODIFIER_CONFIG: ModifierConfig = ModifierConfig {
-    water: 0.1,
+    water: 0.2,
     reg: 1.0,
     stone: 0.7,
 };
