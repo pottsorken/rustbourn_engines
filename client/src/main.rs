@@ -50,7 +50,7 @@ use db_connection::{
     db_setup, setup_connection, update_opponent_hooks, despawn_opponent_hooks, update_opponent_positions,
     update_opponent_tracks,
 };
-use grid::{balance_opponents_grid, balance_player_grid, check_grid_connectivity};
+use grid::{balance_opponents_grid, balance_player_grid, check_grid_connectivity, balance_bots_grid};
 
 use hook::{handle_obstacle_hit, hook_cooldown_system};
 use leaderboard::{spawn_leaderboard, update_leaderboard_from_db};

@@ -1,4 +1,4 @@
-use crate::{block::SpawnedBlocks, common::{AttachedBlock, Opponent, Player, PlayerGrid, CtxWrapper}, module_bindings::{update_block_owner, BlockTableAccess, OwnerType}, player};
+use crate::{block::SpawnedBlocks, common::{AttachedBlock, Bot, CtxWrapper, Opponent, Player, PlayerGrid}, module_bindings::{update_block_owner, BlockTableAccess, OwnerType}, player};
 use bevy::prelude::*;
 use spacetimedb_sdk::{DbContext, Identity};
 use std::collections::{HashSet, VecDeque};
@@ -172,7 +172,7 @@ pub fn balance_player_grid(
 // MAGIC FUNCTION NR 2 :)
 pub fn balance_opponents_grid(
     mut commands: Commands,
-    mut opp_query: Query<(&Opponent,Entity, &mut PlayerGrid)>,
+    mut opp_query: Query<(&Opponent, Entity, &mut PlayerGrid)>,
     mut block_query: Query<&mut AttachedBlock>,
     mut spawned_blocks: ResMut<SpawnedBlocks>,
     ctx_wrapper: Res<CtxWrapper>,
@@ -241,6 +241,35 @@ pub fn balance_opponents_grid(
         }
 
 
+    }
+}
+
+// MAGIC FUNCTION NR 3
+pub fn balance_bots_grid(
+    mut commands: Commands,
+    mut bot_query: Query<(&Bot, Entity, &mut PlayerGrid)>,
+    mut block_query: Query<&mut AttachedBlock>,
+    mut spawned_blocks: ResMut<SpawnedBlocks>,
+    ctx_wrapper: Res<CtxWrapper>,
+){
+    for (bot, bot_entity, mut grid) in bot_query.iter_mut(){
+        let bot_id = bot.id;
+        let mut to_remove: Vec<(i32, i32)> = Vec::new();
+        for (grid_pos, block_ent) in grid.block_position.iter_mut() {
+            if let Some(block_id) = spawned_blocks.entities.get(block_ent) {
+                if let Some(block_from_db) = ctx_wrapper.ctx.db.block().id().find(block_id) {
+                    if OwnerType::Bot(bot_id) != block_from_db.owner{
+                        to_remove.push(*grid_pos);  
+                    }
+                } else {
+                    warn!("Block ID {:?} not found in DB", block_id);
+                }
+            }
+        }
+
+        for grid_pos in to_remove {
+            grid.block_position.remove(&grid_pos);
+        }
     }
 }
 
