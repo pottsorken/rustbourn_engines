@@ -206,7 +206,7 @@ fn spawn_text(
 
     let binding = commands
         .spawn((
-            Sprite::from_color(Color::rgba(0.85, 0.05, 0.05, 0.5), box_size),
+            Sprite::from_color(Color::rgba(0.85, 0.05, 0.05, 0.2), box_size),
             Transform::from_translation(box_position.extend(30.0)),
             OpponentNametag {
                 id: opponent_id.clone(),
@@ -232,8 +232,7 @@ fn spawn_text(
         })
         .id();
     let nametag = binding;
-
-    commands
-        .entity(opponent_entity.expect("Did not find opponent entity from online id"))
-        .add_children(&[nametag]);
+    if let Some(opp_entity) = opponent_entity {
+        commands.entity(opp_entity).add_children(&[nametag]);
+    }
 }
