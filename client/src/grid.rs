@@ -1,4 +1,9 @@
-use crate::{block::SpawnedBlocks, common::{AttachedBlock, Bot, CtxWrapper, Opponent, Player, PlayerGrid}, module_bindings::{update_block_owner, BlockTableAccess, OwnerType}, player};
+use crate::{
+    block::SpawnedBlocks,
+    common::{AttachedBlock, Bot, CtxWrapper, Opponent, Player, PlayerGrid},
+    module_bindings::{update_block_owner, BlockTableAccess, OwnerType},
+    player,
+};
 use bevy::prelude::*;
 use spacetimedb_sdk::{DbContext, Identity};
 use std::collections::{HashSet, VecDeque};
@@ -76,15 +81,19 @@ pub fn check_grid_connectivity(
                 // Optional: Add components to simulate falling, e.g., Gravity, Velocity
                 // commands.entity(block_entity).insert(Gravity::default());
                 //player_grid.load = player_grid.load.saturating_sub(1);
-                
+
                 // Update block ownership to none
                 let server_block_id = spawned_blocks
-                .entities
-                .get(&block_entity)
-                .expect("Failed to get block id");
-            ctx_wrapper.ctx.reducers.update_block_owner(*server_block_id, OwnerType::None, pos.0, pos.1).unwrap();
+                    .entities
+                    .get(&block_entity)
+                    .expect("Failed to get block id");
+                ctx_wrapper
+                    .ctx
+                    .reducers
+                    .update_block_owner(*server_block_id, OwnerType::None, pos.0, pos.1)
+                    .unwrap();
             }
-        } 
+        }
     }
 }
 
@@ -97,16 +106,15 @@ pub fn balance_player_grid(
     ctx_wrapper: Res<CtxWrapper>,
 ) {
     if let Ok((player, player_entity, mut grid)) = player_query.get_single_mut() {
-
         let mut to_detach: Vec<(i32, i32)> = Vec::new();
         let mut to_remove: Vec<(i32, i32)> = Vec::new();
         let player_identity = ctx_wrapper.ctx.identity();
         for (grid_pos, block_ent) in grid.block_position.iter_mut() {
             if let Some(block_id) = spawned_blocks.entities.get(block_ent) {
                 if let Some(block_from_db) = ctx_wrapper.ctx.db.block().id().find(block_id) {
-                    if let OwnerType::None = block_from_db.owner{
-                        to_detach.push(*grid_pos);  
-                    } else if OwnerType::Player(player_identity) != block_from_db.owner{
+                    if let OwnerType::None = block_from_db.owner {
+                        to_detach.push(*grid_pos);
+                    } else if OwnerType::Player(player_identity) != block_from_db.owner {
                         to_remove.push(*grid_pos);
                     }
                 } else {
@@ -137,7 +145,6 @@ pub fn balance_player_grid(
 
             if let Some(block_from_db) = ctx_wrapper.ctx.db.block().id().find(block_id) {
                 if block_from_db.owner == OwnerType::Player(player_identity) {
-
                     if let Some(next_pos) = grid.find_next_free_pos() {
                         grid.block_position.insert(next_pos, *block_entity);
                         grid.load += 1;
@@ -176,15 +183,15 @@ pub fn balance_opponents_grid(
     mut block_query: Query<&mut AttachedBlock>,
     mut spawned_blocks: ResMut<SpawnedBlocks>,
     ctx_wrapper: Res<CtxWrapper>,
-){
-    for (opp, opp_entity, mut grid) in opp_query.iter_mut(){
+) {
+    for (opp, opp_entity, mut grid) in opp_query.iter_mut() {
         let player_identity = opp.id;
         let mut to_remove: Vec<(i32, i32)> = Vec::new();
         for (grid_pos, block_ent) in grid.block_position.iter_mut() {
             if let Some(block_id) = spawned_blocks.entities.get(block_ent) {
                 if let Some(block_from_db) = ctx_wrapper.ctx.db.block().id().find(block_id) {
-                    if OwnerType::Player(player_identity) != block_from_db.owner{
-                        to_remove.push(*grid_pos);  
+                    if OwnerType::Player(player_identity) != block_from_db.owner {
+                        to_remove.push(*grid_pos);
                     }
                 } else {
                     warn!("Block ID {:?} not found in DB", block_id);
@@ -198,7 +205,8 @@ pub fn balance_opponents_grid(
 
         // Second pass: Find all blocks owned by the opponent but not in their grid
         // Clone known block entities to avoid borrow conflict
-        let known_entities: std::collections::HashSet<_> = grid.block_position.values().copied().collect();
+        let known_entities: std::collections::HashSet<_> =
+            grid.block_position.values().copied().collect();
 
         // Insert missing owned blocks into grid
         for (block_ent, block_id) in &spawned_blocks.entities {
@@ -239,8 +247,6 @@ pub fn balance_opponents_grid(
         if let Some(next_pos) = grid.find_next_free_pos() {
             grid.next_free_pos = next_pos;
         }
-
-
     }
 }
 
@@ -248,27 +254,27 @@ pub fn get_block_count(
     identity: Identity,
     ctx_wrapper: &CtxWrapper,
     spawned_blocks: &SpawnedBlocks,
-) -> i32{
+) -> i32 {
     let mut count = 0;
-    for block_id in spawned_blocks.ids.clone(){
-        if let Some(block_from_db) = ctx_wrapper.ctx.db().block().id().find(&block_id){
-            if block_from_db.owner == OwnerType::Player(identity){
+    for block_id in spawned_blocks.ids.clone() {
+        if let Some(block_from_db) = ctx_wrapper.ctx.db().block().id().find(&block_id) {
+            if block_from_db.owner == OwnerType::Player(identity) {
                 count += 1;
             }
         }
     }
-    count 
+    count
 }
 
 pub fn get_bot_block_count(
     bot_id: u64,
     ctx_wrapper: &CtxWrapper,
     spawned_blocks: &SpawnedBlocks,
-) -> i32{
+) -> i32 {
     let mut count = 0;
-    for block_id in spawned_blocks.ids.clone(){
-        if let Some(block_from_db) = ctx_wrapper.ctx.db().block().id().find(&block_id){
-            if block_from_db.owner == OwnerType::Bot(bot_id){
+    for block_id in spawned_blocks.ids.clone() {
+        if let Some(block_from_db) = ctx_wrapper.ctx.db().block().id().find(&block_id) {
+            if block_from_db.owner == OwnerType::Bot(bot_id) {
                 count += 1;
             }
         }
@@ -282,19 +288,26 @@ impl PlayerGrid {
             "Grid size: ({}, {}) --------------",
             -self.grid_size.0, self.grid_size.0
         );
-        for y in 0..=self.grid_size.1 {
-            for x in -self.grid_size.0..=self.grid_size.0 {
-                let pos = (x, -y); // -y since blocks increment backwards
+        for radius in 1..=self.grid_size.1 {
+            for y in 0..=radius {
+                for x in -radius..=radius {
+                    // since size in x should depend on config for x
+                    if x.abs() > self.grid_size.0 {
+                        continue;
+                    }
 
-                // skip if center block
-                if pos == (0, 0) {
-                    continue;
-                }
+                    let pos = (x, -y); // -y since blocks increment backwards
 
-                println!("Checking if free for ({}, {})", pos.0, pos.1);
-                // return position if it is free
-                if !self.block_position.contains_key(&pos) {
-                    return Some(pos);
+                    // skip if center block
+                    if pos == (0, 0) {
+                        continue;
+                    }
+
+                    println!("Checking if free for ({}, {})", pos.0, pos.1);
+                    // return position if it is free
+                    if !self.block_position.contains_key(&pos) {
+                        return Some(pos);
+                    }
                 }
             }
         }

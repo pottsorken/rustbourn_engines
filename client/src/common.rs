@@ -205,7 +205,7 @@ pub struct GridConfig {
 }
 // Global constant config for the player
 pub const GRID_CONFIG: GridConfig = GridConfig {
-    grid_size: (1, 10),
+    grid_size: (2, 10),
     cell_size: 79.,
     next_free_pos: (-1, 0),
     capacity: 100,
