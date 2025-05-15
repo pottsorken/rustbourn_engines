@@ -116,7 +116,7 @@ pub fn player_movement(
     mut _commands: Commands,
     time: Res<Time>,
     ctx: Res<CtxWrapper>,
-    mut spawned_blocks: ResMut<SpawnedBlocks>,
+    spawned_blocks: ResMut<SpawnedBlocks>,
     lava_tiles: Res<LavaTiles>,
     water_tiles: Res<WaterTiles>,
     reg_tiles: Res<RegTiles>,
