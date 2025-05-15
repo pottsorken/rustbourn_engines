@@ -3,6 +3,8 @@ use crate::db_connection::load_obstacles;
 use bevy::prelude::*;
 use bevy::window::PrimaryWindow;
 use std::collections::HashSet;
+use rand::random;
+
 
 pub fn setup_obstacle(
     mut commands: Commands,
