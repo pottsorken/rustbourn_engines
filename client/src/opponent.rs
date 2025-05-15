@@ -36,8 +36,8 @@ pub fn spawn_opponent(
     }
     commands.spawn((
         Sprite {
-            custom_size: Some(bevy::prelude::Vec2::new(80.0, 80.0)), // Square size 100x100 pixels
-            image: asset_server.load("sprites/top-view/robot_3Dred.png"),
+            custom_size: Some(bevy::prelude::Vec2::new(80.0, 160.0)), // Square size 100x100 pixels
+            image: asset_server.load("sprites/top-view/core_long.png"),
             ..default()
         },
         //TextureAtlas {
