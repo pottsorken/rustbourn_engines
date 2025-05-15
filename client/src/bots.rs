@@ -1,6 +1,6 @@
 use crate::common::{
     AttachedBlock, Block, Bot, CtxWrapper, Obstacle, Player, Opponent, Opponent, Player, PlayerGrid, BLOCK_CONFIG,
-    BOT_CONFIG, GRID_CONFIG, OBSTACLE_CONFIG, PLAYER_CONFIG PLAYER_CONFIG
+    BOT_CONFIG, GRID_CONFIG, OBSTACLE_CONFIG, PLAYER_CONFIG
 };
 use crate::db_connection::{load_bots, update_bot_position};
 use crate::grid::increment_grid_pos;
