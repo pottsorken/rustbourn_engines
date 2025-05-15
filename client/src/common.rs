@@ -67,7 +67,7 @@ pub struct BotConfig {
 pub const BOT_CONFIG: BotConfig = BotConfig {
     size: Vec2::new(80.0, 80.0),
     path: "sprites/top-view/newcore.png",
-    count: 3,
+    count: 50,
     movement_speed: 20.0,
     rotation_speed: f32::to_radians(180.0),
 };
