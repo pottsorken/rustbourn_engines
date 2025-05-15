@@ -30,7 +30,6 @@ pub mod update_block_owner_reducer;
 pub mod update_bot_position_reducer;
 pub mod update_hook_movement_reducer;
 pub mod update_hook_position_reducer;
-pub mod update_leaderboard_reducer;
 pub mod update_owner_grid_reducer;
 pub mod update_player_position_reducer;
 pub mod update_tracks_system_reducer;
@@ -80,9 +79,6 @@ pub use update_hook_movement_reducer::{
 };
 pub use update_hook_position_reducer::{
     set_flags_for_update_hook_position, update_hook_position, UpdateHookPositionCallbackId,
-};
-pub use update_leaderboard_reducer::{
-    set_flags_for_update_leaderboard, update_leaderboard, UpdateLeaderboardCallbackId,
 };
 pub use update_owner_grid_reducer::{
     set_flags_for_update_owner_grid, update_owner_grid, UpdateOwnerGridCallbackId,
@@ -139,10 +135,6 @@ pub enum Reducer {
         position: Vec2,
         rotation: f32,
     },
-    UpdateLeaderboard {
-        player_identity: __sdk::Identity,
-        id_leaderboard: u64,
-    },
     UpdateOwnerGrid {
         load: i32,
         next_free_x: i32,
@@ -178,7 +170,6 @@ impl __sdk::Reducer for Reducer {
             Reducer::UpdateBotPosition { .. } => "update_bot_position",
             Reducer::UpdateHookMovement { .. } => "update_hook_movement",
             Reducer::UpdateHookPosition { .. } => "update_hook_position",
-            Reducer::UpdateLeaderboard { .. } => "update_leaderboard",
             Reducer::UpdateOwnerGrid { .. } => "update_owner_grid",
             Reducer::UpdatePlayerPosition { .. } => "update_player_position",
             Reducer::UpdateTracksSystem { .. } => "update_tracks_system",
@@ -229,10 +220,6 @@ impl TryFrom<__ws::ReducerCallInfo<__ws::BsatnFormat>> for Reducer {
             "update_hook_position" => Ok(__sdk::parse_reducer_args::<
                 update_hook_position_reducer::UpdateHookPositionArgs,
             >("update_hook_position", &value.args)?
-            .into()),
-            "update_leaderboard" => Ok(__sdk::parse_reducer_args::<
-                update_leaderboard_reducer::UpdateLeaderboardArgs,
-            >("update_leaderboard", &value.args)?
             .into()),
             "update_owner_grid" => Ok(__sdk::parse_reducer_args::<
                 update_owner_grid_reducer::UpdateOwnerGridArgs,
