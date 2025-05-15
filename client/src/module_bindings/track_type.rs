@@ -4,16 +4,19 @@
 #![allow(unused, clippy::all)]
 use spacetimedb_sdk::__codegen::{self as __sdk, __lib, __sats, __ws};
 
-use super::vec_2_type::Vec2;
+use super::bevy_transform_type::BevyTransform;
 
 #[derive(__lib::ser::Serialize, __lib::de::Deserialize, Clone, PartialEq, Debug)]
 #[sats(crate = __lib)]
-pub struct Obstacle {
+pub struct Track {
+    pub owner_identity: __sdk::Identity,
+    pub position: BevyTransform,
+    pub rotation: f32,
+    pub width: f32,
+    pub height: f32,
     pub id: u64,
-    pub position: Vec2,
-    pub hp: u32,
 }
 
-impl __sdk::InModule for Obstacle {
+impl __sdk::InModule for Track {
     type Module = super::RemoteModule;
 }

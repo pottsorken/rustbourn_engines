@@ -1,12 +1,14 @@
 use crate::common::{
-    AttachedBlock, Block, Bot, Obstacle, Opponent, Player, PlayerGrid, BLOCK_CONFIG, BOT_CONFIG, OBSTACLE_CONFIG, PLAYER_CONFIG
+    AttachedBlock, Block, Bot, CtxWrapper, Obstacle, Player, Opponent, Opponent, Player, PlayerGrid, BLOCK_CONFIG,
+    BOT_CONFIG, GRID_CONFIG, OBSTACLE_CONFIG, PLAYER_CONFIG PLAYER_CONFIG
 };
-use crate::db_connection::{load_bots, update_bot_position, CtxWrapper};
+use crate::db_connection::{load_bots, update_bot_position};
 use crate::grid::increment_grid_pos;
 use crate::module_bindings::{update_bot_position, BotsTableAccess};
 use crate::player_attach::check_collision;
 use bevy::ecs::query::QueryParIter;
 use bevy::prelude::*;
+use rand::Rng;
 use spacetimedb_sdk::{DbContext, Identity};
 use std::collections::HashMap;
 use rand::random;
@@ -21,10 +23,10 @@ pub fn spawn_bots(
         // Check if the query is empty, meaning no bots are in the world yet
 
         let bots = load_bots(&ctx_wrapper);
-        println!("[BOTS] Loaded {} bots", bots.len());
+        //println!("[BOTS] Loaded {} bots", bots.len());
 
         for (x, y, bot_id) in bots {
-            println!("[BOTS] Spawning bot {} at ({}, {})", bot_id, x, y);
+            //println!("[BOTS] Spawning bot {} at ({}, {})", bot_id, x, y);
 
             let bot_entity = commands.spawn((
                 Sprite {
@@ -40,11 +42,11 @@ pub fn spawn_bots(
                 },
                 PlayerGrid {
                     block_position: HashMap::new(),
-                    grid_size: (1, 1),
-                    cell_size: 84.,
-                    next_free_pos: (-1, 0),
+                    grid_size: GRID_CONFIG.grid_size,
+                    cell_size: GRID_CONFIG.cell_size,
+                    next_free_pos: GRID_CONFIG.next_free_pos,
                     capacity: 5,
-                    load: 0,
+                    load: GRID_CONFIG.load,
                 },
             ));
         }
@@ -77,16 +79,55 @@ pub fn render_bots_from_db(
                 transform.translation.z,
             );
 
-            println!(
-                "[BOT] {} at ({}, {}) and rotation: {}",
-                bot.id,
-                server_bot.position.coordinates.x,
-                server_bot.position.coordinates.y,
-                server_bot.position.rotation
-            );
+            let mut movement_dir = transform.rotation * bevy_dir;
+            let mut new_pos = transform.translation
+                + movement_dir * BOT_CONFIG.movement_speed * time.delta_secs();
 
-            update_bot_position(&ctx_wrapper, bot.id);
+            let mut rotation_dir = server_bot.rotation_dir;
 
+            let front_direction = transform.rotation * Vec3::new(1.0, 0.0, 0.0);
+            let front_pos = transform.translation + front_direction * BOT_CONFIG.size.x; // Adjust distance
+
+            if !will_collide(front_pos.truncate(), &obstacle_query) {
+                // If no collision, update the bot's position
+                transform.translation = new_pos;
+                println!(
+                    "[BOT] {} at ({}, {}) and rotation: {}",
+                    bot.id,
+                    server_bot.position.coordinates.x,
+                    server_bot.position.coordinates.y,
+                    server_bot.position.rotation
+                );
+            } else {
+                // Try to look left and right
+                let left_direction =
+                    transform.rotation * Quat::from_rotation_z(0.7).mul_vec3(Vec3::X);
+                let right_direction =
+                    transform.rotation * Quat::from_rotation_z(-0.7).mul_vec3(Vec3::X);
+
+                let left_pos = transform.translation + left_direction * BOT_CONFIG.size.x;
+                let right_pos = transform.translation + right_direction * BOT_CONFIG.size.x;
+
+                let left_clear = !will_collide(left_pos.truncate(), &obstacle_query);
+                let right_clear = !will_collide(right_pos.truncate(), &obstacle_query);
+
+                // Decide which direction to go
+                if left_clear && !right_clear {
+                    rotation_dir = 1.0;
+                    rotation_dir = rotation_dir * BOT_CONFIG.rotation_speed * time.delta_secs();
+                } else if right_clear && !left_clear {
+                    rotation_dir = -1.0;
+                    rotation_dir = rotation_dir * BOT_CONFIG.rotation_speed * time.delta_secs();
+                } else if left_clear && right_clear {
+                    rotation_dir = if rand::random::<bool>() { 1.0 } else { -1.0 };
+                    rotation_dir = rotation_dir * BOT_CONFIG.rotation_speed * time.delta_secs();
+                } else {
+                    // Nowhere to go: turn around
+                    rotation_dir = std::f32::consts::PI; // 180°
+                }
+                transform.rotate_z(rotation_dir);
+            }
+            update_bot_position(&ctx_wrapper, &transform, bot.id, rotation_dir);
         }
     }
 }
@@ -102,10 +143,11 @@ pub fn spawn_bot_blocks(
         //println!("Spawning for bot: {}", bot_entity);
         for x in 0..3 {
             if bot_grid.load < bot_grid.capacity {
+                let num = rand::thread_rng().gen_range(0..=3);
                 commands.spawn((
                     Sprite {
                         custom_size: Some(BLOCK_CONFIG.size),
-                        image: asset_server.load(BLOCK_CONFIG.path),
+                        image: asset_server.load(BLOCK_CONFIG.path[num]),
                         ..default()
                     },
                     Transform::from_xyz(0., 0., 1.0),

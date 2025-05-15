@@ -1,7 +1,8 @@
 // Game engine
 use bevy::prelude::*;
 use bevy_ecs_tilemap::prelude::*;
-//use noisy_bevy::simplex_noise_2d; // For map generation. May be temporary
+use noisy_bevy::simplex_noise_2d; // For map generation. May be temporary
+use bevy::{app::AppExit, color::palettes::css::CRIMSON, prelude::*};
 
 mod block;
 mod bots;
@@ -17,12 +18,18 @@ mod opponent;
 mod parse;
 mod player;
 mod player_attach;
+mod start_menu;
+mod edit_menu; use edit_menu::*;
+mod track_spawner;
 
+use track_spawner::*;
+use camera::*;
 use block::*;
 use hook::*;
 use obstacle::*;
 use player::*;
 use player_attach::*;
+use start_menu::*;
 
 //#[cfg(windows)]
 //#[global_allocator]
@@ -31,11 +38,13 @@ use player_attach::*;
 
 use bots::{render_bots_from_db, spawn_bot_blocks, spawn_bots};
 use camera::{camera_follow, setup_camera};
-use db_connection::{print_player_positions, setup_connection, update_opponent_hooks};
+use db_connection::{update_opponent_positions, setup_connection, update_opponent_hooks, update_opponent_tracks};
 use hook::handle_obstacle_hit;
 use map::setup_tilemap;
-use opponent::despawn_opponents;
+use opponent::{despawn_opponents, spawn_opponent_tracks_system};
 use player::{player_movement, setup_player};
+use common::*;
+use track_spawner::{spawn_tracks_system, track_lifetime_system};
 
 fn main() {
     App::new()
@@ -48,17 +57,27 @@ fn main() {
             ..Default::default()
         }))
         .add_plugins(TilemapPlugin)
+        .init_state::<GameState>()
+        .insert_resource(DisplayQuality::Medium)
+        .insert_resource(Volume(7))
+        .add_plugins((splash_plugin, menu_plugin, game_plugin, edit_plugin))
         .add_systems(
             Startup,
             (
-                setup_connection,
                 setup_camera,
+            )
+            .chain(),
+        )
+        .add_systems(
+            OnEnter(GameState::Game),
+            (
+                setup_connection,
                 setup_player,
                 setup_tilemap,
                 setup_block,
                 setup_hook,
             )
-                .chain(),
+                .chain()
         )
         .add_systems(
             Update,
@@ -67,15 +86,21 @@ fn main() {
                 update_block,
                 confine_player_movement,
                 camera_follow,
-                print_player_positions,
+                camera_zoom,
+                update_opponent_positions,
                 hook_collision_system,
                 hook_controls,
+                handle_obstacle_hit,
+                track_lifetime_system,
                 render_bots_from_db,
                 attach_objects,
                 attach_items,
                 update_opponent_hooks,
-                handle_obstacle_hit,
-            ),
+                spawn_tracks_system,
+                track_lifetime_system,
+                spawn_opponent_tracks_system,
+                update_opponent_tracks, 
+            ) .run_if(in_game_or_edit),
         )
         .add_systems(
             FixedUpdate,
@@ -84,7 +109,14 @@ fn main() {
                 despawn_opponents,
                 spawn_bots,
                 spawn_bot_blocks,
-            ),
+                // update_bots,
+            )
+            .run_if(in_game_or_edit),
+        )
+        .add_systems(
+            FixedUpdate,
+            (setup_obstacle, despawn_opponents, spawn_bots)
+                .run_if(in_game_or_edit)
         )
         .insert_resource(Time::from_seconds(0.5))
         .insert_resource(SpawnedObstacles::default())

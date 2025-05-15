@@ -1,19 +1,24 @@
 use crate::common::{
-    AttachedBlock, Block, Obstacle, Opponent, Player, PlayerGrid, BLOCK_CONFIG, MAP_CONFIG,
-    OBSTACLE_CONFIG, PLAYER_CONFIG,
+    AttachedBlock, Block, Obstacle, Opponent, Player, PlayerGrid, LastTrackPos, CtxWrapper, WaterTiles, DirtTiles, GrassTiles, StoneTiles, BLOCK_CONFIG, GRID_CONFIG,
+    MAP_CONFIG, OBSTACLE_CONFIG, PLAYER_CONFIG, TRACK_CONFIG, MODIFIER_CONFIG,
 };
-use crate::db_connection::{update_player_position, CtxWrapper};
+use crate::db_connection::update_player_position;
 use crate::module_bindings::*;
 use crate::player_attach::*;
-use bevy::prelude::*;
+use bevy::pbr::light_consts::lux::DIRECT_SUNLIGHT;
+use bevy::prelude::{*, Vec2};
+use bevy::text::cosmic_text::rustybuzz::script::MODI;
 use bevy::window::PrimaryWindow;
 use std::collections::HashMap;
+use bevy::math::*; 
+
 
 use rand::Rng;
 
 // server
 use spacetimedb_sdk::{
     credentials, DbContext, Error, Event, Identity, Status, Table, TableWithPrimaryKey,
+    ReducerEvent,
 };
 
 pub fn setup_player(
@@ -44,12 +49,13 @@ pub fn setup_player(
         },
         PlayerGrid {
             block_position: HashMap::new(),
-            grid_size: (1, 1),
-            cell_size: 84.,
-            next_free_pos: (-1, 0),
-            capacity: 0,
-            load: 0,
+            grid_size: GRID_CONFIG.grid_size,
+            cell_size: GRID_CONFIG.cell_size,
+            next_free_pos: GRID_CONFIG.next_free_pos,
+            capacity: GRID_CONFIG.capacity,
+            load: GRID_CONFIG.load,
         },
+        LastTrackPos(Vec2::ZERO),
     ));
 }
 
@@ -67,41 +73,41 @@ pub fn player_movement(
     mut _commands: Commands,
     time: Res<Time>,
     ctx: Res<CtxWrapper>,
+    water_tiles: Res<WaterTiles>,
+    dirt_tiles: Res<DirtTiles>,
+    grass_tiles: Res<GrassTiles>,
+    stone_tiles: Res<StoneTiles>,
 ) {
     //if let Ok((mut transform, _player)) = query.get_single_mut() { // NOTE: merge conflict
     let ctx_wrapper = &ctx.into_inner();
 
     let opponent_transforms: Vec<Transform> = opponent_query.iter().cloned().collect();
     for (player_entity, mut transform, player, grid) in &mut player_query {
-        // Handle rotation with A/D keys
+        // Scale player speed and rotation depending on n blocks
+        let speed_scale = 1.0 / (1.0 + player.block_count as f32 * 0.1);
+        let rotation_scale = 1.0 / (1.0 + player.block_count as f32 * 0.1);
+        let speed_modifier = speed_modifer(transform.translation.truncate(), &dirt_tiles, &grass_tiles, &stone_tiles, player.block_count);
+        let move_speed = PLAYER_CONFIG.movement_speed * speed_scale * speed_modifier;
+        let rot_speed = PLAYER_CONFIG.rotation_speed * rotation_scale;
+
+        // Set move and rotation direction to 0
         let mut rotation_dir = 0.0;
-        if keyboard_input.pressed(KeyCode::KeyA) || keyboard_input.pressed(KeyCode::ArrowLeft) {
-            rotation_dir += 1.0;
-        }
-        if keyboard_input.pressed(KeyCode::KeyD) || keyboard_input.pressed(KeyCode::ArrowRight) {
-            rotation_dir -= 1.0;
-        }
-
-        // Handle movement with W/S keys (forward/backward relative to rotation)
         let mut move_dir = bevy::prelude::Vec3::ZERO;
-        if keyboard_input.pressed(KeyCode::KeyW) || keyboard_input.pressed(KeyCode::ArrowUp) {
-            move_dir.y += 1.0;
-        }
-        if keyboard_input.pressed(KeyCode::KeyS) || keyboard_input.pressed(KeyCode::ArrowDown) {
-            move_dir.y -= 1.0;
-            //rotation_dir *= -1.;
-        }
 
-        // Apply movement relative to player's rotation
+        // Change move and rotation direction depending on input
+        set_movement(&keyboard_input, &mut rotation_dir, &mut move_dir);
+
+        // Apply movement if some button has been pressed
         if move_dir != bevy::prelude::Vec3::ZERO {
-            //|| rotation_dir != 0. {
-            let mut move_direction = bevy::prelude::Vec3::ZERO.clone();
-            //if move_dir != Vec3::ZERO {
-            move_direction = transform.rotation * move_dir.normalize();
-            //}
-            let new_pos =
-                transform.translation + move_direction * player.movement_speed * time.delta_secs();
+            //let mut move_direction = bevy::prelude::Vec3::ZERO.clone();
 
+            // Set new move direction according to new rotation (if any)
+            let move_direction = transform.rotation * move_dir.normalize();
+
+            // Calculate new position for next frame (only translation, not rotation!)
+            let new_pos = transform.translation + move_direction * move_speed * time.delta_secs();
+
+            // Check if player will collide with any obstacles next frame
             let collided_with_obstacle = check_collision(
                 new_pos.truncate(),
                 &obstacle_query,
@@ -109,49 +115,26 @@ pub fn player_movement(
                 OBSTACLE_CONFIG.size,
             );
 
+            // Prepare for block collision, if no collision then var will not be changed
             let mut blocks_collided_obstacles = false;
 
-            // copy tanslation ----
+            // Copy current transform
             let mut next_frame_pos = transform.clone();
+            // Set translation to new position
             next_frame_pos.translation = new_pos;
-            // Apply rotation
+            // Rotate transform if A/D has been pressed
             if rotation_dir != 0.0 {
-                next_frame_pos
-                    .rotate_z(rotation_dir * PLAYER_CONFIG.rotation_speed * time.delta_secs());
+                next_frame_pos.rotate_z(rotation_dir * rot_speed * time.delta_secs());
             }
 
-            // Check collision for all attached blocks
-            for (_attached_block_entity, _attached_block_transform, attached_block_link) in
-                attached_block_query.iter()
-            {
-                if attached_block_link.player_entity == player_entity {
-                    let rotated_offset = next_frame_pos.rotation
-                        * bevy::prelude::Vec3::new(
-                            attached_block_link.grid_offset.0 as f32 * grid.cell_size,
-                            attached_block_link.grid_offset.1 as f32 * grid.cell_size,
-                            5.0,
-                        );
-
-                    let new_block_pos = (next_frame_pos.translation) + (rotated_offset);
-
-                    blocks_collided_obstacles = check_collision(
-                        new_block_pos.truncate(),
-                        &obstacle_query,
-                        PLAYER_CONFIG.size,
-                        OBSTACLE_CONFIG.size,
-                    );
-                    if blocks_collided_obstacles {
-                        break;
-                    }
-                }
-            }
-
+            // Prepare block collision
             let mut collided_with_block = false;
 
-            // NOTE: Block collision logic here
             let block_radius = BLOCK_CONFIG.size.x.min(BLOCK_CONFIG.size.y) / 2.0;
             let player_radius = PLAYER_CONFIG.size.x.min(PLAYER_CONFIG.size.y) / 2.0;
             let collision_distance = block_radius + player_radius;
+
+            // Check if player has collided with any other blocks that are not attached
             for (_block_entity, block_transform) in block_query.iter_mut() {
                 if new_pos
                     .truncate()
@@ -164,27 +147,44 @@ pub fn player_movement(
 
             'outer: for (_block_entity, block_transform, block_link) in attached_block_query.iter()
             {
+                // check blocks collision with obstacles
+                if block_link.player_entity == player_entity {
+                    // Find block pos for next frame
+                    let new_block_pos = get_rotated_offset_pos(&block_link, &next_frame_pos, &grid);
+
+                    blocks_collided_obstacles = check_collision(
+                        new_block_pos.truncate(),
+                        &obstacle_query,
+                        PLAYER_CONFIG.size,
+                        OBSTACLE_CONFIG.size,
+                    );
+                    if blocks_collided_obstacles {
+                        break 'outer;
+                    }
+                }
+
+                // check player or blocks collision with other players/bots blocks
                 if block_link.player_entity != player_entity {
+                    // player collision with other players/bots blocks
                     if new_pos
                         .truncate()
                         .distance(block_transform.translation.truncate())
                         < collision_distance
                     {
                         collided_with_block = true;
+                        break 'outer;
                     }
-                    for (_attached_block_entity, _attached_block_transform, attached_block_link) in
+
+                    // players own blocks collision with other players/bots blocks
+                    for (_attached_block_entity, _attached_block_transform, attached_link) in
                         attached_block_query.iter()
                     {
-                        if attached_block_link.player_entity == player_entity {
-                            let rotated_offset = next_frame_pos.rotation
-                                * bevy::prelude::Vec3::new(
-                                    attached_block_link.grid_offset.0 as f32 * grid.cell_size,
-                                    attached_block_link.grid_offset.1 as f32 * grid.cell_size,
-                                    5.0,
-                                );
+                        if attached_link.player_entity == player_entity {
+                            // Find block pos for next frame
+                            let new_block_pos =
+                                get_rotated_offset_pos(&attached_link, &next_frame_pos, &grid);
 
-                            let new_block_pos = (next_frame_pos.translation) + (rotated_offset);
-
+                            // Check block collision against other blocks not owned by player
                             if new_block_pos
                                 .truncate()
                                 .distance(block_transform.translation.truncate())
@@ -200,24 +200,131 @@ pub fn player_movement(
                 }
             }
 
-            //println!(" ");
+            // If no collision at all then apply  movement
             if !collided_with_obstacle
                 && !collided_with_block
                 && !blocks_collided_obstacles
                 && !will_collide(new_pos.truncate(), &obstacle_query)
                 && !will_collide_with_opponent(new_pos.truncate(), &opponent_transforms)
+                && !will_collide_with_water_tiles(new_pos.truncate(), &water_tiles)
             {
                 // Apply tanslation
                 transform.translation = new_pos;
                 // Apply rotation
                 if rotation_dir != 0.0 {
-                    transform
-                        .rotate_z(rotation_dir * PLAYER_CONFIG.rotation_speed * time.delta_secs());
+                    transform.rotate_z(rotation_dir * rot_speed * time.delta_secs());
                 }
             }
         }
 
+        // Upload new player pos
         update_player_position(ctx_wrapper, &transform);
+    }
+}
+
+fn speed_modifer(
+    player_pos: bevy::prelude::Vec2, 
+    dirt_tiles: &DirtTiles,
+    grass_tiles: &GrassTiles,
+    stone_tiles: &StoneTiles,
+    block_count: i32,
+) -> f32 {    
+    let mut speed_modifier = 1.0;
+    let half_size = PLAYER_CONFIG.size / 2.0;
+
+     // Compute tile bounds the player overlaps
+     let left = player_pos.x - half_size.x;
+     let right = player_pos.x + half_size.x;
+     let bottom = player_pos.y - half_size.y;
+     let top = player_pos.y + half_size.y;
+ 
+     let tile_size = MAP_CONFIG.tile_size;
+ 
+     let tile_x_start = ((left + (MAP_CONFIG.map_size.x as f32 * tile_size.x) / 2.0) / tile_size.x).floor() as u32;
+     let tile_x_end = ((right + (MAP_CONFIG.map_size.x as f32 * tile_size.x) / 2.0) / tile_size.x).floor() as u32;
+     let tile_y_start = ((bottom + (MAP_CONFIG.map_size.y as f32 * tile_size.y) / 2.0) / tile_size.y).floor() as u32;
+     let tile_y_end = ((top + (MAP_CONFIG.map_size.y as f32 * tile_size.y) / 2.0) / tile_size.y).floor() as u32;
+
+     for x in tile_x_start..=tile_x_end {
+        for y in tile_y_start..=tile_y_end {
+            if dirt_tiles.positions.contains(&(x, y)) {
+                speed_modifier = MODIFIER_CONFIG.dirt; // Slow down on dirt tiles
+            } else if grass_tiles.positions.contains(&(x, y)) {
+                speed_modifier = MODIFIER_CONFIG.grass; // Speed up on grass tiles
+            } else if stone_tiles.positions.contains(&(x, y)) {
+                speed_modifier = MODIFIER_CONFIG.stone; // Speed up on stone tiles
+            }
+        }
+    }
+
+    return speed_modifier;
+}
+
+fn will_collide_with_water_tiles(
+    player_pos: bevy::prelude::Vec2, 
+    water_tiles: &WaterTiles
+) -> bool {
+    let half_size = PLAYER_CONFIG.size / 2.0;
+
+    // Compute tile bounds the player overlaps
+    let left = player_pos.x - half_size.x;
+    let right = player_pos.x + half_size.x;
+    let bottom = player_pos.y - half_size.y;
+    let top = player_pos.y + half_size.y;
+
+    let tile_size = MAP_CONFIG.tile_size;
+
+    let tile_x_start = ((left + (MAP_CONFIG.map_size.x as f32 * tile_size.x) / 2.0) / tile_size.x).floor() as u32;
+    let tile_x_end = ((right + (MAP_CONFIG.map_size.x as f32 * tile_size.x) / 2.0) / tile_size.x).floor() as u32;
+    let tile_y_start = ((bottom + (MAP_CONFIG.map_size.y as f32 * tile_size.y) / 2.0) / tile_size.y).floor() as u32;
+    let tile_y_end = ((top + (MAP_CONFIG.map_size.y as f32 * tile_size.y) / 2.0) / tile_size.y).floor() as u32;
+
+    for x in tile_x_start..=tile_x_end {
+        for y in tile_y_start..=tile_y_end {
+            if water_tiles.positions.contains(&(x, y)) {
+                return true;
+            }
+        }
+    }
+
+    false
+}
+
+fn get_rotated_offset_pos(
+    attach_link: &AttachedBlock,
+    next_frame_pos: &Transform,
+    grid: &PlayerGrid,
+) -> bevy::prelude::Vec3 {
+    let rotated_offset = next_frame_pos.rotation
+        * bevy::prelude::Vec3::new(
+            attach_link.grid_offset.0 as f32 * grid.cell_size,
+            attach_link.grid_offset.1 as f32 * grid.cell_size,
+            5.0,
+        );
+
+    (next_frame_pos.translation) + (rotated_offset)
+}
+
+fn set_movement(
+    keyboard_input: &Res<ButtonInput<KeyCode>>,
+    mut rotation_dir: &mut f32,
+    mut move_dir: &mut bevy::prelude::Vec3,
+) {
+    // Handle rotation with A/D keys
+    if keyboard_input.pressed(KeyCode::KeyA) || keyboard_input.pressed(KeyCode::ArrowLeft) {
+        *rotation_dir += 1.0;
+    }
+    if keyboard_input.pressed(KeyCode::KeyD) || keyboard_input.pressed(KeyCode::ArrowRight) {
+        *rotation_dir -= 1.0;
+    }
+
+    // Handle movement with W/S keys (forward/backward relative to rotation)
+    if keyboard_input.pressed(KeyCode::KeyW) || keyboard_input.pressed(KeyCode::ArrowUp) {
+        move_dir.y += 1.0;
+    }
+    if keyboard_input.pressed(KeyCode::KeyS) || keyboard_input.pressed(KeyCode::ArrowDown) {
+        move_dir.y -= 1.0;
+        //rotation_dir *= -1.;
     }
 }
 

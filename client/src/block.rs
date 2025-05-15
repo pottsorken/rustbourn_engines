@@ -1,12 +1,8 @@
-use crate::common::{
-    AttachedBlock, 
-    Block, 
-    BLOCK_CONFIG, 
-    MAP_CONFIG, 
-};
+use crate::common::{AttachedBlock, Block, BLOCK_CONFIG, MAP_CONFIG};
 use bevy::prelude::*;
 use bevy::window::PrimaryWindow;
 use rand::random;
+use rand::Rng;
 
 pub fn setup_block(
     mut commands: Commands,
@@ -28,11 +24,12 @@ pub fn setup_block(
         if valid_x && valid_y {
             continue;
         }
+        let num = rand::thread_rng().gen_range(0..=3);
 
         commands.spawn((
             Sprite {
                 custom_size: Some(BLOCK_CONFIG.size),
-                image: asset_server.load(BLOCK_CONFIG.path),
+                image: asset_server.load(BLOCK_CONFIG.path[num]),
                 ..default()
             },
             Transform::from_xyz(random_x, random_y, 1.0),

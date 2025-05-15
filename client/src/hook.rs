@@ -1,13 +1,15 @@
 use crate::module_bindings::*;
 use crate::{
     common::{
-        AttachedBlock, Block, Hook, HookCharge, Obstacle, OpponentHook, Player, PlayerAttach,
-        PlayerGrid, BLOCK_CONFIG, HOOK_CONFIG, OBSTACLE_CONFIG, PLAYER_CONFIG,
+        AttachedBlock, Block, CtxWrapper, Hook, HookCharge, HookRange, Obstacle, OpponentHook,
+        Player, PlayerAttach, PlayerGrid, BLOCK_CONFIG, HOOK_CONFIG, OBSTACLE_CONFIG,
+        PLAYER_CONFIG,
     },
-    db_connection::{load_obstacles, CtxWrapper},
+    db_connection::load_obstacles,
     grid::increment_grid_pos,
     opponent,
 };
+use bevy::prelude::{Vec2, Vec3};
 use bevy::{prelude::*, transform};
 use spacetimedb_sdk::{
     credentials, DbContext, Error, Event, Identity, Status, Table, TableWithPrimaryKey,
@@ -34,30 +36,40 @@ pub fn setup_hook(mut commands: Commands, asset_server: Res<AssetServer>) {
             offset: HOOK_CONFIG.player_attach_offset,
         },
     ));
+
+    commands.spawn((
+        Sprite {
+            custom_size: Some(Vec2::new(12.0, 26.0)),
+            color: Color::srgb(0.8, 0.4, 0.2),
+            anchor: bevy::sprite::Anchor::BottomCenter,
+            ..default()
+        },
+        Transform::from_xyz(0.0, 0.0, 7.0),
+        HookRange,
+    ));
 }
 
 pub fn hook_controls(
     keyboard_input: Res<ButtonInput<KeyCode>>,
-    mut hook_query: Query<
-        (&mut Sprite, &mut Transform, &Hook, &mut HookCharge),
-        (With<Hook>, Without<Obstacle>, Without<Block>),
-    >,
-    mut block_query: Query<
-        (Entity, &Transform, Option<&mut AttachedBlock>),
-        (With<Block>, Without<Player>),
-    >,
-    mut player_query: Query<
-        (Entity, &Transform, &mut Player, &mut PlayerGrid),
-        (Without<Obstacle>, Without<Block>, Without<Hook>),
-    >,
-    attachable_blocks: Query<&PlayerAttach>,
-    mut commands: Commands,
+    mut query: ParamSet<(
+        Query<(&mut Sprite, &mut Transform, &Hook, &mut HookCharge)>,
+        Query<(&mut Sprite, &mut Transform), With<HookRange>>,
+    )>,
     time: Res<Time>,
     ctx: Res<CtxWrapper>,
 ) {
-    for (mut sprite, mut transform, hook, mut charge) in hook_query.iter_mut() {
+    let mut range_update_info: Option<(Vec3, Quat, f32)> = None;
+
+    for (mut sprite, mut transform, hook, mut charge) in query.p0().iter_mut() {
         if keyboard_input.pressed(KeyCode::Space) && charge.target_length == 0.0 {
             charge.time_held += time.delta_secs();
+            let estimated_range =
+                (charge.time_held / 2.0 * hook.hook_speed).min(hook.hook_max_range);
+
+            let start_pos = transform.translation;
+            let rotation = transform.rotation;
+
+            range_update_info = Some((start_pos, rotation, estimated_range));
         }
 
         if keyboard_input.just_released(KeyCode::Space) {
@@ -72,14 +84,13 @@ pub fn hook_controls(
             let next_height = (current_height + HOOK_CONFIG.extend_speed * time.delta_secs())
                 .min(charge.target_length);
 
-            transform.translation.y += (next_height - current_height) / 2.0;
-            sprite.custom_size = Some(bevy::prelude::Vec2::new(
-                sprite.custom_size.unwrap().x,
-                next_height,
-            ));
+            let rotation = transform.rotation;
+            let offset = rotation * Vec3::Y * ((next_height - current_height) / 2.0);
+            transform.translation += offset;
 
-            let old_size = sprite.custom_size.unwrap().clone();
+            sprite.custom_size = Some(Vec2::new(sprite.custom_size.unwrap().x, next_height));
 
+            let old_size = sprite.custom_size.unwrap();
             ctx.ctx
                 .reducers()
                 .update_hook_movement(ctx.ctx.identity(), old_size.x, next_height)
@@ -91,19 +102,28 @@ pub fn hook_controls(
         } else if current_height > 0.0 && !keyboard_input.pressed(KeyCode::Space) {
             let next_height =
                 (current_height - HOOK_CONFIG.retract_speed * time.delta_secs()).max(0.0);
-            transform.translation.y -= (current_height - next_height) / 2.0;
 
-            let old_size = sprite.custom_size.unwrap().clone();
+            let rotation = transform.rotation;
+            let offset = rotation * Vec3::Y * ((current_height - next_height) / 2.0);
+            transform.translation -= offset;
 
-            sprite.custom_size = Some(bevy::prelude::Vec2::new(
-                sprite.custom_size.unwrap().x,
-                next_height,
-            ));
+            sprite.custom_size = Some(Vec2::new(sprite.custom_size.unwrap().x, next_height));
 
+            let old_size = sprite.custom_size.unwrap();
             ctx.ctx
                 .reducers()
                 .update_hook_movement(ctx.ctx.identity(), old_size.x, next_height)
                 .unwrap();
+        }
+    }
+
+    for (mut range_sprite, mut range_transform) in query.p1().iter_mut() {
+        if let Some((base_pos, rotation, length)) = range_update_info {
+            range_transform.translation = base_pos;
+            range_transform.rotation = rotation;
+            range_sprite.custom_size = Some(Vec2::new(12.0, length));
+        } else {
+            range_sprite.custom_size = Some(Vec2::ZERO);
         }
     }
 }
@@ -276,3 +296,4 @@ pub fn handle_obstacle_hit(
         }
     }
 }
+

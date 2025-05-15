@@ -1,6 +1,8 @@
 // Command line parsing
 use crate::db_connection::DB_NAME;
 use clap::Parser;
+use dirs::*;
+use once_cell::sync::Lazy;
 use std::env;
 use std::fs;
 
@@ -27,9 +29,20 @@ pub fn parse_args() -> String {
     //    panic!("Invalid IPv4 address provided: {}", e);
     // }
     if args.clear {
-        let home_dir = env::var("HOME").expect("Failed to get home directory");
-        let file_path = format!("{}/.spacetimedb_client_credentials/{}", home_dir, DB_NAME);
-        fs::remove_file(&file_path).expect("Failed to remove file");
+        let token_path = Lazy::new(|| {
+            dirs::home_dir()
+                .unwrap()
+                .join(".spacetimedb_client_credentials")
+                .join(DB_NAME)
+        });
+        if token_path.exists() {
+            fs::remove_file(&*token_path).expect("Failed to remove authentication token file");
+        } else {
+            eprintln!(
+                "Authentication token does not exist at {}\nIgnoring '--clear' argument",
+                token_path.display().to_string()
+            );
+        }
     }
 
     println!("http://{}:{}", args.ip, args.port);

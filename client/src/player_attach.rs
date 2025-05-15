@@ -1,14 +1,13 @@
 use bevy::prelude::*;
 
 use crate::module_bindings::*;
-use crate::{
-    common::{AttachedBlock, Bot, Hook, Player, PlayerAttach, PlayerGrid, PLAYER_CONFIG},
-    db_connection::CtxWrapper,
-};
+use crate::common::{AttachedBlock, Bot, Hook, Player, PlayerAttach, PlayerGrid, PLAYER_CONFIG, CtxWrapper};
 use spacetimedb_sdk::{
     credentials, DbContext, Error, Event, Identity, Status, Table, TableWithPrimaryKey,
 };
 
+/// Finds all players' and bots' transform and playergrid components, and performs a update to
+/// block positions if their owner is one of the players or bots
 pub fn attach_objects(
     player_query: Query<(Entity, &Transform, &PlayerGrid), (With<Player>, Without<AttachedBlock>)>,
     bot_query: Query<
@@ -32,6 +31,8 @@ pub fn attach_objects(
     }
 }
 
+/// Change block position based the player's core position, player's grid size and
+/// the block grid offset found in 'slave_attach'.
 fn update_slave_pos(
     owner_transform: &Transform,
     owner_grid: &PlayerGrid,

@@ -1,7 +1,7 @@
 use bevy::prelude::*;
 
 // Spacetime dependencies
-use crate::common::Opponent;
+use crate::common::{Opponent, CtxWrapper, OpponentTrack};
 use crate::module_bindings::*;
 use crate::opponent::*;
 use spacetimedb_sdk::{credentials, DbContext, Error, Identity, Table};
@@ -10,11 +10,6 @@ use crate::parse::*;
 
 use crate::common::OpponentHook;
 use crate::hook::*;
-
-#[derive(Resource)]
-pub struct CtxWrapper {
-    pub ctx: DbConnection,
-}
 
 /// The database name we chose when we published our module.
 //const DB_NAME: &str = "c200083d815ce43080deb1559d525d655b7799ec50b1552f413b372555053a1c";
@@ -159,7 +154,7 @@ fn on_disconnected(_ctx: &ErrorContext, err: Option<Error>) {
     }
 }
 
-pub fn print_player_positions(
+pub fn update_opponent_positions(
     ctx_wrapper: Res<CtxWrapper>,
     mut commands: Commands,
     asset_server: Res<AssetServer>,
@@ -264,5 +259,43 @@ pub fn update_opponent_hooks(
             player.hook.height,
         );
     }
-    despawn_opponent_hooks(commands, ctx_wrapper, despawn_query);
+}
+
+pub fn update_opponent_tracks(
+    ctx_wrapper: Res<CtxWrapper>,
+    mut commands: Commands,
+    asset_server: Res<AssetServer>,
+    mut query: Query<(&mut Sprite, &mut Transform, &OpponentTrack), With<OpponentTrack>>,
+    existing_tracks_query: Query<&OpponentTrack>,
+) {
+    let players = ctx_wrapper.ctx.db.player().iter().collect::<Vec<_>>();
+
+    let local_player_id = ctx_wrapper.ctx.identity(); //Get local player's ID
+
+    for player in players {
+        let player_id = player.identity;
+        spawn_opponent_track(
+            &mut commands,
+            &asset_server,
+            &existing_tracks_query,
+            &player_id,
+            &local_player_id,
+            player.track.id,
+            player.track.position.coordinates.x,
+            player.track.position.coordinates.y,
+            player.track.rotation,
+            player.track.width,
+            player.track.height,
+        );
+
+        update_opponent_track(
+            &mut query,
+            player.track.id,
+            player.track.position.coordinates.x,
+            player.track.position.coordinates.y,
+            player.track.rotation,
+            player.track.width,
+            player.track.height,
+        );
+    }
 }

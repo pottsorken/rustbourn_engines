@@ -2,10 +2,39 @@
 // Configuration and shared components for the game
 //
 
+use crate::module_bindings::DbConnection;
 use bevy::prelude::*;
 use bevy_ecs_tilemap::prelude::*;
 use spacetimedb_sdk::Identity;
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
+
+
+
+#[derive(Resource, Debug)]
+pub struct WaterTiles {
+    pub positions: HashSet<(u32, u32)>,
+}
+
+#[derive(Resource, Debug)]
+pub struct DirtTiles {
+    pub positions: HashSet<(u32, u32)>,
+}
+
+#[derive(Resource, Debug)]
+pub struct GrassTiles {
+    pub positions: HashSet<(u32, u32)>,
+}
+
+#[derive(Resource, Debug)]
+pub struct StoneTiles {
+    pub positions: HashSet<(u32, u32)>,
+}
+
+// Our very important struct containing our even more important context :)
+#[derive(Resource)]
+pub struct CtxWrapper {
+    pub ctx: DbConnection,
+}
 
 //
 // === Bot defined constraints ===
@@ -48,15 +77,6 @@ pub struct Player {
     pub block_count: i32,
 }
 
-// Configuration struct for initializing the Player entity
-#[derive(Component)]
-pub struct PlayerConfig {
-    pub size: Vec2,
-    pub movement_speed: f32,
-    pub rotation_speed: f32,
-    pub path: &'static str,
-    pub max_block_count: i32,
-}
 #[derive(Component)]
 pub struct PlayerAttach {
     pub offset: Vec2,
@@ -77,19 +97,118 @@ pub struct AttachedBlock {
     pub grid_offset: (i32, i32),
     pub player_entity: Entity,
 }
-
-// Global constant config for the player
+// Configuration struct for initializing the Player entity
 #[derive(Component)]
-pub struct OpponentHook {
-    pub id: Identity, // Match with the opponent's identity
+pub struct PlayerConfig {
+    pub size: Vec2,
+    pub movement_speed: f32,
+    pub rotation_speed: f32,
+    pub path: &'static str,
+    pub max_block_count: i32,
 }
+
 /// Global constant config for the player
 pub const PLAYER_CONFIG: PlayerConfig = PlayerConfig {
     size: Vec2::new(80.0, 80.0),
     movement_speed: 300.0,
     rotation_speed: f32::to_radians(180.0),
-    path: "sprites/top-view/robot_3Dblue.png",
+    path: "sprites/top-view/newcore.png",
     max_block_count: 100,
+};
+
+//
+// === Track defined constraints ===
+//
+
+
+// Track specific component
+#[derive(Component)]
+pub struct TrackConfig {
+    pub path: &'static str,
+    pub size: Vec2,
+    pub spawn_distance: f32,
+    pub fade_time: f32,
+    pub track_spacing: f32,
+}
+
+pub const TRACK_CONFIG: TrackConfig = TrackConfig {
+    path: "sprites/td_tanks/track16.png",
+    size: Vec2::new(16.0, 16.0),
+    spawn_distance: 5.0,
+    fade_time: 10.0, // seconds until despawn
+    track_spacing: 60.0,
+};
+
+#[derive(Component)]
+pub struct Track {
+    pub timer: Timer,
+    pub has_extended: bool,
+}
+
+#[derive(Component)]
+pub struct OpponentTrack {
+    pub owner_id: Identity,
+    pub id: u64,
+    pub x: f32,
+    pub y: f32,
+    pub rotation: f32,
+    pub width: f32,
+    pub height: f32,
+}
+
+
+#[derive(Component)]
+pub struct LastTrackPos(pub Vec2);
+
+#[derive(Component)]
+pub struct ModifierConfig {
+    pub dirt: f32,
+    pub grass: f32,
+    pub stone: f32,
+}
+
+pub const MODIFIER_CONFIG: ModifierConfig = ModifierConfig {
+    dirt: 0.5,
+    grass: 0.8,
+    stone: 1.5,
+};
+
+
+
+//
+// === Grid defined constraints ===
+//
+#[derive(Component)]
+pub struct GridConfig {
+    pub grid_size: (i32, i32),
+    pub cell_size: f32,
+    pub next_free_pos: (i32, i32),
+    pub capacity: u32,
+    pub load: u32,
+}
+// Global constant config for the player
+pub const GRID_CONFIG: GridConfig = GridConfig {
+    grid_size: (1, 1),
+    cell_size: 79.,
+    next_free_pos: (-1, 0),
+    capacity: 100,
+    load: 0,
+};
+
+//
+// === Camera defined constraints ===
+//
+#[derive(Component)]
+pub struct CameraConfig {
+    pub zoom_base: f32,
+    pub zoom_per_blocks: f32,
+    pub zoom_after_blocks: i32,
+}
+// Global constant config for the player
+pub const CAMERA_CONFIG: CameraConfig = CameraConfig {
+    zoom_base: 1.0,
+    zoom_per_blocks: 0.2,
+    zoom_after_blocks: 5,
 };
 
 //
@@ -110,6 +229,12 @@ pub struct Opponent {
 // === Hook defined constraints ===
 //
 
+// Global constant config for the player
+#[derive(Component)]
+pub struct OpponentHook {
+    pub id: Identity, // Match with the opponent's identity
+}
+
 #[derive(Component)]
 pub struct Hook {
     pub hook_speed: f32,
@@ -121,6 +246,9 @@ pub struct HookCharge {
     pub time_held: f32,
     pub target_length: f32,
 }
+
+#[derive(Component)]
+pub struct HookRange;
 
 #[derive(Component)]
 pub struct HookConfig {
@@ -154,14 +282,19 @@ pub struct Block {}
 pub struct BlockConfig {
     pub size: Vec2,
     pub rotation_speed: f32,
-    pub path: &'static str,
+    pub path: [&'static str; 4],
     pub count: i32,
 }
 /// Global constant config for the block
 pub const BLOCK_CONFIG: BlockConfig = BlockConfig {
     size: Vec2::new(80.0, 80.0),
     rotation_speed: f32::to_radians(90.0),
-    path: "sprites/top-view/robot_green.png",
+    path: [
+        "sprites/top-view/newblock1.png",
+        "sprites/top-view/newblock2.png",
+        "sprites/top-view/newblock3.png",
+        "sprites/top-view/newblock4.png",
+    ],
     count: 100,
 };
 
@@ -172,6 +305,12 @@ pub const BLOCK_CONFIG: BlockConfig = BlockConfig {
 #[derive(Component)]
 pub struct Obstacle {
     pub id: u64,
+}
+
+// Hashset storing all spawned obstacle IDs.
+#[derive(Resource, Default)]
+pub struct SpawnedObstacles {
+    pub ids: HashSet<u64>,
 }
 
 // Configuration struct for initializing the Player entity
@@ -204,15 +343,85 @@ pub struct MapConfig {
 
 /// Global constant config for the tilemap
 pub const MAP_CONFIG: MapConfig = MapConfig {
-    map_size: TilemapSize { x: 64, y: 64 },
-    tile_size: TilemapTileSize { x: 128.0, y: 128.0 }, // tiles are 16x16 pixels
+    map_size: TilemapSize { x: 1024, y: 1024 },
+    tile_size: TilemapTileSize { x: 8.0, y: 8.0 }, // tiles are 16x16 pixels
     noise_scale: 0.1,
     tile_textures: [
-        "sprites/td_tanks/grass.png",
-        "sprites/td_tanks/water.png",
-        "sprites/td_tanks/stone.png",
-        "sprites/td_tanks/dirt.png",
+        "sprites/td_tanks/grass8.png",
+        "sprites/td_tanks/water8.png",
+        "sprites/td_tanks/stone8.png",
+        "sprites/td_tanks/dirt8.png",
     ],
-    image_path: r"assets/tribasicmap64.png",
+    image_path: r"assets/tribasicmap1024.png",
     safe_zone_size: 300.0,
 };
+
+/////////////////////////////////////////////////////////
+#[derive(Clone, Copy, Default, Eq, PartialEq, Debug, Hash, States)]
+pub enum GameState {
+    #[default]
+    Splash,
+    Menu,
+    Game,
+    Edit,
+}
+
+#[derive(Resource, Debug, Component, PartialEq, Eq, Clone, Copy)]
+pub enum DisplayQuality {
+    Low,
+    Medium,
+    High,
+}
+
+#[derive(Resource, Debug, Component, PartialEq, Eq, Clone, Copy)] // Volume setting
+pub struct Volume(pub u32);
+
+#[derive(Component)]
+pub struct OnSplashScreen;
+
+#[derive(Resource, Deref, DerefMut)]
+pub struct SplashTimer(pub Timer);
+
+#[derive(Component)]
+pub struct OnGameScreen;
+
+#[derive(Clone, Copy, Default, Eq, PartialEq, Debug, Hash, States)] // Menu states
+pub enum MenuState {
+    Main,
+    Settings,
+    SettingsDisplay,
+    SettingsSound,
+    #[default]
+    Disabled,
+}
+
+// Tag components used to tag entities added on different menu screen
+#[derive(Component)]
+pub struct OnMainMenuScreen;
+
+#[derive(Component)]
+pub struct OnSettingsMenuScreen;
+
+#[derive(Component)]
+pub struct OnDisplaySettingsMenuScreen;
+
+#[derive(Component)]
+pub struct OnSoundSettingsMenuScreen;
+
+#[derive(Component)] // Which is the currently selected setting
+pub struct SelectedOption;
+
+// All actions that can be triggered from a button click
+#[derive(Component)]
+pub enum MenuButtonAction {
+    Play,
+    Settings,
+    SettingsDisplay,
+    SettingsSound,
+    BackToMainMenu,
+    BackToSettings,
+    Quit,
+}
+
+#[derive(Component)]
+pub struct OnEditScreen;
