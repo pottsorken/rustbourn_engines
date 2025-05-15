@@ -90,7 +90,7 @@ pub fn send_bots_to_db(
             );
 
              
-            let mut movement_dir = transform.rotation * bevy_dir;
+            let mut movement_dir = transform.rotation * Vec3::X;
             let mut new_pos = transform.translation
                 + movement_dir * BOT_CONFIG.movement_speed * time.delta_secs();
                 
@@ -190,7 +190,7 @@ pub fn render_bots_from_db(
                 server_bot.position.rotation
             );
 
-            let mut movement_dir = transform.rotation * bevy_dir;
+            let mut movement_dir = transform.rotation * Vec3::X;
             let mut new_pos = transform.translation
                 + movement_dir * BOT_CONFIG.movement_speed * time.delta_secs();
 
