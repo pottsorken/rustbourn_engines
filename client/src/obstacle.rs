@@ -1,4 +1,4 @@
-use crate::common::{Obstacle, MAP_CONFIG, OBSTACLE_CONFIG, SpawnedObstacles, CtxWrapper};
+use crate::common::{CtxWrapper, Obstacle, SpawnedObstacles, MAP_CONFIG, OBSTACLE_CONFIG};
 use crate::db_connection::load_obstacles;
 use bevy::prelude::*;
 use bevy::window::PrimaryWindow;
@@ -23,10 +23,10 @@ pub fn setup_obstacle(
     let mut counter = 0;
 
     for obstacle in obstacles {
-        if counter >= OBSTACLE_CONFIG.count {
-            break;
-        }
-        counter += 1;
+        //if counter >= OBSTACLE_CONFIG.count {
+        //    break;
+        //}
+        //counter += 1;
 
         let random_x = (random::<f32>() - 0.5) * world_map_size.x; // obstacle.0;
         let random_y = (random::<f32>() - 0.5) * world_map_size.x; // obstacle.1;
@@ -75,4 +75,3 @@ pub fn setup_obstacle(
         ));
     }
 }
-

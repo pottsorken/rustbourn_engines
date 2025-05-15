@@ -116,9 +116,8 @@ pub struct Vec3 {
 pub struct Leaderboard {
     #[primary_key]
     id: u64,
-    top_players: Vec<Identity>,  // Array of the top three players
+    top_players: Vec<Identity>, // Array of the top three players
 }
-
 
 /// Reducer for decreasing a ("id") specific obstacle's HP by "damage" points.
 /// Client invokes this reducer in "handle_obstacle_hit" function when dealing damage to an obstacle with their hook.
@@ -324,40 +323,38 @@ pub fn reset_bots_if_no_players_online(ctx: &ReducerContext) -> Result<(), Strin
     }
 
     // Original bot spawn points. Three bots are spawned.
-    let bot_spawn_positions = vec![  
-        (-15432.0, 12340.0),  
-        (12984.0, -11324.0),  
-        (-8764.0, -13240.0),  
-        (5432.0, 10876.0),  
-        (12098.0, -2345.0),  
-        (-4321.0, 5432.0),  
-        (8234.0, -9321.0),  
-        (-14230.0, 8391.0),  
-        (987.0, 1234.0),  
-        (16000.0, -16000.0),  
-        (-16384.0, 16384.0),  
-        (1000.0, -500.0),  
-        (10234.0, 9423.0),  
-        (-9382.0, -12083.0),  
-        (8745.0, 9843.0),  
-        (-4321.0, -6789.0),  
-        (14230.0, -5432.0),  
-        (-10987.0, 10342.0),  
-        (11234.0, -7890.0),  
-        (-12345.0, -12345.0),  
-        (3198.0, 8754.0),  
-        (-6543.0, 14982.0),  
-        (4321.0, -9321.0),  
-        (-15432.0, -1324.0),  
-        (13842.0, 15843.0),  
-        (-12983.0, 2342.0),  
-        (7654.0, -7654.0),  
-        (-8432.0, 7654.0),  
-        (15678.0, -13245.0),  
-        (-12874.0, 8234.0),  
+    let bot_spawn_positions = vec![
+        (-15432.0, 12340.0),
+        (12984.0, -11324.0),
+        (-8764.0, -13240.0),
+        (5432.0, 10876.0),
+        (12098.0, -2345.0),
+        (-4321.0, 5432.0),
+        (8234.0, -9321.0),
+        (-14230.0, 8391.0),
+        (987.0, 1234.0),
+        (16000.0, -16000.0),
+        (-16384.0, 16384.0),
+        (1000.0, -500.0),
+        (10234.0, 9423.0),
+        (-9382.0, -12083.0),
+        (8745.0, 9843.0),
+        (-4321.0, -6789.0),
+        (14230.0, -5432.0),
+        (-10987.0, 10342.0),
+        (11234.0, -7890.0),
+        (-12345.0, -12345.0),
+        (3198.0, 8754.0),
+        (-6543.0, 14982.0),
+        (4321.0, -9321.0),
+        (-15432.0, -1324.0),
+        (13842.0, 15843.0),
+        (-12983.0, 2342.0),
+        (7654.0, -7654.0),
+        (-8432.0, 7654.0),
+        (15678.0, -13245.0),
+        (-12874.0, 8234.0),
     ];
-
-
 
     // Reset each bot (e.g., set them to some default positions).
     for (i, mut bot) in ctx.db.bots().iter().enumerate() {
@@ -491,39 +488,38 @@ pub fn update_block_owner(
 // Server invokes this function in "server_startup" reducer during server intialization.
 fn generate_bots(ctx: &ReducerContext) {
     // Example bot generation logic, spawn three bots.
-    let bot_spawn_positions = vec![  
-        (-15432.0, 12340.0),  
-        (12984.0, -11324.0),  
-        (-8764.0, -13240.0),  
-        (5432.0, 10876.0),  
-        (12098.0, -2345.0),  
-        (-4321.0, 5432.0),  
-        (8234.0, -9321.0),  
-        (-14230.0, 8391.0),  
-        (987.0, 1234.0),  
-        (16000.0, -16000.0),  
-        (-16384.0, 16384.0),  
-        (1000.0, -500.0),  
-        (10234.0, 9423.0),  
-        (-9382.0, -12083.0),  
-        (8745.0, 9843.0),  
-        (-4321.0, -6789.0),  
-        (14230.0, -5432.0),  
-        (-10987.0, 10342.0),  
-        (11234.0, -7890.0),  
-        (-12345.0, -12345.0),  
-        (3198.0, 8754.0),  
-        (-6543.0, 14982.0),  
-        (4321.0, -9321.0),  
-        (-15432.0, -1324.0),  
-        (13842.0, 15843.0),  
-        (-12983.0, 2342.0),  
-        (7654.0, -7654.0),  
-        (-8432.0, 7654.0),  
-        (15678.0, -13245.0),  
-        (-12874.0, 8234.0),  
+    let bot_spawn_positions = vec![
+        (-15432.0, 12340.0),
+        (12984.0, -11324.0),
+        (-8764.0, -13240.0),
+        (5432.0, 10876.0),
+        (12098.0, -2345.0),
+        (-4321.0, 5432.0),
+        (8234.0, -9321.0),
+        (-14230.0, 8391.0),
+        (987.0, 1234.0),
+        (16000.0, -16000.0),
+        (-16384.0, 16384.0),
+        (1000.0, -500.0),
+        (10234.0, 9423.0),
+        (-9382.0, -12083.0),
+        (8745.0, 9843.0),
+        (-4321.0, -6789.0),
+        (14230.0, -5432.0),
+        (-10987.0, 10342.0),
+        (11234.0, -7890.0),
+        (-12345.0, -12345.0),
+        (3198.0, 8754.0),
+        (-6543.0, 14982.0),
+        (4321.0, -9321.0),
+        (-15432.0, -1324.0),
+        (13842.0, 15843.0),
+        (-12983.0, 2342.0),
+        (7654.0, -7654.0),
+        (-8432.0, 7654.0),
+        (15678.0, -13245.0),
+        (-12874.0, 8234.0),
     ];
-
 
     // Generate and insert bots into the database.
     for (i, (x, y)) in bot_spawn_positions.into_iter().enumerate() {
@@ -594,14 +590,14 @@ fn generate_obstacles(ctx: &ReducerContext) {
     let perlin_x = Perlin::new(21);
     let perlin_y = Perlin::new(1345);
     // Generate 200 obstacles.
-    for i in 0..200 {
+    for i in 0..150 {
         // Control frequency.
         let x = (i as f32) / 10.0;
         let y = ((i + 1) as f32) / 10.0;
 
         // Noise generate x & y values within the map (8192*8192).
-        let random_x = perlin_x.get([x as f64, y as f64]) as f32 * 4056.0;
-        let random_y = perlin_y.get([y as f64, x as f64]) as f32 * 4056.0;
+        let random_x = perlin_x.get([x as f64, y as f64]) as f32 * 16834.0;
+        let random_y = perlin_y.get([y as f64, x as f64]) as f32 * 16834.0;
 
         // Define invalid x & y values within the safe zone (spawn point).
         let invalid_x = random_x < 300.0 && random_x > -300.0;
@@ -627,10 +623,9 @@ fn generate_obstacles(ctx: &ReducerContext) {
     }
 }
 
-
 #[spacetimedb::reducer]
-pub fn generate_leaderboard(ctx: &ReducerContext){
-	// Create a new leaderboard entry with an empty top players list
+pub fn generate_leaderboard(ctx: &ReducerContext) {
+    // Create a new leaderboard entry with an empty top players list
     let leaderboard = Leaderboard {
         id: 1, // id är 1
         top_players: Vec::new(),
@@ -639,3 +634,4 @@ pub fn generate_leaderboard(ctx: &ReducerContext){
     // Insert the leaderboard into the database
     ctx.db.leaderboard().insert(leaderboard);
 }
+

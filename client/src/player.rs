@@ -129,8 +129,16 @@ pub fn player_movement(
 
     for (player_entity, mut transform, player, grid) in &mut player_query {
         // Scale player speed and rotation depending on n blocks
-        let speed_scale = 1.0 / (1.0 + get_block_count(ctx_wrapper.ctx.identity(), &ctx_wrapper, &spawned_blocks) as f32  * 0.1);
-        let rotation_scale = 1.0 / (1.0 + get_block_count(ctx_wrapper.ctx.identity(), &ctx_wrapper, &spawned_blocks) as f32 * 0.1);
+        let speed_scale = 1.0
+            / (1.0
+                + get_block_count(ctx_wrapper.ctx.identity(), &ctx_wrapper, &spawned_blocks)
+                    as f32
+                    * 0.1);
+        let rotation_scale = 1.0
+            / (1.0
+                + get_block_count(ctx_wrapper.ctx.identity(), &ctx_wrapper, &spawned_blocks)
+                    as f32
+                    * 0.1);
         let speed_modifier = speed_modifer(
             transform.translation.truncate(),
             &water_tiles,
@@ -483,4 +491,3 @@ fn generate_random_spawnpoint(ctx_wrapper: &CtxWrapper) -> (f32, f32) {
     }
     (random_x, random_y)
 }
-
