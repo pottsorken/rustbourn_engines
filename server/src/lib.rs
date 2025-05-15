@@ -506,17 +506,122 @@ pub fn will_collide(
 #[spacetimedb::reducer]
 pub fn update_bot_position(
     ctx: &ReducerContext,
-    bevy_transform: BevyTransform,
+    //bevy_transform: BevyTransform,
     bot_id: u64,
-    new_rotate_dir: f32,
+    //new_rotate_dir: f32,
 ) -> Result<(), String> {
-    // Find requested bot by bot id.
-    if let Some(mut _bot) = ctx.db.bots().iter().find(|b| b.id == bot_id) {
-        // Update bot position and rotation.
-        _bot.position = bevy_transform;
-        _bot.rotation_dir = new_rotate_dir;
+    log::info!(
+        "Code reaches this point! --------------",
+    );
 
-        // Update column in "bots" table.
+    //let obstacles = ctx.db.obstacle().iter().collect::<Vec<_>>();
+    //let players = ctx.db.player().iter().collect::<Vec<_>>();
+
+    //let max_check_distance = BOT_SIZE * 2.5;
+
+
+    if let Some(mut _bot) = ctx.db.bots().iter().find(|b| b.id == bot_id) {
+        //_bot.position = bevy_transform;
+       // _bot.rotation_dir = new_rotate_dir;
+
+        let bevy_dir = Vec3::new(_bot.movement_dir.x, _bot.movement_dir.y, _bot.movement_dir.z);
+        
+
+        let mut transform_translation = Vec3::new(_bot.position.coordinates.x, _bot.position.coordinates.y, 0.0);
+
+        let rotation_quat = Quat::from_rotation_z(_bot.position.rotation);
+
+        let mut movement_dir = rotation_quat * bevy_dir;
+        let front_dir = rotation_quat * Vec3::new(1.8, 0.0, 0.0);
+        //let left_dir = rotation_quat * Quat::from_rotation_z(f32::to_radians(45.0)) * Vec3::X;
+        //let right_dir = rotation_quat * Quat::from_rotation_z(f32::to_radians(-45.0)) * Vec3::X;
+        
+        let left_dir = rotation_quat * Vec3::new(2.0, 1.0, 0.0);
+        let left_dir2: Vec3 = rotation_quat * Vec3::new(1.0, 1.5, 0.0);
+
+
+
+        let right_dir = rotation_quat * Vec3::new(2.0, -1.0, 0.0);
+        let right_dir2: Vec3 = rotation_quat * Vec3::new(1.0, -1.5, 0.0);
+
+        let mut rotation_dir = _bot.rotation_dir;
+
+        let front_pos = transform_translation + front_dir * BOT_SIZE; // Adjust distance
+        let left_pos = transform_translation + left_dir * BOT_SIZE; // Adjust distance
+        let left_pos2 = transform_translation + left_dir2 * BOT_SIZE; // Adjust distance
+        let right_pos = transform_translation + right_dir * BOT_SIZE; // Adjust distance
+        let right_pos2 = transform_translation + right_dir2 * BOT_SIZE; // Adjust distance
+
+        let check_points = vec![front_pos, left_pos, right_pos ,left_pos2, right_pos2];
+
+        // Single pass through all entities
+        let collision_results = check_collisions_at_points(
+            &check_points,
+            ctx.db.obstacle().iter(),
+            ctx.db.player().iter(),
+            ctx.db.bots().iter(),
+            BOT_SIZE * 1.5
+        );
+
+        let front_clear = collision_results[0];
+        let left_clear = collision_results[1];
+        let right_clear = collision_results[2];
+        let left_clear2 = collision_results[3];
+        let right_clear2 = collision_results[4];
+
+        let mut new_pos = transform_translation + movement_dir * BOT_MOVE * FIXED_DELTA;
+
+        if !left_clear.0 && !right_clear.0 && !front_clear.0 && 
+           !left_clear.1 && !right_clear.1 && !front_clear.1 {
+            _bot.position.coordinates.x = new_pos.x;
+            _bot.position.coordinates.y = new_pos.y;
+        }
+        else {
+
+            let rotation_speed = f32::to_radians(90.0);
+            // Player is on the left and NOT on the right → rotate right to chas
+            // Check left and right vision
+
+            if left_clear.0 && !right_clear.0 || left_clear2.0 && !right_clear2.0{
+                // If left is clear but right is blocked, rotate right
+                //_bot.position.rotation += rotation_speed * FIXED_DELTA; // Rotate left (positive direction)
+                _bot.position.rotation += rotation_speed * FIXED_DELTA; // Tracking to right
+
+            } 
+            // Player is on the right and NOT on the left → rotate left to chase
+            else if right_clear.0 && !left_clear.0 || right_clear2.0 && !left_clear2.0{
+                // If right is clear but left is blocked, rotate left
+                //_bot.position.rotation -= rotation_speed * FIXED_DELTA; // Rotate right (negative direction)
+                _bot.position.rotation -= rotation_speed * FIXED_DELTA; // tracking to left
+
+            } 
+            
+            else if (right_clear.1 && left_clear.1 && !front_clear.0) || 
+                    (front_clear.1 && !front_clear.0) ||
+                    (right_clear2.1 && left_clear2.1 && !front_clear.0) ||
+                    (right_clear2.1 && left_clear.1 && !front_clear.0) ||
+                    (right_clear.1 && left_clear2.1 && !front_clear.0) ||
+                    (right_clear.1 && right_clear2.1 && left_clear.1) ||
+                    (left_clear.1 && left_clear2.1 && right_clear.1) {
+                // Move backward slightly
+                _bot.position.coordinates.x -= movement_dir.x * (BOT_MOVE * 0.5) * FIXED_DELTA; 
+
+                // Both left and right are blocked, so rotate 180° (turn around)
+                _bot.position.rotation += std::f32::consts::PI ; // Turn around (180 degrees) // turns around but for now we have this commentd so that it looks at player.
+                
+            }
+            
+            else if left_clear.1 && !right_clear.1 || left_clear2.1 && !right_clear2.1{
+                _bot.position.rotation -= rotation_speed * FIXED_DELTA; // Rotate left (positive direction)
+            } 
+            
+            else if right_clear.1 && !left_clear.1 || right_clear2.1 && !left_clear2.1{
+                _bot.position.rotation += rotation_speed * FIXED_DELTA; // Rotate right to avoid collision (positive direction)
+            }
+            
+
+        }
+
         ctx.db.bots().id().update(_bot);
 
         Ok(())
@@ -576,6 +681,7 @@ pub fn update_bot_position(
         //ctx.db.bots().id().update(_bot);
 
         Ok(())
+
     } else {
         Err("Bot not found".to_string())
     }

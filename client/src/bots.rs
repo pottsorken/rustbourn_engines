@@ -11,7 +11,7 @@ use crate::module_bindings::{update_bot_position};
 use crate::player_attach::check_collision;
 use bevy::ecs::query::QueryParIter;
 use bevy::prelude::*;
-use spacetimedb_sdk::{Identity, Table, DbContext};
+use spacetimedb_sdk::{Identity, Table};
 use std::collections::{HashMap};
 use rand::Rng;
 use rand::random;
@@ -495,6 +495,8 @@ pub fn render_bots_from_db(
             let server_dir = server_bot.movement_dir;
             let bevy_dir = Vec3::new(server_dir.x, server_dir.y, server_dir.z);
 
+    for (mut transform, bot) in param_set.p0().iter_mut() {
+        if let Some(server_bot) = ctx_wrapper.ctx.db.bots().id().find(&bot.id){
             let server_rotation = server_bot.position.rotation;
 
             transform.rotation = Quat::from_rotation_z(server_rotation);
@@ -525,13 +527,13 @@ pub fn render_bots_from_db(
 
                 // If no collision, update the bot's position
                 transform.translation = new_pos;
-                //println!(
-                //    "[BOT] {} at ({}, {}) and rotation: {}",
-                //    bot.id,
-                //    server_bot.position.coordinates.x,
-                //    server_bot.position.coordinates.y,
-                //    server_bot.position.rotation
-                //);
+                println!(
+                    "[BOT] {} at ({}, {}) and rotation: {}",
+                    bot.id,
+                    server_bot.position.coordinates.x,
+                    server_bot.position.coordinates.y,
+                    server_bot.position.rotation
+                );
             } else {
                 // Try to look left and right
                 let left_direction =
@@ -586,6 +588,7 @@ pub fn render_bots_from_db(
 
     ctx_wrapper: Res<CtxWrapper>,
     time: Res<Time>, // Time resource for movement speed calculation
+
 pub fn spawn_bot_blocks(
     mut bots_query: Query<(Entity, &mut PlayerGrid), With<Bot>>,
     mut commands: Commands,

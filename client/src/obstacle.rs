@@ -2,7 +2,6 @@ use crate::common::{Obstacle, MAP_CONFIG, OBSTACLE_CONFIG, SpawnedObstacles, Ctx
 use crate::db_connection::load_obstacles;
 use bevy::prelude::*;
 use bevy::window::PrimaryWindow;
-use rand::random;
 use std::collections::HashSet;
 
 pub fn setup_obstacle(
